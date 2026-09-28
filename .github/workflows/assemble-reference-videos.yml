@@ -23,9 +23,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          base64 --decode < <(cat .github/video-parts2/usar-*.b64) > "Usar como referência.mp4"
-          base64 --decode < <(cat .github/video-parts/ultimos-10s-*.b64) > "Video_referencia_ultimos_10s(4).mp4"
-          git rm -r -f -- .github/video-parts .github/video-parts2 .github/workflows/assemble-reference-videos.yml
+          base64 --decode < <(cat .github/video-parts3/usar-*.b64) > "Usar como referência.mp4"
+          base64 --decode < <(cat .github/video-parts3/ultimos-10s-*.b64) > "Video_referencia_ultimos_10s(4).mp4"
+          git rm -r -f -- .github/video-parts .github/video-parts2 .github/video-parts3 .github/workflows/assemble-reference-videos.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- "Usar como referência.mp4" "Video_referencia_ultimos_10s(4).mp4"
