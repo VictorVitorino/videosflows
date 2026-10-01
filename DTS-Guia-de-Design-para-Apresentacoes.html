@@ -3361,8 +3361,8 @@ DTS.register({
     css: `
 .fx-data-highlight__head{position:absolute;left:24px;right:24px;top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .fx-data-highlight__eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6B7A90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fx-data-highlight__wrap{position:absolute;left:14px;right:14px;top:44px;bottom:58px;display:grid;place-items:center}
-.fx-data-highlight__svg{width:100%;height:100%;font-family:'Inter',sans-serif;overflow:visible}
+.fx-data-highlight__wrap{position:absolute;left:14px;right:14px;top:44px;bottom:58px;display:flex;align-items:center;justify-content:center;min-height:0}
+.fx-data-highlight__svg{display:block;width:100%;height:100%;max-height:100%;font-family:'Inter',sans-serif;overflow:visible}
 .fx-data-highlight__gl{stroke:#E2E7EF;stroke-width:1}
 .fx-data-highlight__gt{font-family:'JetBrains Mono',monospace;font-size:10px;fill:#8A97A8;text-anchor:end}
 .fx-data-highlight__axis{stroke:#CBD4E1;stroke-width:1.5}
@@ -3561,8 +3561,8 @@ DTS.register({
 .fx-chart-build-animation__eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6B7A90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fx-chart-build-animation__read{flex:none;display:inline-flex;align-items:center;gap:8px;height:26px;padding:0 10px;border-radius:8px;border:1px solid #E2E7EF;background:rgba(255,255,255,.85);font-size:11.5px;font-weight:600;color:#3E4C5E;white-space:nowrap}
 .fx-chart-build-animation__read b{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#0B2545;min-width:34px;text-align:right}
-.fx-chart-build-animation__wrap{position:absolute;left:14px;right:14px;top:44px;bottom:58px;display:grid;place-items:center}
-.fx-chart-build-animation__svg{width:100%;height:100%;font-family:'Inter',sans-serif;overflow:visible}
+.fx-chart-build-animation__wrap{position:absolute;left:14px;right:14px;top:44px;bottom:58px;display:flex;align-items:center;justify-content:center;min-height:0}
+.fx-chart-build-animation__svg{display:block;width:100%;height:100%;max-height:100%;font-family:'Inter',sans-serif;overflow:visible}
 .fx-chart-build-animation__axes{opacity:0}
 .fx-chart-build-animation__axis{stroke:#CBD4E1;stroke-width:1.5}
 .fx-chart-build-animation__gl{stroke:#E2E7EF;stroke-width:1}
@@ -3740,8 +3740,8 @@ DTS.register({
   <span class="fx-bpmn-flow-motion__status" data-status>Demanda recebida</span>
 </div>`,
     css: `
-.fx-bpmn-flow-motion__wrap{position:absolute;inset:14px 18px 62px 18px;display:grid;place-items:center}
-.fx-bpmn-flow-motion__svg{width:100%;height:100%;max-height:100%;font-family:'Inter',sans-serif}
+.fx-bpmn-flow-motion__wrap{position:absolute;inset:14px 18px 62px 18px;display:flex;align-items:center;justify-content:center;min-height:0}
+.fx-bpmn-flow-motion__svg{display:block;width:100%;height:100%;max-height:100%;font-family:'Inter',sans-serif}
 .fx-bpmn-flow-motion__lanelbl{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;fill:#6B7A90;text-anchor:middle}
 .fx-bpmn-flow-motion__flows path{fill:none;stroke:#4A6FA5;stroke-width:2;marker-end:url(#fx-bpmn-arrow);stroke-dasharray:var(--len,300);stroke-dashoffset:var(--len,300);opacity:.35;transition:opacity .3s}
 .fx-bpmn-flow-motion__flows path.is-drawn{stroke-dashoffset:0;opacity:1;transition:stroke-dashoffset .55s cubic-bezier(.22,.61,.36,1),opacity .3s}
@@ -3889,8 +3889,8 @@ DTS.register({
 .fx-connector-flow-line__eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#6B7A90;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fx-connector-flow-line__read{flex:none;height:26px;display:inline-flex;align-items:center;padding:0 10px;border-radius:8px;border:1px solid #E2E7EF;background:rgba(255,255,255,.85);font-size:11.5px;font-weight:600;color:#3E4C5E;white-space:nowrap;max-width:56%;overflow:hidden;text-overflow:ellipsis}
 .fx-connector-flow-line__read b{color:#0B2545;margin-right:4px}
-.fx-connector-flow-line__wrap{position:absolute;left:14px;right:14px;top:46px;bottom:58px;display:grid;place-items:center}
-.fx-connector-flow-line__svg{width:100%;height:100%;font-family:'Inter',sans-serif;overflow:visible}
+.fx-connector-flow-line__wrap{position:absolute;left:14px;right:14px;top:46px;bottom:58px;display:flex;align-items:center;justify-content:center;min-height:0}
+.fx-connector-flow-line__svg{display:block;width:100%;height:100%;max-height:100%;font-family:'Inter',sans-serif;overflow:visible}
 .fx-connector-flow-line__col{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;fill:#8A97A8;text-anchor:middle}
 .fx-connector-flow-line__node{opacity:.32;transition:opacity .35s;cursor:pointer}
 .fx-connector-flow-line__node.is-on{opacity:1}
@@ -4129,6 +4129,7 @@ DTS.register({
 .fx-pulse-beacon__axis--y{left:-18px;top:50%;transform:translate(-50%,-50%) rotate(-90deg);white-space:nowrap}
 .fx-pulse-beacon__item{position:absolute;width:48px;height:48px;transform:translate(-50%,-50%);opacity:0}
 .fx-pulse-beacon__item.is-in{opacity:1;transition:opacity .5s}
+.fx-pulse-beacon__item.is-open{z-index:20}
 .fx-pulse-beacon__node{position:relative;display:block;width:48px;height:48px;border-radius:50%;cursor:pointer}
 .fx-pulse-beacon__avatar{position:absolute;inset:0;display:grid;place-items:center;border-radius:50%;background:#13315C;color:#fff;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:.06em;box-shadow:0 0 0 3px #fff,0 6px 14px rgba(11,37,69,.22);transition:transform .25s cubic-bezier(.22,.61,.36,1),box-shadow .25s}
 .fx-pulse-beacon__item:not(.is-beacon) .fx-pulse-beacon__avatar{background:#4A6FA5}
@@ -7040,6 +7041,11 @@ DTS.register({
 .fx-carousel-horizontal-gallery__tg{height:28px;padding:0 10px;border-radius:8px;border:1px solid #CBD4E1;background:#fff;font-size:12px;font-weight:600;color:#6B7A90;transition:all .2s;min-width:84px}
 .fx-carousel-horizontal-gallery__tg.is-on{background:#0B2545;border-color:#0B2545;color:#fff}
 .fx-carousel-horizontal-gallery__hint{margin-left:auto;font-size:11.5px;color:#8A97A8}
+.fx-carousel-horizontal-gallery.is-short .fx-carousel-horizontal-gallery__card{padding:14px 16px 12px;gap:6px}
+.fx-carousel-horizontal-gallery.is-short .fx-carousel-horizontal-gallery__title{font-size:16.5px;margin-top:2px}
+.fx-carousel-horizontal-gallery.is-short .fx-carousel-horizontal-gallery__desc{font-size:11.5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.fx-carousel-horizontal-gallery.is-short .fx-carousel-horizontal-gallery__kpis{padding-top:2px}
+.fx-carousel-horizontal-gallery.is-short .fx-carousel-horizontal-gallery__kpis b{font-size:20px}
 .fx-carousel-horizontal-gallery.is-compact .fx-carousel-horizontal-gallery__track{top:42px;bottom:84px;padding-top:8px;padding-bottom:10px}
 .fx-carousel-horizontal-gallery.is-compact .fx-carousel-horizontal-gallery__card{padding:12px 14px 12px;gap:5px;border-radius:12px}
 .fx-carousel-horizontal-gallery.is-compact .fx-carousel-horizontal-gallery__title{font-size:15px;margin-top:0}
@@ -7064,7 +7070,8 @@ DTS.register({
       const step = () => cards[0].offsetWidth + gap();
       const maxScroll = () => Math.max(0, track.scrollWidth - track.clientWidth);
       /* largura do card em px (o padding lateral da trilha centraliza o card ativo: (100% − cw) / 2) */
-      const layout = () => { const w = api.size().w; const cw = Math.max(236, Math.min(320, Math.round(w * 0.42))); root.style.setProperty('--cw', cw + 'px'); root.classList.toggle('is-compact', w < 600 || api.size().h < 400); track.scrollLeft = index * step(); };
+      /* palco baixo (< 450 px, ex.: 1280×720 → 418 px): card mais denso para o rodapé “Entregável” não ser cortado */
+      const layout = () => { const w = api.size().w, h = api.size().h; const cw = Math.max(236, Math.min(320, Math.round(w * 0.42))); root.style.setProperty('--cw', cw + 'px'); root.classList.toggle('is-compact', w < 600 || h < 400); root.classList.toggle('is-short', h < 450); track.scrollLeft = index * step(); };
       const goTo = (i, smooth) => { index = Math.max(0, Math.min(n - 1, i)); track.scrollTo({ left: index * step(), behavior: smooth !== false && !api.reduced ? 'smooth' : 'auto' }); };
       /* sincroniza indicadores com a posição real de rolagem (evento scroll) */
       const sync = () => {
@@ -7344,12 +7351,15 @@ DTS.register({
           let best = null;
           (right ? ['l', 'r', 'd', 'u'] : ['r', 'd', 'u', 'l']).forEach((m, i) => {
             const b = cand[m]; b.r = b.l + lw; b.b = b.t + lh;
-            let cost = i + (b.l < 0 || b.r > pw || b.t < 0 || b.b > ph ? 100 : 0) + (m === 'l' && right && b.l < half ? 20 : 0) + ((m === 'd' || m === 'u') && (s.i >= 50 ? b.b > ph / 2 : b.t < ph / 2) ? 20 : 0);
+            /* rótulo à direita de uma bolha da metade esquerda que só “vaza” a cauda pelo eixo custa pouco (3); rótulo flipado
+               inteiro no quadrante vizinho custa muito (20) */
+            let cost = i + (b.l < 0 || b.r > pw || b.t < 0 || b.b > ph ? 100 : 0) + (m === 'l' && right && b.l < half ? 20 : 0) + (m === 'r' && !right && b.r > half ? 3 : 0) + ((m === 'd' || m === 'u') && (s.i >= 50 ? b.b > ph / 2 : b.t < ph / 2) ? 20 : 0);
             dots.forEach((o, j) => { if (j !== k && hit(b, o)) cost += 10; });
             placed.forEach(o => { if (hit(b, o)) cost += 10; }); texts.forEach(o => { if (hit(b, o)) cost += 10; });
             if (!best || cost < best.cost) best = { m, b, cost };
           });
-          placed.push(best.b);
+          /* rótulos já colocados contam com 3 px de folga para nunca ficarem colados */
+          placed.push({ l: best.b.l - 3, t: best.b.t - 3, r: best.b.r + 3, b: best.b.b + 3 });
           s.el.classList.toggle('is-flip', best.m === 'l'); s.el.classList.toggle('is-tb', best.m === 'd' || best.m === 'u'); s.el.classList.toggle('is-up', best.m === 'u');
           if (best.m === 'd' || best.m === 'u') s.tag.style.setProperty('--tx', (vx - me.l).toFixed(1) + 'px');
         });
@@ -7582,7 +7592,7 @@ DTS.register({
 .fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__tip-head{flex-wrap:wrap}
 .fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__eyebrow{display:none}
 .fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__tip-desc{font-size:11px}
-.fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__hint,.fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__layer,.fx-tooltip-contextual-info.is-narrow .fx-tooltip-contextual-info__read span:last-of-type,.fx-tooltip-contextual-info.is-narrow .fx-tooltip-contextual-info__read b[data-rxy]{display:none}
+.fx-tooltip-contextual-info.is-narrow .fx-tooltip-contextual-info__hint,.fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__layer,.fx-tooltip-contextual-info.is-narrow .fx-tooltip-contextual-info__read span:last-of-type,.fx-tooltip-contextual-info.is-narrow .fx-tooltip-contextual-info__read b[data-rxy]{display:none}
 .fx-tooltip-contextual-info.is-compact .fx-tooltip-contextual-info__btn{padding:0 10px}
 `,
     init(root, api) {
@@ -7619,7 +7629,8 @@ DTS.register({
         const tw = tip.offsetWidth, th = tip.offsetHeight, m = 8, gap = 12;
         const others = comps.filter(x => x !== c).flatMap(x => [x, x.querySelector('.fx-tooltip-contextual-info__badge')].map(el => { const r = el.getBoundingClientRect(); return { l: r.left - rr.left - 3, t: r.top - rr.top - 3, r: r.right - rr.left + 3, b: r.bottom - rr.top + 3 }; }));
         const fitsAbove = top - gap - th >= m, fitsBelow = bottom + gap + th <= rr.height - m;
-        let place = mode === 'auto' ? (fitsAbove || !fitsBelow ? 'top' : 'bottom') : mode, fallback = false;
+        /* auto: acima por padrão; abaixo só quando não há espaço acima (readout "sem espaço") */
+        let place = mode === 'auto' ? (fitsAbove || !fitsBelow ? 'top' : 'bottom') : mode, fallback = mode === 'auto' && place === 'bottom';
         if (place === 'top' && !fitsAbove && fitsBelow) { place = 'bottom'; fallback = true; }
         else if (place === 'bottom' && !fitsBelow && fitsAbove) { place = 'top'; fallback = true; }
         const x0 = Math.max(m, Math.min(rr.width - tw - m, cx - tw / 2));
@@ -8145,7 +8156,7 @@ DTS.register({
   intensity: 2,
   interaction: 'Passe o cursor sobre um nó · clique para fixar',
   summary: 'Rede viva de sistemas, squads e executivos: ao tocar um nó, seus vizinhos acendem e o resto esmaece.',
-  what: 'Doze nós (sistemas, squads e executivos) e suas dezesseis ligações são dispostos por uma simulação de forças simples em SVG: os nós se repelem, cada ligação age como uma mola, as ligações afastam os rótulos que não são seus e um ajuste suave de espalhamento mantém a nuvem centrada, ocupando cerca de três quartos do palco. Em ~3 s a rede se acomoda e passa a flutuar levemente, sinal de que é um sistema vivo. Ao passar o cursor sobre um nó, suas ligações viram traços laranja em movimento, os vizinhos diretos ganham contorno e todo o resto cai para 15% de opacidade; um clique fixa o destaque para que o apresentador fale sem segurar o mouse. “Reorganizar” embaralha e deixa a rede se reacomodar.',
+  what: 'Doze nós (sistemas, squads e executivos) e dezesseis ligações dispostos por uma simulação de forças em SVG: nós se repelem, ligações agem como molas, caixas de nó e rótulo não se sobrepõem e as ligações afastam rótulos alheios. Antes do primeiro quadro, seis arranjos são acomodados em silêncio e fica o de melhor leitura (menos cruzamentos, ~3/4 da largura do palco); cada rótulo escolhe o lado livre do seu nó. Em ~1 s a rede desliza até esse arranjo e passa a flutuar levemente. Ao passar o cursor sobre um nó, suas ligações viram traços laranja em movimento, os vizinhos ganham contorno e o resto cai para 15% de opacidade; um clique fixa o destaque. “Reorganizar” embaralha e reacomoda.',
   communicates: 'Mostra relação e dependência, não hierarquia: quem conversa com quem, quais sistemas e pessoas giram em torno de um ponto e onde um nó concentra conexões demais. O esmaecimento transforma um mapa denso em uma pergunta por vez.',
   where: ['Arquitetura', 'Mapa de Stakeholders', 'Fluxograma', 'Data Visualization', 'Diagnóstico', 'Portfólio de Serviços'],
   dts: [
@@ -8213,6 +8224,9 @@ DTS.register({
 .fx-node-network-motion__node.is-active .fx-node-network-motion__halo{animation:fx-node-network-motion-halo 1.6s ease-out infinite}
 @keyframes fx-node-network-motion-halo{0%{r:14;opacity:.8}100%{r:34;opacity:0}}
 .fx-node-network-motion__node.is-pinned .fx-node-network-motion__halo{animation:none;opacity:.9;r:20}
+.fx-node-network-motion__lab{transition:transform .5s cubic-bezier(.22,.61,.36,1)}
+.fx-node-network-motion__lab.is-r text{text-anchor:start}
+.fx-node-network-motion__lab.is-l text{text-anchor:end}
 .fx-node-network-motion__txt{font-size:11px;font-weight:600;fill:#0B2545;text-anchor:middle;pointer-events:none;transition:font-size .2s,fill .2s;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
 .fx-node-network-motion__sub{font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;fill:#8A97A8;text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
 .fx-node-network-motion__node.is-active .fx-node-network-motion__txt{font-size:12.5px;fill:#D9521A}
@@ -8264,63 +8278,134 @@ DTS.register({
         n.g = el('g', 'fx-node-network-motion__node'); n.g.dataset.id = n.id;
         n.halo = el('circle', 'fx-node-network-motion__halo'); n.halo.setAttribute('r', '14');
         n.core = el('circle', 'fx-node-network-motion__core'); n.core.setAttribute('r', String(n.r)); n.core.setAttribute('fill', COLOR[n.type]);
-        n.txt = el('text', 'fx-node-network-motion__txt'); n.txt.setAttribute('y', String(n.r + 14)); n.txt.textContent = n.label;
-        n.sub = el('text', 'fx-node-network-motion__sub'); n.sub.setAttribute('y', String(n.r + 25)); n.sub.textContent = SUB[n.type];
-        n.g.appendChild(n.halo); n.g.appendChild(n.core); n.g.appendChild(n.txt); n.g.appendChild(n.sub); gN.appendChild(n.g);
-        n.ph = Math.random() * Math.PI * 2; n.vx = 0; n.vy = 0;
-        const lw = Math.max(22, n.label.length * 6.2); /* largura aproximada do rótulo (Inter 600 · 11px) */
-        n.pr = [{ dx: 0, dy: 0, r: n.r + 12 }, { dx: -lw / 4, dy: n.r + 16, r: lw / 4 + 9 }, { dx: lw / 4, dy: n.r + 16, r: lw / 4 + 9 }];
+        n.lg = el('g', 'fx-node-network-motion__lab');
+        n.txt = el('text', 'fx-node-network-motion__txt'); n.txt.setAttribute('y', '0'); n.txt.textContent = n.label;
+        n.sub = el('text', 'fx-node-network-motion__sub'); n.sub.setAttribute('y', '11'); n.sub.textContent = SUB[n.type];
+        n.lg.appendChild(n.txt); n.lg.appendChild(n.sub);
+        n.g.appendChild(n.halo); n.g.appendChild(n.core); n.g.appendChild(n.lg); gN.appendChild(n.g);
+        n.ph = Math.random() * Math.PI * 2; n.vx = 0; n.vY = 0; n.lp = 'b';
+        /* largura real do rótulo (Inter 600 · 11px); estimativa se a fonte ainda não mediu */
+        let lw = 0; try { lw = n.txt.getComputedTextLength(); } catch (e) { lw = 0; }
+        n.lw = Math.max(24, lw || n.label.length * 6.4);
       });
-      /* ---- geometria do palco ---- */
-      let W = 0, H = 0, L = 110, alpha = 1, floatOn = !reduced, hover = null, pinned = null, tAcc = 0;
-      const PAD = { l: 70, r: 70, t: 72, b: 96 };
-      const center = () => ({ x: (PAD.l + W - PAD.r) / 2, y: (PAD.t + H - PAD.b) / 2 });
+      /* ---- geometria: a simulação roda num espaço "esticado" (Y = y·AR) em que a área útil fica ~quadrada;
+         forças isotrópicas ali viram, na tela, uma composição larga que ocupa ~3/4 do palco ---- */
+      let W = 0, H = 0, AR = 1.6, L = 120, alpha = 1, blend = null, floatOn = !reduced, hover = null, pinned = null, tAcc = 0;
+      const PAD = { l: 64, r: 64, t: 76, b: 96 };
+      const uw = () => W - PAD.l - PAD.r, uh = () => H - PAD.t - PAD.b;
+      const center = () => ({ x: (PAD.l + W - PAD.r) / 2, Y: (PAD.t + H - PAD.b) / 2 * AR });
+      /* ---- rótulo: quatro posições possíveis (abaixo, acima, à direita, à esquerda); retângulo em px de tela relativo ao centro do nó ---- */
+      const PLACE = ['b', 'a', 'r', 'l'], PCOST = { b: 0, a: 1.2, r: 2.2, l: 2.6 };
+      const rectOf = (n, p) => { const r = n.r, w = n.lw; return p === 'b' ? { l: -w / 2, r: w / 2, t: r + 5, b: r + 28 } : p === 'a' ? { l: -w / 2, r: w / 2, t: -(r + 28), b: -(r + 5) } : p === 'r' ? { l: r + 9, r: r + 9 + w, t: -9, b: 14 } : { l: -(r + 9) - w, r: -(r + 9), t: -9, b: 14 }; };
+      /* define a posição do rótulo e recalcula a caixa (círculo ∪ rótulo) e as sondas (em px de tela) que nenhuma ligação alheia pode atravessar */
+      const setPlacement = (n, p) => {
+        n.lp = p; const rc = n.lab = rectOf(n, p);
+        n.bl = Math.min(-n.r, rc.l); n.br = Math.max(n.r, rc.r); n.bt = Math.min(-n.r, rc.t); n.bb = Math.max(n.r, rc.b);
+        const rl = 13, w = rc.r - rc.l, m = Math.max(1, Math.ceil((w - 2 * rl) / (rl * 1.1)) + 1), dy = (rc.t + rc.b) / 2;
+        n.pr = [{ dx: 0, dy: 0, r: n.r + 11 }];
+        for (let i = 0; i < m; i++) n.pr.push({ dx: m === 1 ? (rc.l + rc.r) / 2 : rc.l + rl + (w - 2 * rl) * i / (m - 1), dy, r: rl });
+      };
+      const applyLabel = n => { const r = n.r, p = n.lp, tx = p === 'r' ? r + 9 : p === 'l' ? -(r + 9) : 0, ty = p === 'b' ? r + 14 : p === 'a' ? -(r + 19) : 0; n.lg.style.transform = `translate(${tx}px,${ty}px)`; n.lg.classList.toggle('is-r', p === 'r'); n.lg.classList.toggle('is-l', p === 'l'); };
       /* mede o palco; true só quando o tamanho mudou de fato (o ResizeObserver dispara um callback inicial redundante) */
       const measure = () => {
         const s = api.size(), w = Math.max(1, s.w), h = Math.max(1, s.h); if (w === W && h === H) return false;
-        const c0 = center(); W = w; H = h; svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-        L = Math.max(78, Math.min(140, Math.min((W - PAD.l - PAD.r) / 4.2, (H - PAD.t - PAD.b) / 2.2)));
-        const c1 = center(); nodes.forEach(n => { if (n.x !== undefined) { n.x += c1.x - c0.x; n.y += c1.y - c0.y; } });
+        const c0 = center(), ar0 = AR; W = w; H = h; svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+        AR = Math.max(1, Math.min(2.8, uw() * .82 / Math.max(1, uh())));
+        L = Math.max(84, Math.min(200, uw() * .8 / 3.3));
+        nodes.forEach(n => setPlacement(n, n.lp));
+        const c1 = center(); nodes.forEach(n => { if (n.x !== undefined) { n.x += c1.x - c0.x; n.Y = (n.Y - c0.Y) * (AR / ar0) + c1.Y; } });
         return true;
       };
       measure();
-      const seed = (spread) => { const c = center(); nodes.forEach((n, i) => { const a = i / nodes.length * Math.PI * 2 + Math.random() * .5; const rr = spread * (.55 + Math.random() * .45); n.x = c.x + Math.cos(a) * rr * 1.5; n.y = c.y + Math.sin(a) * rr; n.vx = 0; n.vy = 0; }); alpha = 1; };
-      seed(Math.min(W, H) * .22);
-      /* ---- simulação de forças: repulsão (Coulomb), molas nas ligações, afastamento aresta–rótulo e espalhamento controlado ---- */
+      const seed = () => { const c = center(), spread = Math.min(uw(), uh() * AR) * .3; nodes.forEach((n, i) => { const a = i / nodes.length * Math.PI * 2 + Math.random() * .5, rr = spread * (.55 + Math.random() * .45); n.x = c.x + Math.cos(a) * rr; n.Y = c.Y + Math.sin(a) * rr; n.vx = 0; n.vY = 0; }); };
+      /* ---- simulação de forças: repulsão (Coulomb), caixas nó+rótulo que não se sobrepõem, molas nas ligações,
+         afastamento aresta–rótulo e espalhamento controlado em torno do centroide ---- */
       const tick = k => {
         const c = center(), N = nodes.length, REP = 3400 * k, SPR = .014 * k;
-        for (let i = 0; i < nodes.length; i++) { const a = nodes[i]; for (let j = i + 1; j < nodes.length; j++) { const b = nodes[j]; let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy; if (d2 < 1) { dx = Math.random() - .5; dy = Math.random() - .5; d2 = 1; } const d = Math.sqrt(d2), f = Math.min(5, REP / d2); a.vx += dx / d * f; a.vy += dy / d * f; b.vx -= dx / d * f; b.vy -= dy / d * f; } }
-        for (let i = 0; i < edges.length; i++) { const e = edges[i], dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, d = Math.max(1, Math.sqrt(dx * dx + dy * dy)), f = (d - L) * SPR; e.a.vx += dx / d * f; e.a.vy += dy / d * f; e.b.vx -= dx / d * f; e.b.vy -= dy / d * f; }
-        /* nenhuma ligação atravessa o círculo nem o rótulo de um nó que não é dela: empurra o nó para fora do segmento (e o segmento, de leve, para o outro lado) */
+        for (let i = 0; i < N; i++) {
+          const a = nodes[i];
+          for (let j = i + 1; j < N; j++) {
+            const b = nodes[j]; let dx = a.x - b.x, dY = a.Y - b.Y, d2 = dx * dx + dY * dY;
+            if (d2 < 1) { dx = Math.random() - .5; dY = Math.random() - .5; d2 = 1; }
+            const d = Math.sqrt(d2), f = Math.min(5, REP / d2); a.vx += dx / d * f; a.vY += dY / d * f; b.vx -= dx / d * f; b.vY -= dY / d * f;
+            /* caixas (círculo ∪ rótulo) não se sobrepõem: empurra pelo eixo de menor penetração, a partir dos centros das caixas */
+            const ox = Math.min(a.x + a.br, b.x + b.br) - Math.max(a.x + a.bl, b.x + b.bl) + 16; if (ox <= 0) continue;
+            const oY = Math.min(a.Y + a.bb * AR, b.Y + b.bb * AR) - Math.max(a.Y + a.bt * AR, b.Y + b.bt * AR) + 10 * AR; if (oY <= 0) continue;
+            if (ox < oY) { const s = (a.x + (a.bl + a.br) / 2 < b.x + (b.bl + b.br) / 2) ? -1 : 1, g = Math.min(1.6, ox * .05) * k * s; a.vx += g; b.vx -= g; }
+            else { const s = (a.Y + (a.bt + a.bb) / 2 * AR < b.Y + (b.bt + b.bb) / 2 * AR) ? -1 : 1, g = Math.min(1.6, oY * .05) * k * s; a.vY += g; b.vY -= g; }
+          }
+        }
+        for (let i = 0; i < edges.length; i++) { const e = edges[i], dx = e.b.x - e.a.x, dY = e.b.Y - e.a.Y, d = Math.max(1, Math.sqrt(dx * dx + dY * dY)), f = (d - L) * SPR; e.a.vx += dx / d * f; e.a.vY += dY / d * f; e.b.vx -= dx / d * f; e.b.vY -= dY / d * f; }
+        /* nenhuma ligação atravessa o círculo nem o rótulo de um nó que não é dela (medido em px de tela): empurra o nó para fora do segmento (e o segmento, de leve, para o outro lado) */
         for (let i = 0; i < edges.length; i++) {
-          const e = edges[i], ax = e.a.x, ay = e.a.y, dx = e.b.x - ax, dy = e.b.y - ay, l2 = Math.max(1, dx * dx + dy * dy);
+          const e = edges[i], ax = e.a.x, ay = e.a.Y / AR, dx = e.b.x - ax, dy = e.b.Y / AR - ay, l2 = Math.max(1, dx * dx + dy * dy);
           for (let j = 0; j < N; j++) {
-            const n = nodes[j]; if (n === e.a || n === e.b) continue;
-            for (let q = 0; q < 3; q++) {
-              const p = n.pr[q], px = n.x + p.dx, py = n.y + p.dy, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
+            const n = nodes[j]; if (n === e.a || n === e.b) continue; const ny = n.Y / AR;
+            for (let q = 0; q < n.pr.length; q++) {
+              const p = n.pr[q], px = n.x + p.dx, py = ny + p.dy, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l2));
               let ex = px - (ax + t * dx), ey = py - (ay + t * dy), d = Math.sqrt(ex * ex + ey * ey);
               if (d >= p.r) continue;
               if (d < .5) { ex = -dy; ey = dx; d = Math.sqrt(l2); }
-              const f = (1 - d / p.r) * 2.4 * k, fx = ex / d * f, fy = ey / d * f;
-              n.vx += fx; n.vy += fy; e.a.vx -= fx * (1 - t) * .5; e.a.vy -= fy * (1 - t) * .5; e.b.vx -= fx * t * .5; e.b.vy -= fy * t * .5;
+              const f = (1 - d / p.r) * 4.5 * k, fx = ex / d * f, fY = ey / d * f * AR;
+              n.vx += fx; n.vY += fY; e.a.vx -= fx * (1 - t) * .5; e.a.vY -= fY * (1 - t) * .5; e.b.vx -= fx * t * .5; e.b.vY -= fY * t * .5;
             }
           }
         }
-        /* espalhamento controlado em torno do centroide (RMS alvo ≈ 76% da largura e 80% da altura úteis) + centragem do centroide no palco */
-        let mx = 0, my = 0; for (let i = 0; i < N; i++) { mx += nodes[i].x; my += nodes[i].y; } mx /= N; my /= N;
-        let sx = 0, sy = 0; for (let i = 0; i < N; i++) { const n = nodes[i]; sx += (n.x - mx) * (n.x - mx); sy += (n.y - my) * (n.y - my); } sx = Math.sqrt(sx / N); sy = Math.sqrt(sy / N);
-        const TX = (W - PAD.l - PAD.r) * .38 / 1.7, TY = (H - PAD.t - PAD.b) * .4 / 1.7;
-        const gx = Math.max(-.004, Math.min(.014, .006 * (sx / TX - 1))) * k, gy = Math.max(-.004, Math.min(.014, .008 * (sy / TY - 1))) * k;
-        const ccx = (c.x - mx) * .05 * k, ccy = (c.y - my) * .05 * k;
-        for (let i = 0; i < N; i++) { const n = nodes[i]; n.vx += (mx - n.x) * gx + ccx; n.vy += (my - n.y) * gy + ccy; n.vx *= .84; n.vy *= .84; n.x += n.vx; n.y += n.vy; if (n.x < PAD.l) { n.x = PAD.l; n.vx = 0; } else if (n.x > W - PAD.r) { n.x = W - PAD.r; n.vx = 0; } if (n.y < PAD.t) { n.y = PAD.t; n.vy = 0; } else if (n.y > H - PAD.b) { n.y = H - PAD.b; n.vy = 0; } }
+        /* espalhamento controlado (RMS alvo ≈ 21% da largura útil e 25% da altura útil em S) + centragem do centroide */
+        let mx = 0, mY = 0; for (let i = 0; i < N; i++) { mx += nodes[i].x; mY += nodes[i].Y; } mx /= N; mY /= N;
+        let sx = 0, sY = 0; for (let i = 0; i < N; i++) { const n = nodes[i]; sx += (n.x - mx) * (n.x - mx); sY += (n.Y - mY) * (n.Y - mY); } sx = Math.sqrt(sx / N); sY = Math.sqrt(sY / N);
+        const TX = uw() * .21, TY = uh() * AR * .25;
+        const gx = Math.max(-.008, Math.min(.014, .02 * (sx / TX - 1))) * k, gY = Math.max(-.008, Math.min(.014, .02 * (sY / TY - 1))) * k;
+        const ccx = (c.x - mx) * .05 * k, ccY = (c.Y - mY) * .05 * k, Yt = PAD.t * AR, Yb = (H - PAD.b) * AR;
+        for (let i = 0; i < N; i++) { const n = nodes[i]; n.vx += (mx - n.x) * gx + ccx; n.vY += (mY - n.Y) * gY + ccY; n.vx *= .84; n.vY *= .84; n.x += n.vx; n.Y += n.vY; if (n.x < PAD.l) { n.x = PAD.l; n.vx = 0; } else if (n.x > W - PAD.r) { n.x = W - PAD.r; n.vx = 0; } if (n.Y < Yt) { n.Y = Yt; n.vY = 0; } else if (n.Y > Yb) { n.Y = Yb; n.vY = 0; } }
       };
-      /* acomoda de uma vez (reduced-motion e redimensionamento em reduced): a rede nunca se move sozinha */
-      const settle = () => { for (let i = 0; i < 240; i++) tick(Math.max(.05, 1 - i / 240)); alpha = 0; };
-      /* pré-acomoda a rede antes do primeiro frame: legível em < 1 s, mas ainda “floresce” ao vivo */
-      if (reduced) settle();
-      else { for (let i = 0; i < 55; i++) tick(1 - i / 110); alpha = .5; }
-      nodes.forEach(n => { n.rx = n.x; n.ry = n.y; });
-      api.observe(new ResizeObserver(() => { if (!measure()) return; if (reduced) settle(); else alpha = Math.max(alpha, .35); })).observe(root);
+      /* ---- leitura: segmento × retângulo (Liang–Barsky), escolha do lado do rótulo e nota de um arranjo (em px de tela) ---- */
+      const segRect = (x1, y1, x2, y2, l, t, r, b) => { let t0 = 0, t1 = 1; const dx = x2 - x1, dy = y2 - y1; const chk = (p, q) => { if (p === 0) return q >= 0; const u = q / p; if (p < 0) { if (u > t1) return false; if (u > t0) t0 = u; } else { if (u < t0) return false; if (u < t1) t1 = u; } return true; }; return chk(-dx, x1 - l) && chk(dx, r - x1) && chk(-dy, y1 - t) && chk(dy, b - y1); };
+      /* cada rótulo escolhe o lado do nó com menos ligações cruzando, sem sobrepor vizinhos, dentro do palco e fora do cabeçalho/leitura */
+      const placeLabels = () => {
+        const N = nodes.length;
+        for (let pass = 0; pass < 2; pass++) for (let i = 0; i < N; i++) {
+          const n = nodes[i], x = n.x, y = n.Y / AR; let bp = n.lp, bc = Infinity;
+          for (let q = 0; q < 4; q++) {
+            const p = PLACE[q], rc = rectOf(n, p), L0 = x + rc.l, R0 = x + rc.r, T0 = y + rc.t, B0 = y + rc.b; let cst = PCOST[p];
+            if (L0 < 8 || R0 > W - 8 || T0 < 8 || B0 > H - 50) cst += 20;
+            if (T0 < 62 && L0 < 340) cst += 10; if (T0 < 48 && R0 > W - 230) cst += 10;
+            for (let j = 0; j < N; j++) { if (j === i) continue; const o = nodes[j], ox = o.x, oy = o.Y / AR; if (L0 < ox + o.br + 8 && ox + o.bl - 8 < R0 && T0 < oy + o.bb + 7 && oy + o.bt - 7 < B0) cst += 8; }
+            for (let k = 0; k < edges.length; k++) { const e = edges[k]; if (segRect(e.a.x, e.a.Y / AR, e.b.x, e.b.Y / AR, L0 - 2, T0 - 2, R0 + 2, B0 + 2)) cst += (e.a === n || e.b === n) ? 3 : 5; }
+            if (cst < bc) { bc = cst; bp = p; }
+          }
+          if (bp !== n.lp) setPlacement(n, bp);
+        }
+      };
+      const score = () => {
+        let s = 0, lo = Infinity, hi = -Infinity; const N = nodes.length;
+        for (let i = 0; i < N; i++) { const a = nodes[i], ay = a.Y / AR; lo = Math.min(lo, a.x); hi = Math.max(hi, a.x); for (let j = i + 1; j < N; j++) { const b = nodes[j], by = b.Y / AR, ox = Math.min(a.x + a.br, b.x + b.br) - Math.max(a.x + a.bl, b.x + b.bl) + 7, oy = Math.min(ay + a.bb, by + b.bb) - Math.max(ay + a.bt, by + b.bt) + 7; if (ox > 0 && oy > 0) s += 6 + ox * oy / 60; } }
+        for (let i = 0; i < edges.length; i++) { const e = edges[i], x1 = e.a.x, y1 = e.a.Y / AR, x2 = e.b.x, y2 = e.b.Y / AR; for (let j = 0; j < N; j++) { const n = nodes[j], x = n.x, y = n.Y / AR, rc = n.lab; if (n !== e.a && n !== e.b && segRect(x1, y1, x2, y2, x - n.r - 3, y - n.r - 3, x + n.r + 3, y + n.r + 3)) s += 4; if (segRect(x1, y1, x2, y2, x + rc.l - 2, y + rc.t - 2, x + rc.r + 2, y + rc.b + 2)) s += (n === e.a || n === e.b) ? 2 : 5; } }
+        return s + Math.max(0, .72 - (hi - lo) / uw()) * 120;
+      };
+      const snap = () => nodes.map(n => [n.x, n.Y, n.vx, n.vY, n.lp]);
+      const load = s => s.forEach((p, i) => { const n = nodes[i]; n.x = p[0]; n.Y = p[1]; n.vx = p[2]; n.vY = p[3]; if (n.lp !== p[4]) setPlacement(n, p[4]); });
+      /* gera K arranjos candidatos, acomoda cada um em silêncio (com os rótulos escolhendo lado) e fica com o de melhor nota;
+         devolve o estado inicial (de onde a rede “floresce” ao vivo) e o final (destino do florescer; direto em reduced-motion) */
+      const bestOf = (K, gen, warm) => {
+        let best = null, bs = Infinity;
+        for (let c = 0; c < K; c++) {
+          gen(); for (let i = 0; i < warm; i++) tick(1 - i / (warm * 2)); const start = snap();
+          for (let i = 0; i < 150; i++) tick(Math.max(.05, .6 - i / 250)); placeLabels();
+          for (let i = 0; i < 60; i++) tick(.12); placeLabels(); const sc = score();
+          if (sc < bs) { bs = sc; best = { start, end: snap() }; }
+        }
+        return best;
+      };
+      /* parte do estado inicial e deixa a física correr; o desenho desliza (outCubic, rápido no início) até o arranjo final, que então vira o estado real */
+      const begin = (cand, a0, dur) => {
+        if (reduced || !dur) { load(cand.end); alpha = 0; blend = null; }
+        else { load(cand.start); cand.end.forEach((p, i) => { if (nodes[i].lp !== p[4]) setPlacement(nodes[i], p[4]); }); alpha = a0; blend = { end: cand.end, t: 0, dur }; }
+        nodes.forEach(applyLabel);
+      };
+      begin(bestOf(6, seed, 120), 1, 1100);
+      nodes.forEach(n => { n.rx = n.x; n.ry = n.Y / AR; });
+      api.observe(new ResizeObserver(() => { if (!measure()) return; begin(bestOf(1, () => { }, 0), .35, 1000); })).observe(root);
       /* ---- destaque: vizinhos acendem, resto esmaece ---- */
       const focus = () => {
         const f = pinned || hover;
@@ -8341,14 +8426,21 @@ DTS.register({
       bFloat.classList.toggle('is-on', floatOn);
       api.on(bFloat, 'click', () => { floatOn = !floatOn; bFloat.classList.toggle('is-on', floatOn); });
       api.on(bLabels, 'click', () => { const on = !bLabels.classList.contains('is-on'); bLabels.classList.toggle('is-on', on); root.classList.toggle('no-labels', !on); });
-      api.on(root.querySelector('[data-shuffle]'), 'click', () => { nodes.forEach(n => { n.x += (Math.random() - .5) * W * .5; n.y += (Math.random() - .5) * H * .4; n.vx = 0; n.vy = 0; }); alpha = 1; if (reduced) settle(); });
-      /* ---- loop: simulação com alpha decrescente + flutuação suave; desenho ---- */
+      /* Reorganizar: embaralha a partir do arranjo atual; entre cinco embaralhamentos fica o que se acomoda melhor, e a rede desliza do arranjo atual para ele */
+      api.on(root.querySelector('[data-shuffle]'), 'click', () => {
+        const base = snap();
+        const cand = bestOf(5, () => { load(base); nodes.forEach(n => { n.x += (Math.random() - .5) * uw() * .6; n.Y += (Math.random() - .5) * uh() * AR * .6; n.vx = 0; n.vY = 0; }); }, 0);
+        cand.start = base; begin(cand, .5, 1400);
+      });
+      /* ---- loop: física com alpha decrescente, blend do desenho rumo ao arranjo final, flutuação suave; desenho ---- */
       const AMP = reduced ? 1 : 3.2;
       api.raf((t, dt) => {
         const k = dt / 16.7; tAcc += dt;
         if (alpha > .003) { tick(alpha * k); alpha *= Math.pow(.982, k); if (alpha <= .003) alpha = 0; }
-        const amp = floatOn ? AMP : 0;
-        for (let i = 0; i < nodes.length; i++) { const n = nodes[i]; n.rx = n.x + Math.sin(tAcc * .00085 + n.ph) * amp; n.ry = n.y + Math.cos(tAcc * .0011 + n.ph * 1.7) * amp; n.g.setAttribute('transform', `translate(${n.rx.toFixed(1)} ${n.ry.toFixed(1)})`); }
+        let w = 0;
+        if (blend) { blend.t += dt; w = api.ease.outCubic(Math.min(1, blend.t / blend.dur)); if (w >= 1) { load(blend.end); alpha = 0; blend = null; w = 0; } }
+        const amp = floatOn ? AMP : 0, bl = blend;
+        for (let i = 0; i < nodes.length; i++) { const n = nodes[i], bx = bl ? n.x + (bl.end[i][0] - n.x) * w : n.x, bY = bl ? n.Y + (bl.end[i][1] - n.Y) * w : n.Y; n.rx = bx + Math.sin(tAcc * .00085 + n.ph) * amp; n.ry = bY / AR + Math.cos(tAcc * .0011 + n.ph * 1.7) * amp; n.g.setAttribute('transform', `translate(${n.rx.toFixed(1)} ${n.ry.toFixed(1)})`); }
         for (let i = 0; i < edges.length; i++) { const e = edges[i].el, a = edges[i].a, b = edges[i].b; e.setAttribute('x1', a.rx.toFixed(1)); e.setAttribute('y1', a.ry.toFixed(1)); e.setAttribute('x2', b.rx.toFixed(1)); e.setAttribute('y2', b.ry.toFixed(1)); }
       });
       focus();
