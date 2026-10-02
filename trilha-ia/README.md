@@ -1,9 +1,11 @@
 # Trilha IA: do Zero ao Avançado
 
-Organograma de estudo de Inteligência Artificial em português, com 8 níveis e 32 etapas, nas cores da Alvarez & Marsal.
-Cada etapa tem um vídeo gratuito do YouTube (PT-BR), incorporado no cartão do quadro, e uma prática.
+Organograma de estudo de Inteligência Artificial em português, com 9 níveis e 36 etapas, nas cores da Alvarez & Marsal.
+Cada etapa tem um vídeo gratuito do YouTube (PT-BR) e uma prática. O nível 8 é a camada de consultoria:
+IA em projetos ágeis, gestão de projetos, gestão de mudanças e transformação organizacional.
 As práticas seguem um caso guia: o **Assistente de Conhecimento** do seu time, que responde dúvidas
-a partir dos documentos do time. Ele nasce como um prompt (nível 1) e termina publicado e governado (níveis 5 a 7).
+a partir dos documentos do time. Ele nasce como um prompt (nível 1), é publicado e governado (níveis 5 a 7)
+e, no nível 8, é levado ao time e à organização como um projeto de mudança.
 
 **Quadro no Miro:** https://miro.com/app/board/uXjVEfGWYMU=/
 
@@ -12,10 +14,10 @@ a partir dos documentos do time. Ele nasce como um prompt (nível 1) e termina p
 
 ## Como estudar
 
-1. **Assista** ao vídeo direto no cartão do quadro ou abra no YouTube.
+1. **Assista** ao vídeo pelo botão do cartão no quadro.
 2. **Pratique** no caso guia ou no seu trabalho.
 3. **Marque** o status no Painel de Progresso do quadro.
-4. **Consulte** a Cola Rápida do quadro: camadas da IA, anatomia do prompt, fluxo do RAG e glossário.
+4. **Consulte** a Cola Rápida do quadro: camadas da IA, anatomia do prompt, fluxo do RAG, glossário e ADKAR (gestão da mudança na adoção da IA).
 
 ```
 COMECE AQUI
@@ -68,7 +70,13 @@ NÍVEL 7: Governança, Estratégia e Carreira  (Semanas 13 e 14)
    ├── 7.3 Certificações de IA
    └── 7.4 Projeto final de IA
    |
-META ALCANÇADA: assistente de IA do time no ar, seguro e gerando valor
+NÍVEL 8: IA em Projetos, Mudança e Transformação  (Semanas 15 e 16)
+   ├── 8.1 IA em Projetos Ágeis
+   ├── 8.2 IA em Gestão de Projetos
+   ├── 8.3 IA em Gestão de Mudanças
+   └── 8.4 IA em Transformação Organizacional
+   |
+META ALCANÇADA: assistente de IA no ar, adotado pelo time e gerando valor
 ```
 
 ## Fase 1: Iniciante (Níveis 0, 1 e 2)
@@ -157,7 +165,19 @@ _IA responsável que gera valor (Semanas 13 e 14)_
 | **7.3** Certificações de IA | AI-900: como estudar e o que cai na prova de fundamentos de IA. | Faça um simulado da AI-900 e agende a sua prova. | [Certificação AI-900 Microsoft](https://www.youtube.com/watch?v=61JN7iTLx3o) | [#SprintAI900: Simulado Certificação AI-900 Azure AI Fundamentals](https://www.youtube.com/watch?v=agbvlVGZLL8) |
 | **7.4** Projeto final de IA | Um agente com RAG de ponta a ponta, do problema ao resultado. | Apresente o assistente do caso guia em 5 minutos. | [Agente de IA completo com Python - Projeto RAG com Langchain](https://www.youtube.com/watch?v=0M8iO5ykY-E) (Hashtag Treinamentos) | [Como criar um ChatBot inteligente com Python estilo ChatGPT](https://www.youtube.com/watch?v=UvaUdZBLo9Y) |
 
+## Fase 4: Consultoria (Nível 8)
+
+### Nível 8: IA em Projetos, Mudança e Transformação
+_Camada de consultoria: IA com times e organizações (Semanas 15 e 16)_
+
+| Etapa | O que você aprende | Prática | Vídeo (YouTube) | Alternativo |
+|---|---|---|---|---|
+| **8.1** IA em Projetos Ágeis | Como a IA muda o Scrum: papéis, eventos, cadência e o trabalho do PO e do Scrum Master. | Peça a uma IA para quebrar um épico do caso guia em histórias com critérios de aceite e revise com o time. | [A IA chegou para transformar ou acbaar com o SCRUM?](https://www.youtube.com/watch?v=AaK3NeGJNEE) | [Como o ChatGPT pode ajudar o Product Owner?](https://www.youtube.com/watch?v=W19cXIvleoc) |
+| **8.2** IA em Gestão de Projetos | Planejamento, riscos, status reports e PMO com IA; o novo papel do gerente de projetos. | Gere com IA o plano de riscos e o status report do caso guia. | [Inteligência Artificial na Gestão de Projetos](https://www.youtube.com/watch?v=V2ZBMfQqaJg) (PMI São Paulo) | [Novo Guia de Boas Práticas de Gestão de Projetos com IA do PMI](https://www.youtube.com/watch?v=qe5OuZ6i5kU) |
+| **8.3** IA em Gestão de Mudanças | Adoção da IA pelas pessoas: patrocínio, comunicação, resistência, capacitação e cultura. | Monte com o modelo ADKAR o plano de comunicação e capacitação para o time adotar o assistente. | [Como extrair o melhor no processo de adoção da IA nas empresas](https://www.youtube.com/watch?v=jaFT02BqBHw) | [09 - IA na Gestão de Pessoas: a liderança e o trabalho do futuro, com Alura](https://www.youtube.com/watch?v=BhgYoN3EbBE) (Alura) |
+| **8.4** IA em Transformação Organizacional | Como implementar e escalar a IA generativa: estratégia, modelo operacional e captura de valor. | Desenhe o roadmap em 3 horizontes para escalar o assistente na organização. | [Impulsionando a IA Generativa: aprendizados para implementar e escalar](https://www.youtube.com/watch?v=LVCUmVDccro) (McKinsey & Company) | [Marco Castro, da PwC Brasil: "Empresas que melhor usam IA conseguem explorar novos negócios"](https://www.youtube.com/watch?v=lA_7kAv1oPw) |
+
 ---
 
-Links verificados em 02/10/2026: cada vídeo principal foi encontrado no índice de busca do YouTube e reconfirmado por uma segunda busca independente pelo título (mesmo ID). Uma revisão adversarial independente conferiu a aderência de cada vídeo ao tema e ao nível da etapa; as etapas 2.1 e 7.4 foram trocadas por vídeos mais adequados. Os vídeos alternativos vêm da mesma curadoria por busca no YouTube, sem a segunda checagem independente.
+Links verificados em 02/10/2026: cada vídeo principal foi encontrado no índice de busca do YouTube e reconfirmado por uma segunda busca independente pelo título (mesmo ID). Uma revisão adversarial independente conferiu a aderência de cada vídeo ao tema e ao nível da etapa; as etapas 2.1 e 7.4 foram trocadas por vídeos mais adequados. Os vídeos do nível 8 foram encontrados por um curador e reconfirmados por duas buscas independentes pelo título. Os vídeos alternativos vêm da mesma curadoria por busca no YouTube, sem a segunda checagem independente.
 Se algum vídeo sair do ar, use o link alternativo da mesma etapa.
