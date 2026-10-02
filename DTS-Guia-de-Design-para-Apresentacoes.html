@@ -294,6 +294,17 @@ main{min-height:calc(100vh - var(--header-h))}
 .tags{display:flex;flex-wrap:wrap;gap:6px}
 .tags li{font-family:var(--font-mono);font-size:11.5px;color:var(--navy-700);background:var(--steel-100);border-radius:6px;padding:4px 8px}
 .tags li::before{content:"#";color:var(--steel-400)}
+.block.prompt{border-color:var(--navy-800);box-shadow:inset 3px 0 0 var(--orange-500)}
+.prompt-lead{font-size:13px!important;color:var(--ink-3)!important;margin-bottom:10px}
+.prompt-box{margin:0;padding:14px 16px;border-radius:10px;background:var(--navy-900);color:#E4EBF5;font-family:var(--font-mono);font-size:12px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto}
+.prompt-box mark{background:rgba(242,107,33,.18);color:var(--orange-400);border-radius:3px;padding:0 2px}
+.prompt-actions{display:flex;align-items:center;gap:10px;margin-top:10px}
+.prompt-ok{font-size:12.5px;font-weight:600;color:var(--navy-600);opacity:0;transition:opacity .25s}
+.prompt-ok.show{opacity:1}
+.ai-reco{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.ai-row{display:grid;grid-template-columns:104px 1fr;gap:10px;font-size:12.5px;line-height:1.5;color:var(--ink-2);padding:8px 10px;border-radius:8px;background:var(--off);border:1px solid var(--line)}
+.ai-row b{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--navy-800);padding-top:1px}
+.ai-row strong{color:var(--navy-800)}
 .related{display:flex;flex-direction:column;gap:6px}
 .related a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--off);font-size:13px;font-weight:600;color:var(--navy-800);transition:all var(--dur-2)}
 .related a:hover{border-color:var(--orange-500);background:var(--orange-100)}
@@ -505,6 +516,16 @@ main{min-height:calc(100vh - var(--header-h))}
         <section class="block"><h3><span class="n">06</span>Exemplos de aplicação em DTS</h3><ul class="dts-list" id="fxDts"></ul></section>
         <section class="block avoid"><h3><span class="n">07</span>Quando evitar</h3><ul class="avoid-list" id="fxAvoid"></ul></section>
         <section class="block"><h3><span class="n">08</span>Tags de utilização</h3><ul class="tags" id="fxTags"></ul></section>
+        <section class="block prompt"><h3><span class="n">09</span>Prompt pronto para IA</h3>
+          <p class="prompt-lead">Copie, cole na IA, anexe sua apresentação e troque o que está entre colchetes.</p>
+          <pre class="prompt-box" id="fxPrompt"></pre>
+          <div class="prompt-actions"><button class="btn btn-accent btn-sm" id="btnCopyPrompt" type="button">Copiar prompt</button><span class="prompt-ok" id="promptOk">Copiado ✓</span></div>
+          <div class="ai-reco">
+            <div class="ai-row"><b>Melhor opção</b><span>Claude (claude.ai) · modelo <strong>Opus 5.5</strong>. Anexe o PDF ou PPT no chat e o HTML aparece pronto para visualizar.</span></div>
+            <div class="ai-row"><b>Ajustes rápidos</b><span>Claude · modelo <strong>Sonnet 5.5</strong>, para pequenas mudanças de texto, cor ou velocidade.</span></div>
+            <div class="ai-row"><b>Dica</b><span>Peça um slide por vez. Depois diga “agora a próxima página” no mesmo chat.</span></div>
+          </div>
+        </section>
         <section class="block"><h3><span class="n">+</span>Ver também</h3><div class="related" id="fxRelated"></div></section>
       </aside>
     </div>
@@ -772,6 +793,23 @@ window.DTS = (function () {
     $('#fxDts').innerHTML = (e.dts || []).map((d, i) => `<li><i>${pad(i + 1)}</i><div><b>${esc(d.title)}</b><span>${esc(d.desc)}</span></div></li>`).join('');
     $('#fxAvoid').innerHTML = (e.avoid || []).map(a => `<li>${esc(a)}</li>`).join('');
     $('#fxTags').innerHTML = (e.tags || []).map(t => `<li>${esc(t)}</li>`).join('');
+    const ph = t => `<mark>[${esc(t)}]</mark>`;
+    const ctx = (e.where || []).slice(0, 3).join(', ');
+    $('#fxPrompt').innerHTML =
+`Atue como designer de apresentações executivas da Alvarez &amp; Marsal (DTS).
+
+Com base na minha apresentação ${ph('anexe o PDF/PPT ou cole o conteúdo')}, transforme a página ${ph('número ou título do slide')} em um slide HTML.
+
+Insira o efeito "${esc(e.name)}": ${esc(e.summary)}
+Objetivo do efeito: ${esc(e.communicates)}
+
+Use no contexto de ${ph(ctx || 'tipo de slide')} e me traga neste nível: ${ph('ex.: números, nomes, etapas, destaques que precisam aparecer')}.
+
+Regras:
+- Mantenha o visual original (cores, fontes, logos e posições).
+- Efeito com função, sem exagero, entrando em sequência.
+- Um único arquivo HTML com CSS e JS embutidos, navegação ← → e bom em notebook a 100% de zoom.
+- No final, explique em 3 linhas como o efeito ajuda a mensagem.`;
     /* relacionados: compartilham intenção ou categoria */
     const rel = effects.filter(o => o.num !== e.num).map(o => { const shared = (o.intents || []).filter(i => (e.intents || []).includes(i)); const sameCat = o.category === e.category; return { o, score: shared.length * 2 + (sameCat ? 1 : 0), why: shared.length ? SPEC.intents[shared[0]] : (sameCat ? 'mesma categoria' : '') }; }).filter(x => x.score > 0).sort((a, b) => b.score - a.score || a.o.num - b.o.num).slice(0, 3);
     $('#fxRelated').innerHTML = rel.map(x => `<a href="#/fx/${x.o.num}"><span class="n">${pad(x.o.num)}</span>${esc(x.o.name)}<span class="why">${esc(x.why)}</span></a>`).join('') || '<p style="font-size:13px;color:var(--ink-3)">Sem relacionados.</p>';
@@ -819,6 +857,12 @@ window.DTS = (function () {
   }
   function bindGlobalKeys() {
     $('#btnReplay').addEventListener('click', replay);
+    $('#btnCopyPrompt').addEventListener('click', () => {
+      const text = $('#fxPrompt').innerText;
+      const ok = () => { const m = $('#promptOk'); m.classList.add('show'); setTimeout(() => m.classList.remove('show'), 1600); };
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (err) { } ta.remove(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok, fallback); else fallback();
+    });
     document.addEventListener('keydown', ev => {
       if (ev.target && /input|select|textarea/i.test(ev.target.tagName)) return;
       if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
