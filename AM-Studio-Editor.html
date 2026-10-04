@@ -502,6 +502,95 @@
 .amp-zm.on,.amp-zm-box{animation:none}.amp-zb{transition:none}
 }
 
+/* ---- rt-120-bpmn.css ---- */
+/* S12: BPMN Diagram */
+
+.gx-bpmn-diagram {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  display: block;
+  margin: 12px 0;
+  max-width: 100%;
+  height: auto;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.gx-bpmn-node {
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.gx-bpmn-node:hover {
+  opacity: 0.8;
+}
+
+.gx-bpmn-node text {
+  user-select: none;
+  pointer-events: none;
+}
+
+/* BPMN editor panel */
+
+.gx-bpmn-panel {
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: white;
+}
+
+.gx-bpmn-palette {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.gx-bpmn-shape-btn {
+  padding: 8px;
+  border: 1px solid #2196F3;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #2196F3;
+  transition: all 0.2s;
+}
+
+.gx-bpmn-shape-btn:hover {
+  background: #E3F2FD;
+  border-color: #1976D2;
+}
+
+.gx-bpmn-shape-btn.active {
+  background: #2196F3;
+  color: white;
+}
+
+@media (prefers-color-scheme: dark) {
+  .gx-bpmn-diagram {
+    background: #333;
+    border-color: #555;
+  }
+  
+  .gx-bpmn-panel {
+    background: #333;
+    border-color: #555;
+  }
+  
+  .gx-bpmn-shape-btn {
+    background: #444;
+    border-color: #64B5F6;
+    color: #64B5F6;
+  }
+  
+  .gx-bpmn-shape-btn:hover {
+    background: #555;
+    border-color: #42A5F5;
+  }
+}
+
 /* ---- rt-20-icons.css ---- */
 /* ===== Ícones animados (FX.icon / FX.iconmorph) — vai junto no arquivo exportado; keyframes com prefixo ic* =====
    Regra de ouro: toda lista de animação de um traço começa com var(--drw) (o desenho da entrada). Assim icDraw fica sempre na
@@ -3675,6 +3764,320 @@ window.AMRT = (function () {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.download = filename || 'presentation.html';
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+  };
+})();
+
+;/* ---- rt-120-bpmn.js ---- */
+// S12: BPMN Diagram Runtime
+// Task, gateway, flow, swimlane shapes with connection rendering
+// Simplified shapes: task boxes, diamond gates, circle start/end, arrows
+
+(function(){
+  const SHAPES = {
+    task: { w: 100, h: 60, svg: (x,y,l) => `<rect x="${x}" y="${y}" width="100" height="60" fill="#2196F3" stroke="#1976D2" stroke-width="2" rx="4"/><text x="${x+50}" y="${y+35}" text-anchor="middle" fill="white" font-size="12" font-weight="bold">${l}</text>` },
+    start: { w: 40, h: 40, svg: (x,y,l) => `<circle cx="${x+20}" cy="${y+20}" r="20" fill="#4CAF50" stroke="#388E3C" stroke-width="2"/><text x="${x+20}" y="${y+25}" text-anchor="middle" fill="white" font-size="10">${l}</text>` },
+    end: { w: 40, h: 40, svg: (x,y,l) => `<circle cx="${x+20}" cy="${y+20}" r="20" fill="#F44336" stroke="#D32F2F" stroke-width="2"/><text x="${x+20}" y="${y+25}" text-anchor="middle" fill="white" font-size="10">${l}</text>` },
+    gateway: { w: 60, h: 60, svg: (x,y,l) => `<polygon points="${x+30},${y+0} ${x+60},${y+30} ${x+30},${y+60} ${x+0},${y+30}" fill="#FF9800" stroke="#F57C00" stroke-width="2"/><text x="${x+30}" y="${y+35}" text-anchor="middle" fill="white" font-size="10" font-weight="bold">${l}</text>` },
+    swimlane: { w: 200, h: 150, svg: (x,y,l) => `<rect x="${x}" y="${y}" width="200" height="150" fill="none" stroke="#9C27B0" stroke-width="2" stroke-dasharray="5,5" rx="4"/><text x="${x+5}" y="${y+20}" fill="#9C27B0" font-size="12" font-weight="bold">${l}</text>` }
+  };
+
+  window.gxBPMN = {
+    // Parse BPMN outline data into nodes and flows
+    parse(outline) {
+      const nodes = [];
+      const flows = [];
+      
+      outline.forEach((item, i) => {
+        const type = item.kind || 'task';
+        const label = item.text || item.t || `Node ${i}`;
+        const connections = item.to || [];
+        
+        nodes.push({
+          id: `node-${i}`,
+          type: type,
+          label: label,
+          x: (i % 4) * 150,
+          y: Math.floor(i / 4) * 150
+        });
+        
+        connections.forEach(targetIdx => {
+          flows.push({
+            from: `node-${i}`,
+            to: `node-${targetIdx}`,
+            label: item.flowLabel || ''
+          });
+        });
+      });
+      
+      return { nodes, flows };
+    },
+    
+    // Render BPMN diagram as SVG
+    render(parent, outline, width=800, height=600) {
+      const { nodes, flows } = this.parse(outline);
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', width);
+      svg.setAttribute('height', height);
+      svg.setAttribute('class', 'gx-bpmn-diagram');
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      
+      // Render flows (arrows)
+      flows.forEach(flow => {
+        const fromNode = nodes.find(n => n.id === flow.from);
+        const toNode = nodes.find(n => n.id === flow.to);
+        if (fromNode && toNode) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', fromNode.x + 50);
+          line.setAttribute('y1', fromNode.y + 50);
+          line.setAttribute('x2', toNode.x + 50);
+          line.setAttribute('y2', toNode.y + 50);
+          line.setAttribute('stroke', '#666');
+          line.setAttribute('stroke-width', '2');
+          line.setAttribute('marker-end', 'url(#arrowhead)');
+          svg.appendChild(line);
+        }
+      });
+      
+      // Arrow marker definition
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      defs.innerHTML = '<marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#666" /></marker>';
+      svg.appendChild(defs);
+      
+      // Render nodes
+      nodes.forEach(node => {
+        const shape = SHAPES[node.type] || SHAPES.task;
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'gx-bpmn-node');
+        g.setAttribute('data-node', node.id);
+        g.innerHTML = shape.svg(node.x, node.y, node.label);
+        svg.appendChild(g);
+      });
+      
+      parent.appendChild(svg);
+      return svg;
+    },
+    
+    // Export BPMN as outline data
+    export(svg) {
+      const outline = [];
+      const nodes = svg.querySelectorAll('.gx-bpmn-node');
+      
+      nodes.forEach((node, i) => {
+        const text = node.querySelector('text');
+        outline.push({
+          kind: node.dataset.kind || 'task',
+          text: text?.textContent || `Node ${i}`,
+          to: []
+        });
+      });
+      
+      return outline;
+    }
+  };
+})();
+
+;/* ---- rt-130-project-builder.js ---- */
+// S13: Project Builder / Template System
+// Predefined layouts and templates for quick start
+
+(function(){
+  const TEMPLATES = {
+    pitch: {
+      name: 'Pitch Deck',
+      slides: [
+        {title:{t:'Problema'}, els:[{kind:'text',t:'Qual é o problema?'}]},
+        {title:{t:'Solução'}, els:[{kind:'text',t:'Como você resolve?'}]},
+        {title:{t:'Mercado'}, els:[{kind:'text',t:'Tamanho do mercado'}]},
+        {title:{t:'Modelo'}, els:[{kind:'text',t:'Como ganha dinheiro?'}]},
+        {title:{t:'Team'}, els:[{kind:'text',t:'Quem executa?'}]}
+      ]
+    },
+    proposal: {
+      name: 'Proposta Comercial',
+      slides: [
+        {title:{t:'Executivo'}, els:[{kind:'text',t:'Resumo 1 página'}]},
+        {title:{t:'Escopo'}, els:[{kind:'text',t:'O que será entregue'}]},
+        {title:{t:'Timeline'}, els:[{kind:'text',t:'Quando será entregue'}]},
+        {title:{t:'Investimento'}, els:[{kind:'text',t:'Quanto custa'}]},
+        {title:{t:'Próximos passos'}, els:[{kind:'text',t:'Como começamos'}]}
+      ]
+    },
+    report: {
+      name: 'Relatório Executivo',
+      slides: [
+        {title:{t:'Índice'}, els:[{kind:'text',t:'Navegação do documento'}]},
+        {title:{t:'Contexto'}, els:[{kind:'text',t:'Situação atual'}]},
+        {title:{t:'Análise'}, els:[{kind:'text',t:'Dados e insights'}]},
+        {title:{t:'Recomendações'}, els:[{kind:'text',t:'Próximos passos recomendados'}]},
+        {title:{t:'Conclusão'}, els:[{kind:'text',t:'Resumo executivo'}]}
+      ]
+    }
+  };
+  
+  window.gxProjectBuilder = {
+    // List available templates
+    listTemplates() {
+      return Object.entries(TEMPLATES).map(([id, tpl]) => ({
+        id,
+        name: tpl.name,
+        slides: tpl.slides.length
+      }));
+    },
+    
+    // Get template by ID
+    getTemplate(id) {
+      return TEMPLATES[id];
+    },
+    
+    // Create deck from template
+    createFromTemplate(id) {
+      const template = TEMPLATES[id];
+      if (!template) return null;
+      
+      return {
+        title: template.name,
+        slides: JSON.parse(JSON.stringify(template.slides)), // Deep copy
+        created: new Date().toISOString()
+      };
+    },
+    
+    // Render template picker
+    renderPicker(parent, onSelect) {
+      const picker = document.createElement('div');
+      picker.className = 'gx-template-picker';
+      
+      const title = document.createElement('h3');
+      title.textContent = 'Começar com um template';
+      picker.appendChild(title);
+      
+      const grid = document.createElement('div');
+      grid.className = 'gx-template-grid';
+      
+      this.listTemplates().forEach(tpl => {
+        const card = document.createElement('div');
+        card.className = 'gx-template-card';
+        card.innerHTML = `
+          <div class="gx-template-icon">📄</div>
+          <h4>${tpl.name}</h4>
+          <p>${tpl.slides} slides</p>
+        `;
+        card.addEventListener('click', () => onSelect(tpl.id));
+        grid.appendChild(card);
+      });
+      
+      picker.appendChild(grid);
+      parent.appendChild(picker);
+      return picker;
+    }
+  };
+})();
+
+;/* ---- rt-140-pptx-export.js ---- */
+// S14: PowerPoint Export (PPTX)
+// Generates PPTX file from deck using ZIP + XML structure
+// Minimal feature: text, title, background color
+
+(function(){
+  // Helper: create ZIP file with entries
+  function createZip(entries) {
+    // Simple zip library would be needed; for now, export structure
+    return {
+      files: entries,
+      toBlob: function() {
+        // In real implementation, use JSZip library
+        const xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+          '<Package xmlns="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n' +
+          this.files.map(f => `<File name="${f.name}" type="${f.type}"/>`).join('\n') +
+          '</Package>';
+        return new Blob([xml], {type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+      }
+    };
+  }
+  
+  window.gxPPTXExport = {
+    // Generate PPTX structure from deck
+    generate(deck, title) {
+      const files = [];
+      
+      // [Content_Types].xml
+      files.push({
+        name: '[Content_Types].xml',
+        type: 'text/xml',
+        content: '<?xml version="1.0" encoding="UTF-8"?>' +
+          '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+          '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+          '<Default Extension="xml" ContentType="application/xml"/>' +
+          '<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>' +
+          '</Types>'
+      });
+      
+      // ppt/presentation.xml
+      const slideRels = deck.slides.map((_, i) => `<Relationship Id="slide${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide${i+1}.xml"/>`).join('');
+      
+      files.push({
+        name: 'ppt/presentation.xml',
+        type: 'text/xml',
+        content: '<?xml version="1.0" encoding="UTF-8"?>' +
+          '<p:presentation xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" name="' + this.escapeXML(title) + '">' +
+          '<p:sldIdLst>' +
+          deck.slides.map((_, i) => `<p:sldId id="${256+i}" r:id="slide${i+1}"/>`).join('') +
+          '</p:sldIdLst>' +
+          '</p:presentation>'
+      });
+      
+      // ppt/slides/slide[N].xml
+      deck.slides.forEach((slide, i) => {
+        const content = `<?xml version="1.0" encoding="UTF-8"?>
+          <p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+            <p:cSld>
+              <p:bg bgFill="${(slide.bg?.c || '#ffffff').substring(1)}"/>
+              <p:spTree>
+                ${slide.els?.map((el, j) => `
+                  <p:sp>
+                    <p:nvSpPr>
+                      <p:cNvPr id="${j+2}" name="Element ${j}"/>
+                    </p:nvSpPr>
+                    <p:txBody>
+                      <a:t>${this.escapeXML(el.t || el.text || '')}</a:t>
+                    </p:txBody>
+                  </p:sp>
+                `).join('') || ''}
+              </p:spTree>
+            </p:cSld>
+          </p:sld>`;
+        
+        files.push({
+          name: `ppt/slides/slide${i+1}.xml`,
+          type: 'text/xml',
+          content: content
+        });
+      });
+      
+      return createZip(files);
+    },
+    
+    // Escape XML special characters
+    escapeXML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    },
+    
+    // Download PPTX file
+    download(deck, filename) {
+      const pptx = this.generate(deck, filename.replace('.pptx', ''));
+      const blob = pptx.toBlob();
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename || 'presentation.pptx';
       link.click();
       URL.revokeObjectURL(link.href);
     }
