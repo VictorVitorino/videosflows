@@ -58,7 +58,7 @@ const TOOLS=()=>{
   await p.evaluate(id=>AMStudio.select(id), sw.id); await sleep(250);
   const secs=await p.evaluate(()=>[...document.querySelectorAll('#props .sec>h3')].map(h=>h.textContent.trim()));
   const iC=secs.indexOf('Conteúdo'), iP=secs.indexOf('Cores do componente');
-  const ui0=await p.evaluate(()=>{ const s=document.querySelector('#palSec'); return s?{sw:s.querySelectorAll('.sw').length, inp:[...s.querySelectorAll('input[data-p]')].map(i=>i.dataset.p), reset:(s.querySelector('[data-act=palreset]')||{}).disabled, note:(s.querySelector('.note')||{}).textContent}:null; });
+  const ui0=await p.evaluate(()=>{ const s=document.querySelector('#palSec'); return s?{sw:s.querySelectorAll('.sw').length, inp:[...s.querySelectorAll('[data-cpick]')].map(i=>i.dataset.cpick), reset:(s.querySelector('[data-act=palreset]')||{}).disabled, note:(s.querySelector('.note')||{}).textContent}:null; });
   check('S20-01: SWOT inserido pela Biblioteca; painel tem “Cores do componente” logo depois de “Conteúdo”, com “Cor principal” (pal.p) e “Cor de destaque” (pal.a) e “Restaurar cores A&M” desativado sem cores próprias', sw.kind==='swot'&&iC>=0&&iP===iC+1&&ui0&&ui0.sw===2&&ui0.inp.join()==='pal.p,pal.a'&&ui0.reset===true, {secs,ui0});
   const n0=await p.evaluate(id=>__amCount(document.querySelector('#wrap .am-stage .am-el[data-id="'+id+'"]')), sw.id);
 
@@ -66,8 +66,9 @@ const TOOLS=()=>{
   await p.click('#palSec .sw >> nth=0 >> button[data-v="#43698F"]'); await sleep(250);
   const afterSw=await p.evaluate(()=>(id=>AMStudio.deck.slides[AMStudio.cur].els.find(o=>o.id===id))(AMStudio.selected()[0]).pal);
   const histSw=await p.evaluate(()=>document.querySelector('#bUndo').disabled);
-  await p.locator('#palSec input[data-p="pal.p"]').fill('#1b7f3b'); await sleep(250);
-  await p.locator('#palSec input[data-p="pal.a"]').fill('#c0392b'); await sleep(350);
+  /* cor livre pelo seletor “Mais cores…” (S19): código #hex + Enter */
+  await p.click('#palSec [data-cpick="pal.p"]'); await sleep(200); await p.fill('.cpop .cp-hex','#1b7f3b'); await p.press('.cpop .cp-hex','Enter'); await sleep(300);
+  await p.click('#palSec [data-cpick="pal.a"]'); await sleep(200); await p.fill('.cpop .cp-hex','#c0392b'); await p.press('.cpop .cp-hex','Enter'); await sleep(400);
   const pal1=await p.evaluate(()=>(id=>AMStudio.deck.slides[AMStudio.cur].els.find(o=>o.id===id))(AMStudio.selected()[0]).pal);
   check('S20-02: clicar a amostra grava pal.p (um passo de desfazer); o seletor de cor grava a principal e a de destaque', afterSw&&afterSw.p==='#43698F'&&!histSw&&pal1&&/^#1b7f3b$/i.test(pal1.p)&&/^#c0392b$/i.test(pal1.a), {afterSw,pal1});
   const st1=await p.evaluate(id=>{ const n=document.querySelector('#wrap .am-stage .am-el[data-id="'+id+'"]'); return {k:n.dataset.pal, bad:__am(n), green:__hue(n,139), red:[...n.querySelectorAll('*')].filter(e=>/rgb\(192, 57, 43\)/.test(getComputedStyle(e).backgroundColor+getComputedStyle(e).fill+getComputedStyle(e).color+getComputedStyle(e).borderTopColor)).length, style:!!document.getElementById('am-pal-'+n.dataset.pal)}; }, sw.id);
