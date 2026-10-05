@@ -76,6 +76,7 @@ Invariant pinned by test-core: with nothing open, **Esc exits present mode**. No
 | Comments (F11) | Ctrl/⌘+Enter · Esc | Add the comment typed in "Novo comentário"; Esc blurs, then closes. |
 | Edit mode in the exported file (F11) | Arrows / Shift+arrows · Ctrl/⌘+S · Ctrl/⌘+Z · Ctrl/⌘+Shift+Z · Esc | Arrows nudge the selected element 1 px / 10 px (navigate when nothing is selected); Salvar cópia; Desfazer; Refazer; leave edit mode. Double-click edits text (rule 1 then applies). |
 | Shortcuts overlay (F8) | Esc · ? | Close. |
+| Editor “Mais cores…” popover (S19, `ed-colors.js`) | ← → ↑ ↓ · Home End · Enter/Space · Tab/Shift+Tab · Esc · Enter in the hex field | Arrows move between colour swatches (↑/↓ go to the nearest swatch in the row above/below, across sections); Enter/Space applies the focused colour; Tab cycles inside the popover; Esc closes and returns focus to the “Mais cores…” button; Enter in “Personalizada” applies a valid #RRGGBB (invalid = red outline, nothing applied). Every key pressed inside the popover stops there (arrows never nudge the element, Delete never deletes). |
 
 ---
 
