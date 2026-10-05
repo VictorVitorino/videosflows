@@ -175,6 +175,11 @@
   function numOr(v, d) { v = +v; return isFinite(v) ? v : d; }
   function safeStr(v, n) { return typeof v === 'string' ? v.slice(0, n) : null; }
   function pickN(v, list, def) { v = +v; return list.indexOf(v) >= 0 ? v : def; }
+  function safePal(v) {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+    var o = {}; ['p', 'a'].forEach(function (k) { if (typeof v[k] === 'string' && /^#[0-9a-f]{6}$/i.test(v[k])) o[k] = v[k].toUpperCase(); });
+    return o.p || o.a ? o : null;
+  }
   function safeSrc(s) { return typeof s === 'string' && /^(data:image\/[\w.+-]+[;,]|https?:|blob:)/i.test(s) && !/["\\\n\r]/.test(s) ? s : null; }
   function safeEl(e) {
     if (!e || typeof e !== 'object' || ['text', 'shape', 'line', 'image', 'fx'].indexOf(e.type) < 0) return null;
@@ -189,6 +194,7 @@
     ['weight', 'lh', 'ls', 'size', 'radius', 'strokeW', 'rot', 'opacity'].forEach(function (k) { if (o[k] != null) { var v = +o[k]; if (isFinite(v)) o[k] = v; else delete o[k]; } });
     Object.keys(EL_TOKENS).forEach(function (k) { if (o[k] != null && EL_TOKENS[k].indexOf(o[k]) < 0) delete o[k]; });
     if (o.bend != null) { if (isFinite(+o.bend)) o.bend = Math.max(0.05, Math.min(0.95, +o.bend)); else delete o.bend; }
+    if (o.pal != null) { var pl = o.type === 'fx' ? safePal(o.pal) : null; if (pl) o.pal = pl; else delete o.pal; } /* cores do componente (S20): só #rrggbb; vazio sai */
     if (o.zoom != null) { if (o.zoom === false || o.zoom === true) { } else delete o.zoom; } /* ampliar na apresentação: só booleano (false desliga num modelo/imagem; true liga num componente) */
     if (o.html != null) o.html = cleanHTML(String(o.html));
     if (o.type === 'image') { o.src = safeSrc(o.src); if (!o.src) return null; }
@@ -398,6 +404,7 @@
     chart: '<path d="M4 20h16"/><path d="M6 16v-5M11 16V6M16 16v-8"/><path d="M20 4l-4 4"/>',
     zoom: '<path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/>',
     flip: '<path d="M4 8h15M15 4l4 4-4 4"/><path d="M20 16H5M9 12l-4 4 4 4"/>',
+    palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
     smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>'
   };
   function svgI(k, cls) { return '<svg viewBox="0 0 24 24"' + (cls ? ' class="' + cls + '"' : '') + '>' + (IC[k] || '') + '</svg>'; }
@@ -474,6 +481,7 @@
         if (t === 'smartlayout') return smartLayoutField(k, v);
         return '<div class="row r1">' + fld(f[1], txtIn(k, v)) + '</div>';
       }).join('') + (FD.model ? '<div class="chips">' + tog('data.panel', el.data.panel === 'white', 'Painel branco (para fundo escuro)').replace('data-v="1"', 'data-v="white"').replace('data-v="0"', 'data-v=""').replace(' data-b="1"', '') + '</div>' : '') + '</div>';
+      if (palOk(el)) h += palSec(el);
     }
     if (FD && FD.gal === 'icon') { var hv = h.slice(h0.length), ci = hv.indexOf('<div class="sec"><h3>Conteúdo</h3>'); if (ci > 0) h = h0 + hv.slice(ci) + hv.slice(0, ci); }
     if (el.type === 'line') {
@@ -514,6 +522,24 @@
       '<div class="row r1"><button class="btnw pri" data-act="preview">▶ Ver animação no slide</button></div><div class="row r1"><button class="btnw ic" data-act="gallery">' + svgI('models') + 'Ver todos os efeitos em caixas</button></div></div>';
     p.innerHTML = h;
     var ion = p.querySelector('.icf-g .on'); if (ion) ion.parentNode.scrollTop = ion.offsetTop - (ion.parentNode.clientHeight - ion.offsetHeight) / 2; /* o ícone atual no meio da grade (a grade é o offsetParent) */
+  }
+  /* “Cores do componente” (S20): el.pal = {p, a}; o runtime (rt-05-pal.js) troca o azul-marinho/azuis pela cor principal e o laranja
+     pela de destaque, só neste elemento. Não vale para a Marca A&M nem para ícones (que já têm cores próprias) */
+  function palOk(el) { var F = el && el.type === 'fx' && RT.FX[el.kind]; return !!(F && RT.palTag && F.cat !== 'Marca A&M' && !isIcon(el)); }
+  function palSec(el) {
+    var pl = el.pal || {};
+    return '<div class="sec" id="palSec"><h3>Cores do componente</h3>' +
+      '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p) +
+      '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a) +
+      (el.pal && RT.pal ? '<div class="pal-tones" title="Tons que o componente usa com estas cores">' + ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#C9D6E8', '#EEF2F7', '|', '#F78C16', '#FEF1E2'].map(function (c) { return c === '|' ? '<b></b>' : '<i style="background:' + RT.pal.map(c, el.pal) + '"></i>'; }).join('') + '</div>' : '') +
+      '<p class="note">Cada azul do modelo vira um tom da cor principal com a mesma claridade (o azul-marinho vira a versão escura dela), então os textos continuam legíveis; o laranja vira a cor de destaque. Vale só para este elemento, também na apresentação e no arquivo salvo.</p>' +
+      (pl.a && RT.pal && RT.pal.contrast(pl.a, RT.pal.map('#002A46', el.pal)) < 3 ? '<p class="note pal-warn">Pouco contraste entre a cor de destaque e a principal escura: textos de destaque sobre ela podem ficar difíceis de ler. Experimente um destaque mais claro.</p>' : '') +
+      '<div class="row r1"><button class="btnw ic" data-act="palreset"' + (el.pal ? '' : ' disabled') + '>' + svgI('reset') + 'Restaurar cores A&amp;M</button></div></div>';
+  }
+  function focusPal() {
+    var sc = $('#palSec'); if (!sc) return;
+    sc.scrollIntoView({ block: 'nearest' }); sc.classList.remove('flash'); void sc.offsetWidth; sc.classList.add('flash');
+    var b = sc.querySelector('.sw button'); if (b) b.focus({ preventScroll: true });
   }
   /* campo “Layout” do SmartArt: grade de miniaturas (clique troca o layout: data-set; os itens ficam) + dica do layout atual */
   function smartLayoutField(k, v) {
@@ -794,6 +820,7 @@
     if (a === 'preview') return present(cur);
     if (a === 'zoomview') { if (!el) return; present(cur); if (player && player.zoom) player.zoom.open(el.id); return; }
     if (a === 'pvel') return previewEl(el);
+    if (a === 'palreset') { if (!el || !el.pal) return; delete el.pal; rerenderEl(el); renderProps(); commit(); toast('Cores A&M restauradas neste elemento · Ctrl+Z desfaz'); return; }
     if (a === 'gallery') return openGallery('in');
     if (a === 'gallery-tr') return openGallery('tr');
     if (a === 'gallery-icon') return openGallery('icon');
@@ -2252,7 +2279,8 @@
       { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null); } }, { t: 'Duplicar', ic: 'dup', k: KEY.dup, fn: dupSel },
       { t: 'Apagar', ic: 'del', k: KEY.del, fn: delSel }, { sep: 1 },
       { t: 'Trazer para frente', ic: 'front', fn: function () { act('front'); } }, { t: 'Enviar para trás', ic: 'back', fn: function () { act('back'); } }, { sep: 1 },
-      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null];
+      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null,
+      el && palOk(el) ? { sep: 1 } : null, el && palOk(el) ? { t: 'Cores do componente…', ic: 'palette', fn: function () { setTimeout(focusPal, 0); } } : null];
   }
   function ctxCanvasItems(p) {
     return [{ hd: 'Slide ' + (cur + 1) }, { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(p); } },
@@ -2377,7 +2405,7 @@
     var data = JSON.stringify(d).replace(/</g, '\\u003c');
     var css = $('#am-runtime-css').textContent, js = $('#am-runtime').textContent;
     var S = 'script';
-    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">\n<style>' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
+    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">\n<style id="am-runtime-css">' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
   }
   function download(name, text, type) {
     var blob = new Blob([text], { type: type || 'text/html;charset=utf-8' }), a = document.createElement('a');

@@ -371,7 +371,8 @@ window.AMRT = (function () {
     if (el.type === 'fx' && FX[el.kind]) {
       var inner; try { inner = FX[el.kind].html(el.data || {}, w, h, el); } /* um componente com defeito nunca derruba o slide nem o player exportado */
       catch (ex) { inner = '<div class="fx fx-falha" title="' + esc(ex && ex.message || ex) + '"></div>'; if (window.console && console.warn) console.warn('AMRT: componente “' + el.kind + '” falhou', ex); }
-      return (el.data && el.data.panel === 'white') ? '<div class="fx fx-panel"><div class="fx-pin">' + inner + '</div></div>' : inner;
+      if (el.data && el.data.panel === 'white') inner = '<div class="fx fx-panel"><div class="fx-pin">' + inner + '</div></div>';
+      return el.pal && API.palHTML ? API.palHTML(el, inner) : inner; /* “Cores do componente” (rt-05-pal.js): só com el.pal */
     }
     return '';
   }
@@ -461,6 +462,7 @@ window.AMRT = (function () {
       var sr = Math.max(0, Math.min(+el.radius || 0, w / 2, h / 2)), rr = el.shape === 'ellipse' ? '50%' : el.shape === 'pill' ? CQ(Math.min(w, h) / 2) : el.shape === 'round' ? CQ(sr || Math.min(w, h) * .12) : sr && (!el.shape || el.shape === 'rect') ? CQ(sr) : '';
       if (rr) fx.style.borderRadius = rr; }
     fx.innerHTML = content(el, w, h);
+    if (el.pal && el.type === 'fx' && API.palTag) API.palTag(n, el); /* data-pal + folha de estilo restrita (rt-05-pal.js) */
     if (el.type === 'fx' && !(+el.radius)) { /* componente sem raio próprio: o invólucro segue o canto do cartão (anéis, brilho, contorno, varredura) */
       var c0 = fx.firstElementChild, cr = c0 && (c0.style.borderRadius || FX_RAD[(String(c0.className).match(/\bfx(?:h|g|cd|q|-panel)\b/) || [''])[0]]);
       if (cr) fx.style.borderRadius = cr; }
@@ -720,6 +722,8 @@ window.AMRT = (function () {
     /* pontos de extensão para rt-*.js: player = funções chamadas a cada player criado; shapeBody/lineSVG acima podem ser embrulhados;
        shapeInset(el) devolve o recuo do texto de uma forma ('0 0 22% 0') ou null; shapeText(el, w, h, html) pode reescrever o texto da forma */
     hooks: { player: [], show: [], key: [] }, shapeInset: null, shapeText: null,
+    /* cores do componente (rt-05-pal.js): palHTML(el, html) troca as cores do markup, palTag(node, el) marca o .am-el e injeta o CSS */
+    palHTML: null, palTag: null,
     /* para arquivos de extensão rt-*.js (modelos, gráficos, ícones): os mesmos utilitários dos modelos internos */
     util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid } };
   return API;
