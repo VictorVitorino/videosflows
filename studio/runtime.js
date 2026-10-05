@@ -361,16 +361,33 @@ window.AMRT = (function () {
 
   Object.keys(M).forEach(function (k) { FX[k] = M[k]; });
 
+  /* espelhar (el.flipH / el.flipV): só o desenho — a foto, o corpo da forma e o traço do ícone. Textos, gráficos e modelos com texto
+     não se espelham (a leitura ficaria ao contrário). O espelho nunca vai em .am-rot nem em .am-fxw (giro e animações moram lá) */
+  function flipOK(el) { if (!el) return false; if (el.type === 'image' || el.type === 'shape') return true; var F = el.type === 'fx' && FX[el.kind]; return !!F && (F.gal === 'icon' || F.flip === true); }
+  function flipOf(el) { var fh = el.flipH === true, fv = el.flipV === true; return (fh || fv) && flipOK(el) ? [fh ? -1 : 1, fv ? -1 : 1] : null; }
+  /* recuo do texto (CSS inset: topo direita base esquerda) acompanha a forma espelhada: a área útil do balão, triângulo-retângulo… troca de lado */
+  function flipInset(ins, f) {
+    var q = String(ins).trim().split(/\s+/); if (q.length === 1) return ins; if (q.length === 2) q = [q[0], q[1], q[0], q[1]]; else if (q.length === 3) q = [q[0], q[1], q[2], q[1]];
+    if (f[0] < 0) { var t = q[1]; q[1] = q[3]; q[3] = t; } if (f[1] < 0) { var u = q[0]; q[0] = q[2]; q[2] = u; }
+    return q.join(' ');
+  }
   function content(el, w, h) {
     if (el.type === 'text') return textHTML(el, false);
+    var fl = flipOf(el);
     if (el.type === 'shape') { /* shapeInset (rt-10-shapes): recuo do texto dentro de formas com ponta, rabicho ou tampa (balão, triângulo, cilindro…) */
-      var tx = textHTML(el, true), ins = API.shapeInset ? API.shapeInset(el) : null; if (API.shapeText) tx = API.shapeText(el, w, h, tx);
-      return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"' + (el.shadow ? ' style="filter:drop-shadow(0 .8cqh 1.6cqh rgba(0,30,50,.3))"' : '') + '>' + API.shapeBody(el, w, h) + '</svg>' + (ins ? tx.replace('class="am-text" style="', 'class="am-text" style="inset:' + ins + ';') : tx); }
+      var tx = textHTML(el, true), ins = API.shapeInset ? API.shapeInset(el) : null, body = API.shapeBody(el, w, h); if (API.shapeText) tx = API.shapeText(el, w, h, tx);
+      if (fl) { /* espelho dentro do SVG: a sombra (filtro no <svg>) continua para baixo e o texto (.am-text) continua legível */
+        var sy = el.look === 'header' ? 1 : fl[1]; /* card Cabeçalho: a faixa do título fica sempre no alto */
+        if (fl[0] < 0 || sy < 0) { body = '<g data-flip="' + (fl[0] < 0 ? 'h' : '') + (sy < 0 ? 'v' : '') + '" transform="matrix(' + fl[0] + ' 0 0 ' + sy + ' ' + (fl[0] < 0 ? w : 0) + ' ' + (sy < 0 ? h : 0) + ')">' + body + '</g>'; if (ins) ins = flipInset(ins, [fl[0], sy]); }
+      }
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"' + (el.shadow ? ' style="filter:drop-shadow(0 .8cqh 1.6cqh rgba(0,30,50,.3))"' : '') + '>' + body + '</svg>' + (ins ? tx.replace('class="am-text" style="', 'class="am-text" style="inset:' + ins + ';') : tx); }
     if (el.type === 'line') return API.lineSVG(el);
-    if (el.type === 'image') return '<img class="am-img" alt="" draggable="false" src="' + esc(el.src) + '" style="object-fit:' + (el.fit || 'cover') + ';border-radius:' + CQ(+el.radius || 0) + (el.shadow ? ';box-shadow:0 1cqh 2.4cqh rgba(0,30,50,.3)' : '') + '">';
+    /* foto espelhada: propriedade scale (soma com o “Zoom interno” do mouse, que usa transform); a sombra é desenhada já espelhada, então inverte o deslocamento */
+    if (el.type === 'image') return '<img class="am-img" alt="" draggable="false" src="' + esc(el.src) + '"' + (fl ? ' data-flip="' + (fl[0] < 0 ? 'h' : '') + (fl[1] < 0 ? 'v' : '') + '"' : '') + ' style="object-fit:' + (el.fit || 'cover') + ';border-radius:' + CQ(+el.radius || 0) + (fl ? ';scale:' + fl[0] + ' ' + fl[1] : '') + (el.shadow ? ';box-shadow:0 ' + (fl && fl[1] < 0 ? '-' : '') + '1cqh 2.4cqh rgba(0,30,50,.3)' : '') + '">';
     if (el.type === 'fx' && FX[el.kind]) {
       var inner; try { inner = FX[el.kind].html(el.data || {}, w, h, el); } /* um componente com defeito nunca derruba o slide nem o player exportado */
       catch (ex) { inner = '<div class="fx fx-falha" title="' + esc(ex && ex.message || ex) + '"></div>'; if (window.console && console.warn) console.warn('AMRT: componente “' + el.kind + '” falhou', ex); }
+      if (fl) inner = String(inner).replace(/<svg class="ic"/, '<svg class="ic" data-flip="' + (fl[0] < 0 ? 'h' : '') + (fl[1] < 0 ? 'v' : '') + '" style="scale:' + fl[0] + ' ' + fl[1] + '"'); /* ícone: só o desenho; a legenda continua legível */
       return (el.data && el.data.panel === 'white') ? '<div class="fx fx-panel"><div class="fx-pin">' + inner + '</div></div>' : inner;
     }
     return '';
@@ -712,7 +729,7 @@ window.AMRT = (function () {
   function fxLabel(el) { var F = el && FX[el.kind]; return (F && (typeof F.label === 'function' ? F.label(el) : F.name)) || 'Elemento'; }
   var API = { W: W, H: H, FX: FX, FONTS: FONTS, shapeBody: shapeBody, lineSVG: lineSVG, renderEl: renderEl, renderSlide: renderSlide, runFx: runFx, lineBox: lineBox, player: player, esc: esc,
     /* título do slide (índice, resumo, “Ampliar”), elementos ampliáveis de um slide, nome de um elemento fx e texto simples de um HTML guardado */
-    slideTitle: slideTitle, zoomables: zoomables, fxLabel: fxLabel, plain: plain, isDark: isDark,
+    slideTitle: slideTitle, zoomables: zoomables, flipOK: flipOK, fxLabel: fxLabel, plain: plain, isDark: isDark,
     /* capítulos (linha do tempo e índice), divisor de um slide, resumo automático (“Sobre este slide”) e textos livres de el.data */
     sectionsOf: sectionsOf, dividerOf: dividerOf, autoNotes: autoNotes, dataStrings: dataStrings,
     /* vocabulário de animações (entrada, contínuo, mouse, transição; extensões podem acrescentar famílias, ex.: emph) e inclinação 3D por cursor */

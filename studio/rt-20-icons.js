@@ -226,7 +226,7 @@
   };
   R.FX.iconmorph = {
     name: 'Ícone que se transforma', cat: 'Ícones animados', kw: 'ícone icone transformação morph troca estado antes depois problema solução', w: 120, h: 120, anim: { in: 'zoom' }, variant: 'loop',
-    gal: 'one', vtitle: 'Como alterna', tip: 'O estado A aparece na cor do traço; o estado B, na cor do detalhe.',
+    gal: 'one', flip: true, vtitle: 'Como alterna', /* flip: o desenho pode ser espelhado (Girar e inverter), como no ícone animado */ tip: 'O estado A aparece na cor do traço; o estado B, na cor do detalhe.',
     variants: [['loop', 'Alternando sozinho', 'Mostra o estado A e o estado B, alternando a cada 2,2 s.'], ['click', 'Ao clicar', 'Na apresentação, cada clique alterna entre os dois estados.']],
     data: { pair: 'alert-check', color: '#002A46', accent: '#F78C16', bg: 'circle', stroke: 1.85, label: '' },
     fields: [['pair', 'Transformação', 'sel:' + AMICON_MORPHS.map(function (m) { return m[0] + '=' + m[1]; }).join('|')], ['color', 'Cor do estado A', 'sel:#002A46=Navy|#FFFFFF=Branco|#43698F=Azul-aço'], ['accent', 'Cor do estado B', 'sel:#F78C16=Laranja|#002A46=Navy|#FFFFFF=Branco'], ['bg', 'Fundo', 'sel:none=Sem fundo|soft=Quadrado gelo|circle=Círculo gelo|ring=Anel|navy=Círculo navy'], ['label', 'Legenda (opcional)']],
