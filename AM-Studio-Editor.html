@@ -1388,11 +1388,13 @@ body.side-off #sideMini{display:flex}
 #thumbs{flex:1;overflow:auto;padding:12px 12px 4px}
 #side.cols2 #thumbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;align-content:start;padding-left:8px}
 #side.cols2 .th{margin-bottom:0;min-width:0}
-#side.cols2 .th.drop-before .box{box-shadow:-4px 0 0 var(--orange)}
 .th{position:relative;display:grid;grid-template-columns:18px 1fr;gap:6px;margin-bottom:10px;cursor:pointer}
 .th .n{font-size:11px;font-weight:600;color:var(--mut);padding-top:2px;text-align:right}
 .th .box{position:relative;border-radius:6px;overflow:hidden;outline:2px solid transparent;outline-offset:1px;box-shadow:0 1px 3px rgba(0,30,50,.15);transition:outline-color .15s}
-.th .box .am-stage{pointer-events:none}
+.th .box .am-stage{pointer-events:none;content-visibility:auto} /* miniatura fora da vista não é refeita quando a largura muda (a altura vem do aspect-ratio) */
+/* arrastando a divisória: cada miniatura fica do tamanho do início e só escala (transform), sem refazer o layout do slide a cada quadro */
+#thumbs.frz .th .box{aspect-ratio:16/9}
+#thumbs.frz .th .box .am-stage{position:absolute;left:0;top:0;width:var(--tw0);transform:scale(var(--tk,1));transform-origin:0 0}
 .th.on .box{outline-color:var(--orange)}
 .th:hover .box{outline-color:#C5D2E2}
 .th.on:hover .box{outline-color:var(--orange)}
@@ -1401,7 +1403,13 @@ body.side-off #sideMini{display:flex}
 .th .act button{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:rgba(0,30,50,.78);color:#fff}
 .th .act button svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .th .act button:hover{background:var(--orange);color:var(--navy)}
-.th.drop-before .box{box-shadow:0 -3px 0 var(--orange)}
+/* onde a miniatura arrastada vai cair: barra laranja própria (pseudo-elemento), que não disputa a sombra de foco da miniatura atual */
+.th.drop-before::before,.th.drop-after::after{content:"";position:absolute;z-index:4;left:20px;right:-4px;height:3px;border-radius:2px;background:var(--orange);pointer-events:none}
+.th.drop-before::before{top:-7px}
+.th.drop-after::after{bottom:-7px}
+#side.cols2 .th.drop-before::before,#side.cols2 .th.drop-after::after{top:-6px;bottom:-6px;width:3px;height:auto}
+#side.cols2 .th.drop-before::before{left:18px;right:auto}
+#side.cols2 .th.drop-after::after{left:auto;right:-7px}
 #addSlide{margin:6px 12px 12px;height:38px;border-radius:var(--r-ctl);border:1.5px dashed #B8C6D8;color:var(--navy);font-weight:600}
 #addSlide:hover{border-color:var(--orange);color:var(--navy);background:#fff}
 /* canvas */
@@ -2469,6 +2477,11 @@ window.AMRT = (function () {
   var COL_OK = /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d.,\s%]+\))$/i, HEX6 = /^#[0-9a-f]{6}$/i;
   function colOr(v, d) { return typeof v === 'string' && COL_OK.test(v) ? v : d; }
   function ucols(d) { var c = d && d.colors; return Array.isArray(c) ? c.slice(0, 6).map(function (x) { return typeof x === 'string' && HEX6.test(x) ? x : ''; }) : []; }
+  /* cor de série escolhida num elemento com “Cores do componente” (el.pal): sai como #RRGGBBFF (a mesma cor, opaca), que o recolorir
+     (rt-05-pal.js) não troca — a cor escolhida aparece exatamente como foi escolhida; sem el.pal, nada muda. kcols(d, el, cols) =
+     cols(d) com as posições escolhidas marcadas assim */
+  function ukeep(el) { return el && el.pal && API.pal && API.pal.norm(el.pal) ? function (c) { return HEX6.test(c) ? c + 'FF' : c; } : function (c) { return c; }; }
+  function kcols(d, el, cc) { var u = ucols(d), K = ukeep(el); return cc.map(function (c, k) { return u[k] ? K(c) : c; }); }
   function lumHex(c) { var m = /^#([0-9a-f]{6})$/i.exec(c || ''); if (!m) return null; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
   /* mistura c (#rrggbb) com branco (t > 0) ou preto (t < 0); t de -1 a 1 */
   function mixHex(c, t) {
@@ -2560,7 +2573,7 @@ window.AMRT = (function () {
       fields: [['title', 'Título'], ['labels', 'Categorias (separe por vírgula)'], ['values', 'Valores (separe por vírgula)'], ['unit', 'Unidade'], ['highlight', 'Destacar posições (ex.: 1, 3)'], ['style', 'Estilo', 'sel:clear=Transparente|light=Branco|ice=Gelo|dark=Navy'], ['colors', 'Cores', 'colors:2', ['Barras', 'Destaque']]],
       cols: function (d) { var c = ucols(d); return [c[0] || (d.style === 'dark' ? '#7EA1C3' : '#002A46'), c[1] || '#F78C16']; },
       html: function (d, w, h, el) {
-        var cc = FX.bars.cols(d), labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
+        var cc = kcols(d, el, FX.bars.cols(d)), labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
         var n = Math.max(1, Math.min(labs.length, vals.length)), mx = Math.max.apply(null, vals.slice(0, n).concat([1])), hl = String(d.highlight || '').split(',').map(function (s) { return parseInt(s, 10); });
         var dark = d.style === 'dark', top = d.title ? h * .17 : h * .06, bot = h * .13, ch = h - top - bot, gap = w / n, bw = gap * .58, fs = Math.max(10, Math.min(h * .05, gap * .2)), out = '';
         for (var k = 0; k < n; k++) {
@@ -2784,7 +2797,7 @@ window.AMRT = (function () {
     fields: [['title', 'Título'], ['labels', 'Rótulos do eixo (um por linha)', 'lines'], ['values', 'Valores (um por linha)', 'lines'], ['unit', 'Unidade'], ['target', 'Meta (0 oculta)', 'number'], ['colors', 'Cores', 'colors:2', ['Linha e pontos', 'Último ponto']]],
     cols: function (d) { var c = ucols(d); return [c[0] || '#002A46', c[1] || '#F78C16']; },
     html: function (d, w, h, el) {
-      var cu = ucols(d), cc = M.linechart.cols(d), lastT = lumHex(cc[1]) > .75 ? '#002A46' : cc[1], v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
+      var cu = ucols(d), c0 = M.linechart.cols(d), cc = kcols(d, el, c0), lastT = lumHex(c0[1]) > .75 ? '#002A46' : cc[1], v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
       var mx = Math.max.apply(null, vs.slice(0, n).concat([t, 1])) * 1.15, top = d.title ? h * .16 : h * .06, bot = h * .12, L = w * .04, R = w * .96, ch = h - top - bot, fs = Math.max(10, h * .045);
       function X(k) { return L + (R - L) * k / (n - 1); } function Y(val) { return top + ch - val / mx * ch; }
       var pts = vs.slice(0, n).map(function (val, k) { return [X(k), Y(val)]; }), dl = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L');
@@ -2804,7 +2817,7 @@ window.AMRT = (function () {
     fields: [['items', 'Fatias (nome | valor)', 'rows:t|v:n'], ['center', 'Texto no centro'], ['colors', 'Cores das fatias', 'colors:6', 'items']],
     cols: function (d) { var c = ucols(d); return DN_C.map(function (x, k) { return c[k] || x; }); },
     html: function (d, w, h, el) {
-      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = M.donut.cols(d), acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
+      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = kcols(d, el, M.donut.cols(d)), acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
       it.forEach(function (o, g) {
         var p = Math.max(0, num(o.v)) / tot * 100;
         segs += '<circle class="dn-seg" data-g="' + g + '" style="--g:' + g + '" cx="50" cy="50" r="38" fill="none" stroke="' + C[g % C.length] + '" stroke-width="16" pathLength="100" stroke-dasharray="' + Math.max(0, p - .6).toFixed(2) + ' ' + (100 - Math.max(0, p - .6)).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '"/>';
@@ -2950,11 +2963,12 @@ window.AMRT = (function () {
       var sr = Math.max(0, Math.min(+el.radius || 0, w / 2, h / 2)), rr = el.shape === 'ellipse' ? '50%' : el.shape === 'pill' ? CQ(Math.min(w, h) / 2) : el.shape === 'round' ? CQ(sr || Math.min(w, h) * .12) : sr && (!el.shape || el.shape === 'rect') ? CQ(sr) : '';
       if (rr) fx.style.borderRadius = rr; }
     fx.innerHTML = content(el, w, h);
-    if (el.pal && el.type === 'fx' && API.palTag) API.palTag(n, el); /* data-pal + folha de estilo restrita (rt-05-pal.js) */
     if (el.type === 'fx' && !(+el.radius)) { /* componente sem raio próprio: o invólucro segue o canto do cartão (anéis, brilho, contorno, varredura) */
       var c0 = fx.firstElementChild, cr = c0 && (c0.style.borderRadius || FX_RAD[(String(c0.className).match(/\bfx(?:h|g|cd|q|-panel)\b/) || [''])[0]]);
       if (cr) fx.style.borderRadius = cr; }
     rot.appendChild(fx); n.appendChild(rot);
+    if (el.pal && el.type === 'fx' && API.palTag) API.palTag(n, el); /* data-pal + folha de estilo restrita às classes do elemento (rt-05-pal.js) */
+    if (API.palSweep) API.palSweep(); /* folhas de paletas que ninguém usa mais saem depois (rt-05-pal.js) */
     return n;
   }
   var FX_RAD = { fxh: '4%/7%', fxg: '5%/9%', fxcd: '3%/6%', fxq: '1cqh', 'fx-panel': '1.2cqh' }; /* mesmos cantos do runtime.css (.fxh, .fxg, .fxcd, .fxq, .fx-panel) */
@@ -2965,6 +2979,7 @@ window.AMRT = (function () {
     st.style.background = slide.bg || '#FFFFFF';
     if (slide.bgImg) { var bi = document.createElement('div'); bi.className = 'am-bgimg'; bi.style.backgroundImage = 'url("' + slide.bgImg + '")'; bi.style.opacity = slide.bgImgOp == null ? 1 : slide.bgImgOp; st.appendChild(bi); }
     (slide.els || []).forEach(function (el, i) { st.appendChild(renderEl(el, i)); });
+    if (API.palSweep) API.palSweep();
     if (opts.play) st.querySelectorAll('.am-el[data-in=words] .am-tx').forEach(splitWords);
     return st;
   }
@@ -3106,7 +3121,7 @@ window.AMRT = (function () {
     var zs = [], zoomOpen = false, zi = 0, zClean = null, zReturn = null, hoverId = null, zbT = null;
     function hideZb(ms) { clearTimeout(zbT); zbT = setTimeout(function () { zb.classList.remove('on'); }, ms || 0); }
     function showZb(n) {
-      clearTimeout(zbT); var r = n.getBoundingClientRect(), a = wrap.getBoundingClientRect();
+      clearTimeout(zbT); var r = (n.querySelector(':scope>.am-rot') || n).getBoundingClientRect(), a = wrap.getBoundingClientRect(); /* girado: canto do desenho, não da caixa sem giro */
       zb.style.left = Math.max(0, r.right - 40 - a.left) + 'px'; zb.style.top = Math.max(0, r.top + 8 - a.top) + 'px'; zb.classList.add('on');
     }
     function zoomableNode(t) { var n = t && t.closest && t.closest('.am-el'); return n && zs.some(function (e) { return e.id === n.dataset.id; }) ? n : null; }
@@ -3116,11 +3131,14 @@ window.AMRT = (function () {
       zi = ((n % zs.length) + zs.length) % zs.length; var el = zs[zi];
       if (!zoomOpen) zReturn = document.activeElement;
       if (zClean) { zClean(); zClean = null; }
-      var maxW = Math.min(innerWidth * .94, 1700) - 52, maxH = innerHeight * .92 - 90, k = Math.max(.1, Math.min(maxW / el.w, maxH / el.h, 4));
+      /* elemento girado: a janela tem o tamanho da caixa que contém o desenho girado (|w cos|+|h sin| × |w sin|+|h cos|), com o elemento
+         no meio — nada é cortado e a foto continua na orientação escolhida */
+      var t = el.type === 'line' ? 0 : (+el.rot || 0) * Math.PI / 180, cs = Math.abs(Math.cos(t)), sn = Math.abs(Math.sin(t)), bw = el.w * cs + el.h * sn, bh = el.w * sn + el.h * cs;
+      var maxW = Math.min(innerWidth * .94, 1700) - 52, maxH = innerHeight * .92 - 90, k = Math.max(.1, Math.min(maxW / bw, maxH / bh, 4));
       var st = renderSlide({ bg: s.bg || '#FFFFFF', els: [el] }, { play: true });
       st.classList.remove('am-pre'); /* estado final, pronto para ler: contadores e ciclos ainda rodam (runFx) */
-      st.style.cssText += ';position:absolute;left:' + (-el.x * k) + 'px;top:' + (-el.y * k) + 'px;width:' + (W * k) + 'px;height:' + (H * k) + 'px;aspect-ratio:auto';
-      zvp.style.width = (el.w * k) + 'px'; zvp.style.height = (el.h * k) + 'px'; zvp.style.background = s.bg || '#FFFFFF'; zbox.style.width = (el.w * k + 52) + 'px';
+      st.style.cssText += ';position:absolute;left:' + (-(el.x - (bw - el.w) / 2) * k) + 'px;top:' + (-(el.y - (bh - el.h) / 2) * k) + 'px;width:' + (W * k) + 'px;height:' + (H * k) + 'px;aspect-ratio:auto' + (t ? ';overflow:visible' : '');
+      zvp.style.width = (bw * k) + 'px'; zvp.style.height = (bh * k) + 'px'; zvp.style.background = s.bg || '#FFFFFF'; zbox.style.width = (bw * k + 52) + 'px';
       zvp.innerHTML = ''; zvp.appendChild(st); zClean = runFx(st);
       zbox.classList.toggle('dark', isDark(s.bg));
       zm.querySelector('.t').textContent = slideTitle(s, cur); zm.querySelector('.n').textContent = zs.length > 1 ? (zi + 1) + ' / ' + zs.length : '';
@@ -3211,9 +3229,9 @@ window.AMRT = (function () {
        shapeInset(el) devolve o recuo do texto de uma forma ('0 0 22% 0') ou null; shapeText(el, w, h, html) pode reescrever o texto da forma */
     hooks: { player: [], show: [], key: [] }, shapeInset: null, shapeText: null,
     /* cores do componente (rt-05-pal.js): palHTML(el, html) troca as cores do markup, palTag(node, el) marca o .am-el e injeta o CSS */
-    palHTML: null, palTag: null,
+    palHTML: null, palTag: null, palSweep: null,
     /* para arquivos de extensão rt-*.js (modelos, gráficos, ícones): os mesmos utilitários dos modelos internos */
-    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid, colOr: colOr, ucols: ucols, lumHex: lumHex, mixHex: mixHex } };
+    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid, colOr: colOr, ucols: ucols, lumHex: lumHex, mixHex: mixHex, ukeep: ukeep, kcols: kcols } };
   return API;
 })();
 
@@ -3227,12 +3245,15 @@ window.AMRT = (function () {
    saturação ≥ 0,5) -> cor de destaque, com os tons claros/escuros na mesma posição relativa. Branco, preto, cinzas (#3E4C5E…)
    e cores de status ficam como estão. Alfa preservado.
    1) markup: só os atributos de cor (style, fill, stroke, stop-color, flood-color, color) do HTML que FX[kind].html devolveu;
-      textos (nós de texto) nunca são tocados.
+      textos (nós de texto) nunca são tocados. Cores escritas como #RRGGBBAA (8 dígitos) ficam como estão: é assim que os gráficos
+      escrevem as cores de série que o usuário escolheu (data.colors, U.ukeep), que valem exatamente como foram escolhidas.
    2) folhas de estilo: na primeira vez, um índice das regras do CSS do runtime (#am-runtime-css; no arquivo exportado, o <style>
       do runtime) que mexem em propriedades que levam cores da marca (inclusive dentro de @media/@supports e os @keyframes com
-      cores). Para cada paleta distinta, UM <style id="am-pal-<chave>"> logo depois do CSS do runtime, com as mesmas regras (mesma
-      especificidade, graças ao :where) restritas a [data-pal="<chave>"] e às cores trocadas; vence a original pela ordem no
-      documento. Keyframes com cores ganham uma cópia renomeada (<nome>--<chave>) usada só pelas regras restritas. */
+      cores). Para cada paleta distinta, UM <style id="am-pal-<chave>"> logo depois do CSS do runtime, só com as regras das
+      classes presentes nos elementos dessa paleta (mesma especificidade, graças ao :where), restritas a [data-pal="<chave>"] e
+      às cores trocadas; vence a original pela ordem no documento. Keyframes com cores usados por essas regras ganham uma cópia
+      renomeada (<nome>--<chave>). Sobre o fundo de destaque, o texto vira branco ou a principal escura quando o destaque
+      escolhido deixaria o par ilegível (ink). Folhas que nenhum elemento usa mais saem sozinhas (palSweep). */
 (function (R) {
   'use strict';
   if (!R) return;
@@ -3315,7 +3336,10 @@ window.AMRT = (function () {
   }
 
   /* ---------- 2) folhas de estilo ---------- */
-  var IDX = null, KF = [], STY = {}, ORDER = [];
+  /* IDX.items = regras do CSS do runtime (achatadas, na ordem do documento) que mexem em grupos com cor da marca; cada uma guarda
+     as classes do composto final (o "sujeito") de cada seletor, sem as classes de estado que o player liga depois (DYN) */
+  var IDX = null, KF = [], STY = {}, sweepT = 0, sigs = {};
+  var DYN = { on: 1, 'cy-on': 1, 'cy-active': 1, tilting: 1, 'ic-go': 1, 'ic-on': 1, dark: 1, 'am-in': 1, 'am-pre': 1, 'am-play': 1, 'am-edit': 1, previewing: 1 };
   function runtimeSheet() {
     var n = document.getElementById('am-runtime-css');
     if (!n) { var ss = document.querySelectorAll('style'); for (var i = 0; i < ss.length; i++) if (/\.am-stage\b/.test(ss[i].textContent) && /\.am-el\b/.test(ss[i].textContent)) { n = ss[i]; break; } }
@@ -3350,87 +3374,154 @@ window.AMRT = (function () {
     if (/^(outline|text-decoration|text-emphasis|column-rule|animation)/.test(p)) return p.split('-')[0] + (/^text|^column/.test(p) ? '-' + p.split('-')[1] : '');
     return p;
   }
+  /* início do composto final de um seletor simples (depois do último combinador no nível 0) */
+  function lastCompound(s) {
+    var d = 0, q = '', st = 0;
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      if (q) { if (c === '\\') i++; else if (c === q) q = ''; continue; }
+      if (c === '"' || c === "'") q = c; else if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
+      else if (!d && (c === ' ' || c === '>' || c === '+' || c === '~')) st = i + 1;
+    }
+    return st;
+  }
+  /* classes que identificam o componente de cada seletor da lista: as do composto mais à direita que tem alguma classe (o sujeito;
+     “.gt-grid i” → gt-grid), fora de :not()/:is() e das classes de estado (DYN). Classes de contexto do runtime (am-stage, am-el,
+     amp-slide…, menos am-k-… e am-t-…) valem para todos: [] = regra genérica, entra sempre */
+  function subj(sel) {
+    return split(sel, ',').map(function (s) {
+      s = s.trim();
+      for (var end = s.length; end > 0;) {
+        var st = lastCompound(s.slice(0, end)), t = s.slice(st, end), d = 0, out = [], ctx = false, m;
+        for (var i = 0; i < t.length; i++) {
+          var c = t[i];
+          if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
+          else if (c === '.' && !d && (m = /^[\w-]+/.exec(t.slice(i + 1)))) { if (DYN[m[0]]) { } else if (/^amp?-/.test(m[0]) && !/^am-[kt]-/.test(m[0])) ctx = true; else out.push(m[0]); i += m[0].length; }
+        }
+        if (out.length || ctx) return out;
+        end = st; while (end > 0 && /[\s>+~]/.test(s[end - 1])) end--;
+      }
+      return [];
+    });
+  }
   function build() {
-    var node = runtimeSheet(); IDX = { node: node, items: [], groups: {} }; KF = [];
+    var node = runtimeSheet(); IDX = { node: node, items: [], groups: {}, kre: null }; KF = []; sigs = {};
     if (!node) return IDX;
     var raw = [], kf = {};
-    function walk(rules, into) {
+    function walk(rules, med) {
       for (var i = 0; i < rules.length; i++) {
         var r = rules[i];
-        if (r.type === 1 && r.selectorText) { var ds = decls(r.style.cssText); if (ds.length) into.push({ s: r.selectorText, d: ds }); }
-        else if (r.type === 4 || r.type === 12) { var sub = []; walk(r.cssRules, sub); if (sub.length) into.push({ m: (r.type === 4 ? '@media ' + r.conditionText : '@supports ' + r.conditionText), l: sub }); }
-        else if (r.type === 7 && hasFam(r.cssText)) { kf[r.name] = 1; KF.push(r.cssText); }
+        if (r.type === 1 && r.selectorText) { var ds = decls(r.style.cssText); if (ds.length) raw.push({ s: r.selectorText, d: ds, m: med }); }
+        else if (r.type === 4 || r.type === 12) walk(r.cssRules, med.concat([r.type === 4 ? '@media ' + r.conditionText : '@supports ' + r.conditionText]));
+        else if (r.type === 7 && hasFam(r.cssText)) { kf[r.name] = 1; KF.push({ n: r.name, t: r.cssText }); }
       }
     }
-    try { walk(node.sheet.cssRules, raw); } catch (er) { return IDX; }
+    try { walk(node.sheet.cssRules, []); } catch (er) { return IDX; }
     var names = Object.keys(kf);
     IDX.kre = names.length ? new RegExp('(^|[\\s,])(' + names.map(function (x) { return x.replace(/[^\w-]/g, '\\$&'); }).join('|') + ')(?=$|[\\s,;!])', 'g') : null;
     /* grupos de propriedades que levam cor da marca (background, border, color, fill, stroke, box, filter, --var…) */
-    (function mark(list) { list.forEach(function (it) { if (it.l) return mark(it.l); it.d.forEach(function (d) { if (hasFam(d[1])) IDX.groups[group(d[0])] = 1; }); }); })(raw);
+    raw.forEach(function (it) { it.d.forEach(function (d) { if (hasFam(d[1])) IDX.groups[group(d[0])] = 1; }); });
     if (IDX.kre) IDX.groups.animation = 1;
     /* fica só o que toca esses grupos (todas as declarações desses grupos, mesmo sem cor da marca: a ordem da cascata se mantém) */
-    (function keep(list, into) {
-      list.forEach(function (it) {
-        if (it.l) { var sub = []; keep(it.l, sub); if (sub.length) into.push({ m: it.m, l: sub }); return; }
-        var ds = it.d.filter(function (d) { return IDX.groups[group(d[0])]; }); if (ds.length) into.push({ s: it.s, d: ds });
-      });
-    })(raw, IDX.items);
+    raw.forEach(function (it) {
+      var ds = it.d.filter(function (d) { return IDX.groups[group(d[0])]; });
+      if (ds.length) IDX.items.push({ s: it.s, d: ds, m: it.m.join('\u0001'), mq: it.m, sj: subj(it.s) });
+    });
     return IDX;
+  }
+  /* regras que valem para um elemento: alguma classe exigida pelo sujeito existe no elemento (ou o sujeito não exige classe) */
+  function needed(node) {
+    var cls = {}, list = [node].concat(Array.prototype.slice.call(node.querySelectorAll('[class]')));
+    list.forEach(function (e) { String(e.getAttribute('class') || '').split(/\s+/).forEach(function (c) { if (c) cls[c] = 1; }); });
+    var sig = Object.keys(cls).sort().join(' ');
+    if (sigs[sig]) return sigs[sig];
+    var out = [];
+    IDX.items.forEach(function (it, i) { if (it.sj.some(function (l) { return !l.length || l.some(function (c) { return cls[c]; }); })) out.push(i); });
+    return (sigs[sig] = out);
   }
   /* :where(escopo) no composto final de cada seletor, antes de um pseudo-elemento */
   function scope(sel, sc) {
     return split(sel, ',').map(function (s) {
-      s = s.trim(); var d = 0, q = '', st = 0;
-      for (var i = 0; i < s.length; i++) {
-        var c = s[i];
-        if (q) { if (c === '\\') i++; else if (c === q) q = ''; continue; }
-        if (c === '"' || c === "'") q = c; else if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
-        else if (!d && (c === ' ' || c === '>' || c === '+' || c === '~')) st = i + 1;
-      }
+      s = s.trim(); var st = lastCompound(s);
       var tail = s.slice(st), pm = /::|:(before|after|first-line|first-letter)\b/i.exec(tail), at = pm ? st + pm.index : s.length;
       return s.slice(0, at) + ':where(' + sc + ')' + s.slice(at);
     }).join(',');
   }
-  function css(k, M) {
-    var ix = IDX, sc = '[data-pal="' + k + '"],[data-pal="' + k + '"] *', out = '';
-    function val(p, v) { v = recolor(v, M); if (ix.kre && group(p) === 'animation') v = v.replace(ix.kre, function (m, a, nm) { return a + nm + '--' + k; }); return v; }
-    function emit(list) {
-      var s = '';
-      list.forEach(function (it) {
-        if (it.l) { s += it.m + '{' + emit(it.l) + '}'; return; }
-        s += scope(it.s, sc) + '{' + it.d.map(function (d) { return d[0] + ':' + val(d[0], d[1]); }).join(';') + '}\n';
-      });
-      return s;
+  /* cor sólida de um valor CSS (o CSSOM serializa as cores como rgb()/rgba()); null = gradiente, var(), translúcida… */
+  function solid(v) {
+    v = String(v).replace(/\s*!important\s*$/i, '').trim();
+    var m = /^#([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(v);
+    if (m) { var hx = m[1]; if (hx.length === 3) hx = hx[0] + hx[0] + hx[1] + hx[1] + hx[2] + hx[2]; return hexRGB('#' + hx); }
+    m = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(v);
+    if (m && (m[4] == null || +m[4] >= .95)) return [+m[1], +m[2], +m[3]];
+    if (/^white$/i.test(v)) return [255, 255, 255];
+    return null;
+  }
+  function con(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+  var WHITE = [255, 255, 255], NAVYC = [0, 42, 70];
+  /* tinta legível sobre a cor de destaque: numa regra cujo fundo é o laranja A&M (agora a cor de destaque), se o texto (o declarado
+     ali ou — sem declaração — o branco/navy que a A&M usa sobre o laranja) cair abaixo de 3:1 E abaixo do contraste original, o texto
+     vira o melhor entre o branco e a principal escura. Um destaque tão escuro quanto o laranja A&M não muda nada */
+  function ink(it, M) {
+    var bg = null; it.d.forEach(function (d) { if (group(d[0]) === 'background') { var c = solid(d[1]); bg = c && family(c) === 'a' ? c : null; } });
+    if (!bg) return null;
+    var bn = M.fn(bg); if (!bn) return null;
+    var nv = M.fn(NAVYC) || NAVYC, best = con(WHITE, bn) >= con(nv, bn) ? WHITE : nv, fg = null;
+    it.d.forEach(function (d) { if (d[0] === 'color') fg = solid(d[1]); });
+    if (fg) { var fn = M.fn(fg) || fg, cn = con(fn, bn); return cn < Math.min(3, con(fg, bg)) - .05 && con(best, bn) > cn ? 'rgb(' + best.join(',') + ')' : null; }
+    return con(WHITE, bn) < Math.min(3, con(WHITE, bg)) - .05 || con(nv, bn) < Math.min(3, con(NAVYC, bg)) - .05 ? 'rgb(' + best.join(',') + ')' : null;
+  }
+  function closeMq(m) { return m ? new Array(m.split('\u0001').length + 1).join('}') + '\n' : ''; }
+  function css(k, M, inc) {
+    var ix = IDX, sc = '[data-pal="' + k + '"],[data-pal="' + k + '"] *', out = '', used = {}, body = '', open = '';
+    function val(p, v) {
+      v = recolor(v, M);
+      if (ix.kre && group(p) === 'animation') v = v.replace(ix.kre, function (m, a, nm) { used[nm] = 1; return a + nm + '--' + k; });
+      return v;
     }
-    KF.forEach(function (t) { out += recolor(t, M).replace(/^@(-webkit-)?keyframes\s+("?)([\w-]+)\2/, function (m, w, q, nm) { return '@keyframes ' + nm + '--' + k; }) + '\n'; });
+    Object.keys(inc).map(Number).sort(function (a, b) { return a - b; }).forEach(function (i) {
+      var it = ix.items[i];
+      if (it.m !== open) { body += closeMq(open); open = it.m; if (open) body += it.mq.join('{') + '{'; }
+      var tx = ink(it, M), ds = it.d.map(function (d) { return d[0] + ':' + (tx && d[0] === 'color' ? tx : val(d[0], d[1])); });
+      if (tx && !it.d.some(function (d) { return d[0] === 'color'; })) ds.push('color:' + tx);
+      body += scope(it.s, sc) + '{' + ds.join(';') + '}\n';
+    });
+    body += closeMq(open);
+    /* só os keyframes que as regras incluídas usam */
+    KF.forEach(function (f) { if (used[f.n]) out += recolor(f.t, M).replace(/^@(-webkit-)?keyframes\s+("?)([\w-]+)\2/, function (m, w, q, nm) { return '@keyframes ' + nm + '--' + k; }) + '\n'; });
     /* a cor herdada do palco (.am-stage{color:#002A46}) entra pelo próprio .am-el */
     out += ':where([data-pal="' + k + '"]){color:' + recolor('#002A46', M) + '}\n';
-    return out + emit(ix.items);
+    return out + body;
   }
-  function ensure(k, n) {
-    if (STY[k] && STY[k].isConnected) { touch(k); return; }
-    if (!IDX || !IDX.node || !IDX.node.isConnected) build();
+  /* UMA folha por paleta com a união (sem repetição) das regras de que os elementos dessa paleta precisam — só as das classes
+     presentes em cada elemento, ou seja, do tipo dele; cresce quando entra um tipo novo na mesma paleta (o texto é refeito na
+     ordem original, então a cascata se mantém) */
+  function ensure(k, n, node) {
+    if (!IDX || !IDX.node || !IDX.node.isConnected) { build(); Object.keys(STY).forEach(function (x) { if (STY[x].st) STY[x].st.remove(); }); STY = {}; }
     if (!IDX.node) return;
-    var st = document.createElement('style'); st.id = 'am-pal-' + k; st.setAttribute('data-am-pal', k);
-    st.textContent = css(k, mapOf(n, k));
-    IDX.node.parentNode.insertBefore(st, IDX.node.nextSibling); STY[k] = st; touch(k); gc();
+    var S = STY[k] || (STY[k] = { st: null, inc: {} }), add = false;
+    needed(node).forEach(function (i) { if (!S.inc[i]) { S.inc[i] = 1; add = true; } });
+    if (S.st && S.st.isConnected && !add) return;
+    if (!S.st || !S.st.isConnected) { S.st = document.createElement('style'); S.st.id = 'am-pal-' + k; S.st.setAttribute('data-am-pal', k); IDX.node.parentNode.insertBefore(S.st, IDX.node.nextSibling); }
+    S.st.textContent = css(k, mapOf(n, k), S.inc);
   }
-  function touch(k) { var i = ORDER.indexOf(k); if (i >= 0) ORDER.splice(i, 1); ORDER.push(k); }
-  /* o seletor de cor do sistema gera uma paleta por movimento: guarda as 12 mais recentes e as que ainda estão na página */
-  function gc() {
-    if (ORDER.length <= 12) return;
-    ORDER.slice(0, ORDER.length - 12).forEach(function (k) {
+  /* limpeza: as folhas de paletas que nenhum elemento da página usa mais (outra cor escolhida, slide trocado, desfazer, seletor do
+     sistema arrastando = uma paleta por passo) saem pouco depois do último desenho (runtime.js chama palSweep a cada renderEl) */
+  function sweep() {
+    sweepT = 0;
+    Object.keys(STY).forEach(function (k) {
       if (document.querySelector('[data-pal="' + k + '"]')) return;
-      if (STY[k]) STY[k].remove(); delete STY[k]; delete MAPS[k]; ORDER.splice(ORDER.indexOf(k), 1);
+      if (STY[k].st) STY[k].st.remove(); delete STY[k]; delete MAPS[k];
     });
   }
+  function palSweep() { if (!sweepT && Object.keys(STY).length) sweepT = setTimeout(sweep, 1200); }
   function palTag(node, el) {
     var n = norm(el && el.pal); if (!n || !node) return;
     var k = keyOf(n); node.setAttribute('data-pal', k);
-    try { ensure(k, n); } catch (er) { if (window.console && console.warn) console.warn('AMRT: cores do componente', er); }
+    try { ensure(k, n, node); } catch (er) { if (window.console && console.warn) console.warn('AMRT: cores do componente', er); }
   }
-  R.palHTML = palHTML; R.palTag = palTag;
-  R.pal = { norm: norm, key: keyOf, family: function (hex) { return HEX.test(hex) ? family(hexRGB(hex)) : ''; }, map: function (hex, pal) { var n = norm(pal); if (!n || !HEX.test(hex)) return hex; var o = mapOf(n, keyOf(n)).fn(hexRGB(hex)); return o ? '#' + h2(o[0]) + h2(o[1]) + h2(o[2]) : hex.toUpperCase(); }, recolor: function (s, pal) { var n = norm(pal); return n ? recolor(String(s), mapOf(n, keyOf(n))) : s; }, index: function () { return IDX || build(); },
+  R.palHTML = palHTML; R.palTag = palTag; R.palSweep = palSweep;
+  R.pal = { norm: norm, key: keyOf, family: function (hex) { return HEX.test(hex) ? family(hexRGB(hex)) : ''; }, map: function (hex, pal) { var n = norm(pal); if (!n || !HEX.test(hex)) return hex; var o = mapOf(n, keyOf(n)).fn(hexRGB(hex)); return o ? '#' + h2(o[0]) + h2(o[1]) + h2(o[2]) : hex.toUpperCase(); }, recolor: function (s, pal) { var n = norm(pal); return n ? recolor(String(s), mapOf(n, keyOf(n))) : s; }, index: function () { return IDX || build(); }, sweep: sweep,
     contrast: function (x, y) { if (!HEX.test(x) || !HEX.test(y)) return 0; var a = lum(hexRGB(x)), b = lum(hexRGB(y)); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); } };
 })(window.AMRT);
 
@@ -4044,23 +4135,26 @@ window.AMRT = (function () {
    no campo 'colors:N' (rótulos) e em cols(d) (cores efetivas, usadas pelo painel do editor); legendas usam as mesmas cores. */
 (function (R) {
   'use strict';
-  var U = R.util, ucols = U.ucols, mixHex = U.mixHex, esc = U.esc, num = U.num, fmt = U.fmt, fmtN = U.fmtN, CQ = U.CQ, E = U.E, arr = U.arr, VV = U.VV, nid = U.nid;
+  var U = R.util, ucols = U.ucols, ukeep = U.ukeep, kcols = U.kcols, mixHex = U.mixHex, lumHex = U.lumHex, esc = U.esc, num = U.num, fmt = U.fmt, fmtN = U.fmtN, CQ = U.CQ, E = U.E, arr = U.arr, VV = U.VV, nid = U.nid;
   /* paletas: séries categóricas, rampa ordinal (funil), texto, grade e eixo; k = 'light' | 'dark' */
   var TH = {
     light: { dk: false, pal: ['#002A46', '#4A6FA5', '#A3B8D6', '#F78C16'], ramp: ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#A3B8D6', '#C9D6E8'], txt: '#3E4C5E', val: '#002A46', mut: '#43698F', grid: '#E2E7EF', axis: '#CBD4E1', neg: '#C9D6E8', hatch: '#fff', band: ['#EEF2F7', '#DCE5F0', '#C9D6E8'], ice: '#EEF2F7' },
     dark: { dk: true, pal: ['#FFFFFF', '#7EA1C3', '#C9D6E8', '#F78C16'], ramp: ['#FFFFFF', '#DCE5F0', '#C9D6E8', '#A3B8D6', '#7EA1C3', '#43698F'], txt: '#C9D6E8', val: '#FFFFFF', mut: '#A3B8D6', grid: 'rgba(255,255,255,.16)', axis: 'rgba(255,255,255,.35)', neg: '#7EA1C3', hatch: '#002A46', band: ['rgba(255,255,255,.08)', 'rgba(255,255,255,.14)', 'rgba(255,255,255,.22)'], ice: 'rgba(255,255,255,.12)' }
   };
   function base(d) { return TH[d && d.style === 'dark' ? 'dark' : 'light']; }
-  function theme(d) {
-    var b = base(d), c = ucols(d); if (!c.some(Boolean)) return b;
+  /* el: com “Cores do componente” (el.pal) as cores escolhidas saem marcadas (U.ukeep: #RRGGBBFF) e o recolorir não as troca.
+     Rampa do funil: tons de colors[0] em direção ao branco; com uma cor clara num gráfico para fundo claro, em direção ao preto
+     (senão as últimas etapas somem no slide branco) */
+  function theme(d, el) {
+    var b = base(d), c = ucols(d), K = ukeep(el); if (!c.some(Boolean)) return b;
     var t = {}; Object.keys(b).forEach(function (k) { t[k] = b[k]; });
-    t.pal = b.pal.map(function (x, k) { return c[k] || x; });
-    if (c[0]) t.ramp = [0, .16, .32, .48, .62, .74].map(function (f) { return f ? mixHex(c[0], f) : c[0].toUpperCase(); });
+    t.pal = b.pal.map(function (x, k) { return c[k] ? K(c[k]) : x; });
+    if (c[0]) { var dn = !b.dk && lumHex(c[0]) > .7; t.ramp = [0, .16, .32, .48, .62, .74].map(function (f) { return K(f ? mixHex(c[0], dn ? -f * .8 : f) : c[0].toUpperCase()); }); }
     return t;
   }
   /* cores efetivas de cada posição de data.colors (painel do editor): idx = posições da paleta base usadas por padrão */
   function colsOf(d, idx, extra) { var c = ucols(d), b = base(d); return idx.map(function (k, i) { return c[i] || (typeof k === 'number' ? b.pal[k] : k) || extra; }); }
-  function lum(c) { var m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return 1; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
+  function lum(c) { var m = /^#?([0-9a-f]{6})(?:ff)?$/i.exec(c || ''); if (!m) return 1; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
   function inkOn(c) { return lum(c) < .55 ? '#FFFFFF' : '#002A46'; }
   var STYLE = ['style', 'Paleta', 'sel:light=Para fundo claro|dark=Para fundo escuro'];
   /* texto SVG: o = {fs, a (âncora), w (peso), c (condensada), f (cor), cls, st (style)} */
@@ -4082,7 +4176,7 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0, 1, 2, 3]); },
     tip: 'Duplo clique no nome de uma série (legenda) para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'columns'), th = theme(d), cats = arr(d.cats), S = rowsOf(d.series).slice(0, 4), n = Math.max(1, cats.length), m = Math.max(1, S.length), mode = ['cluster', 'stack', 'pct'].indexOf(d.mode) >= 0 ? d.mode : 'cluster', u = String(d.unit || '');
+      var v = VV(el, 'columns'), th = theme(d, el), cats = arr(d.cats), S = rowsOf(d.series).slice(0, 4), n = Math.max(1, cats.length), m = Math.max(1, S.length), mode = ['cluster', 'stack', 'pct'].indexOf(d.mode) >= 0 ? d.mode : 'cluster', u = String(d.unit || '');
       var top = d.title ? h * .15 : h * .06, bot = h * .16, L = w * .02, Rr = w * .98, ch = h - top - bot, gw = (Rr - L) / n, fs = Math.max(10, Math.min(h * .042, gw * .14)), o = '';
       var val = function (s, i) { return Math.max(0, num(((S[s] || {}).v || [])[i])); }, tot = cats.map(function (c, i) { var t = 0; for (var s = 0; s < m; s++) t += val(s, i); return t; });
       var mx = mode === 'cluster' ? Math.max.apply(null, S.map(function (s, k) { return Math.max.apply(null, cats.map(function (c, i) { return val(k, i); }).concat([0])); }).concat([1])) : mode === 'pct' ? 100 : Math.max.apply(null, tot.concat([1]));
@@ -4116,10 +4210,10 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0, '#F78C16']); },
     tip: 'Duplo clique num nome ou no título para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'hbars'), th = theme(d), it = rowsOf(d.items).map(function (o, k) { return { t: o.t, v: num(o.v), k: k }; }), hl = hlList(d.hl), u = String(d.unit || '');
+      var v = VV(el, 'hbars'), th = theme(d, el), it = rowsOf(d.items).map(function (o, k) { return { t: o.t, v: num(o.v), k: k }; }), hl = hlList(d.hl), u = String(d.unit || '');
       if (d.sort !== 'none') it.sort(function (a, b) { return b.v - a.v; });
       var mx = Math.max.apply(null, it.map(function (o) { return Math.abs(o.v); }).concat([1])), n = Math.max(1, it.length), fs = Math.max(10, Math.min(h / (n + 1.5) * .34, w * .026));
-      return '<div class="fx fxch fxhb fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + (ucols(d)[1] ? ';--chh:' + ucols(d)[1] : '') + '">' + (d.title ? E('title', d.title, 'ch-tt') : '') + '<div class="hb-rows">' + it.map(function (o, r) {
+      return '<div class="fx fxch fxhb fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + (ucols(d)[1] ? ';--chh:' + ukeep(el)(ucols(d)[1]) : '') + '">' + (d.title ? E('title', d.title, 'ch-tt') : '') + '<div class="hb-rows">' + it.map(function (o, r) {
         var on = hl.indexOf(r + 1) >= 0;
         return '<div class="hb-r' + (on ? ' hl' : '') + '" data-g="' + r + '" style="--r:' + r + '"><span class="hb-l">' + E('items.' + o.k + '.t', o.t) + '</span><span class="hb-t"><i class="hb-b" style="width:' + (Math.abs(o.v) / mx * 86).toFixed(2) + '%"></i><b class="hb-v"' + (v === 'race' ? ' data-count="' + o.v + '" data-dec="' + (Math.abs(o.v % 1) > .001 ? 1 : 0) + '" data-suf="' + esc(u) + '"' : '') + '>' + esc(fmtN(o.v) + u) + '</b></span></div>';
       }).join('') + '</div></div>';
@@ -4136,7 +4230,7 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0, 1, 'neg']).map(function (x, k) { return k === 2 && x === 'neg' ? base(d).neg : x; }); },
     tip: 'Marque as barras de total com “t” na terceira coluna. Valores negativos saem hachurados em azul-claro.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'waterfall'), th = theme(d), cu = ucols(d), negC = cu[2] || th.neg, negS = cu[2] ? mixHex(cu[2], -.25) : th.pal[2], con = base(d).pal[2], it = rowsOf(d.items), n = Math.max(1, it.length), run = 0, bars = [], u = String(d.unit || '');
+      var v = VV(el, 'waterfall'), th = theme(d, el), cu = ucols(d), negC = cu[2] ? ukeep(el)(cu[2]) : th.neg, negS = cu[2] ? ukeep(el)(mixHex(cu[2], -.25)) : th.pal[2], con = base(d).pal[2], it = rowsOf(d.items), n = Math.max(1, it.length), run = 0, bars = [], u = String(d.unit || '');
       it.forEach(function (o, i) {
         var isT = String(o.k || '').trim().toLowerCase().charAt(0) === 't';
         if (isT) { var tv = i === 0 || num(o.v) ? num(o.v) : run; run = tv; bars.push({ t: o.t, a: 0, b: tv, tot: 1, val: tv }); } /* total: usa o valor digitado; com 0, a soma corrente */
@@ -4170,9 +4264,9 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0, '#F78C16']); },
     tip: 'A marca laranja é a meta; a barra navy, o realizado. Duplo clique no nome para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'bullet'), th = theme(d), rs = rowsOf(d.rows), n = Math.max(1, rs.length), fs = Math.max(10, Math.min(h / n * .26, w * .024)), bd = String(d.bands || '').split(',').map(num).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });
+      var v = VV(el, 'bullet'), th = theme(d, el), rs = rowsOf(d.rows), n = Math.max(1, rs.length), fs = Math.max(10, Math.min(h / n * .26, w * .024)), bd = String(d.bands || '').split(',').map(num).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });
       var bands = '<i class="bu-z" style="left:0;width:100%;background:' + th.band[0] + '"></i>' + bd.map(function (p, k) { return '<i class="bu-z" style="left:' + p + '%;width:' + (100 - p) + '%;background:' + th.band[1 + k % 2] + '"></i>'; }).join('');
-      return '<div class="fx fxch fxbu fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + ';--chm:' + th.mut + (ucols(d)[1] ? ';--cht:' + ucols(d)[1] : '') + '">' + rs.map(function (r, k) {
+      return '<div class="fx fxch fxbu fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + ';--chm:' + th.mut + (ucols(d)[1] ? ';--cht:' + ukeep(el)(ucols(d)[1]) : '') + '">' + rs.map(function (r, k) {
         var mx = num(r.mx) || 100, val = num(r.v), tg = num(r.tg), pv = Math.max(0, Math.min(100, val / mx * 100)), pt = Math.max(0, Math.min(100, tg / mx * 100));
         return '<div class="bu-r" data-g="' + k + '" style="--r:' + k + '"><span class="bu-l">' + E('rows.' + k + '.t', r.t) + '</span><span class="bu-t">' + bands + '<i class="bu-b" style="width:' + pv.toFixed(2) + '%"></i><i class="bu-tg" style="left:' + pt.toFixed(2) + '%"></i></span><b class="bu-v"><span data-count="' + val + '" data-dec="' + (Math.abs(val % 1) > .001 ? 1 : 0) + '">' + esc(fmtN(val)) + '</span><small> / ' + esc(fmtN(tg)) + '</small></b></div>';
       }).join('') + '</div>';
@@ -4189,7 +4283,7 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0]); },
     tip: 'Clique numa bola para trocar a nota (0 → 4). Duplo clique num nome para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'harvey'), th = theme(d), cols = arr(d.cols), rows = rowsOf(d.rows), m = Math.max(1, cols.length), n = Math.max(1, rows.length), best = Math.round(num(d.best)) - 1, fs = Math.max(9, Math.min(h / (n + 1.3) * .3, w / (m + 2.4) * .13)), ink = th.pal[0];
+      var v = VV(el, 'harvey'), th = theme(d, el), cols = arr(d.cols), rows = rowsOf(d.rows), m = Math.max(1, cols.length), n = Math.max(1, rows.length), best = Math.round(num(d.best)) - 1, fs = Math.max(9, Math.min(h / (n + 1.3) * .3, w / (m + 2.4) * .13)), ink = th.pal[0];
       var g = '<div class="fx fxch fxhv fxv-' + v + '" style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chg:' + th.grid + ';grid-template-columns:2.4fr repeat(' + m + ',1fr);grid-template-rows:1.1fr repeat(' + n + ',1fr)"><div></div>';
       cols.forEach(function (c, k) { g += '<div class="hv-h' + (k === best ? ' best' : '') + '" style="--c:' + k + '">' + E('cols.' + k, c) + '</div>'; });
       rows.forEach(function (r, i) {
@@ -4213,7 +4307,7 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [base(d).ramp[0]]); },
     tip: 'A largura de cada etapa segue a raiz do valor (como na leitura de área). Duplo clique num nome para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'funnel'), th = theme(d), it = rowsOf(d.items), n = Math.max(1, it.length), v0 = Math.max(1, num((it[0] || {}).v)), fw = w * .58, cx = fw / 2, sh = h / n, fs = Math.max(10, Math.min(sh * .26, w * .028)), o = '', conv = '', worst = -1, wr = 2, u = String(d.unit || '');
+      var v = VV(el, 'funnel'), th = theme(d, el), it = rowsOf(d.items), n = Math.max(1, it.length), v0 = Math.max(1, num((it[0] || {}).v)), fw = w * .58, cx = fw / 2, sh = h / n, fs = Math.max(10, Math.min(sh * .26, w * .028)), o = '', conv = '', worst = -1, wr = 2, u = String(d.unit || '');
       var Wd = function (k) { return Math.max(.12, Math.sqrt(Math.max(0, num((it[k] || {}).v)) / v0)) * fw; }, C = th.ramp;
       it.forEach(function (s, k) { if (k) { var r = num(s.v) / Math.max(1, num(it[k - 1].v)); if (r < wr) { wr = r; worst = k; } } });
       it.forEach(function (s, k) {
@@ -4236,12 +4330,12 @@ window.AMRT = (function () {
     cols: function (d) { return colsOf(d, [0, 3, 1]); },
     tip: 'A 2ª série sai tracejada em laranja (meta). Duplo clique no nome de uma série para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'radar'), th = theme(d), ax = arr(d.axes), m = Math.max(3, ax.length), S = rowsOf(d.series).slice(0, 3), mx = num(d.max) || 5, sz = Math.min(w * .78, h * .8), cx = w / 2, cy = h * .47, Rr = sz / 2 * .78, fs = Math.max(10, Math.min(h * .042, w * .03));
+      var v = VV(el, 'radar'), th = theme(d, el), ax = arr(d.axes), m = Math.max(3, ax.length), S = rowsOf(d.series).slice(0, 3), mx = num(d.max) || 5, sz = Math.min(w * .78, h * .8), cx = w / 2, cy = h * .47, Rr = sz / 2 * .78, fs = Math.max(10, Math.min(h * .042, w * .03));
       while (ax.length < m) ax.push('');
       var Pt = function (k, r) { var a = -Math.PI / 2 + k * 2 * Math.PI / m; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; }, o = '', lv = Math.max(1, Math.min(10, Math.round(mx)));
       for (var l = 1; l <= lv; l++) o += '<path d="M' + ax.map(function (x, k) { return Pt(k, Rr * l / lv).map(function (q) { return q.toFixed(1); }).join(' '); }).join('L') + 'Z" fill="none" stroke="' + th.grid + '" stroke-width="1"/>';
       ax.forEach(function (a, k) { var p = Pt(k, Rr), q = Pt(k, Rr + fs * 1.3), an = Math.abs(q[0] - cx) < 4 ? 'middle' : (q[0] > cx ? 'start' : 'end'); o += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '" stroke="' + th.grid + '"/>' + T(q[0], q[1] + fs * .35, a, { fs: fs, a: an, w: 700, c: 1, f: th.txt }); });
-      var col = R.FX.radar.cols(d);
+      var col = kcols(d, el, R.FX.radar.cols(d));
       S.forEach(function (s, j) {
         var pts = ax.map(function (x, k) { return Pt(k, Rr * Math.max(0, Math.min(mx, num((s.v || [])[k]))) / mx); }), dd = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L') + 'Z';
         var per = pts.reduce(function (a, p, k) { var q = pts[(k + 1) % pts.length]; return a + Math.hypot(q[0] - p[0], q[1] - p[1]); }, 0) || 1; /* tracejado em unidades de pathLength=1 */
@@ -5296,9 +5390,10 @@ window.AMRT = (function () {
     ['weight', 'lh', 'ls', 'size', 'radius', 'strokeW', 'rot', 'opacity'].forEach(function (k) { if (o[k] != null) { var v = +o[k]; if (isFinite(v)) o[k] = v; else delete o[k]; } });
     Object.keys(EL_TOKENS).forEach(function (k) { if (o[k] != null && EL_TOKENS[k].indexOf(o[k]) < 0) delete o[k]; });
     if (o.rot != null) { var rr = normRot(o.rot); if (rr) o.rot = rr; else delete o.rot; } /* giro em graus inteiros, (-180, 180] */
+    if (o.type === 'line' && o.rot != null) { turnEl(o, o.rot); delete o.rot; } /* linha não guarda giro (arquivo antigo/editado à mão): vira pontas giradas, o desenho fica igual e as alças batem */
     ['flipH', 'flipV'].forEach(function (k) { if (o[k] !== true || !RT.flipOK || !RT.flipOK(o)) delete o[k]; }); /* espelho: só true, e só onde ele existe (foto, forma, ícone) */
     if (o.bend != null) { if (isFinite(+o.bend)) o.bend = Math.max(0.05, Math.min(0.95, +o.bend)); else delete o.bend; }
-    if (o.pal != null) { var pl = o.type === 'fx' ? safePal(o.pal) : null; if (pl) o.pal = pl; else delete o.pal; } /* cores do componente (S20): só #rrggbb; vazio sai */
+    if (o.pal != null) { var pl = palOk(o) ? safePal(o.pal) : null; if (pl) o.pal = pl; else delete o.pal; } /* cores do componente (S20): só #rrggbb; vazio sai; só onde o painel oferece a seção (não em ícones nem na Marca A&M) */
     if (o.zoom != null) { if (o.zoom === false || o.zoom === true) { } else delete o.zoom; } /* ampliar na apresentação: só booleano (false desliga num modelo/imagem; true liga num componente) */
     if (o.html != null) o.html = cleanHTML(String(o.html));
     if (o.type === 'image') { o.src = safeSrc(o.src); if (!o.src) return null; }
@@ -5317,7 +5412,7 @@ window.AMRT = (function () {
     if (a.depth != null) o.anim.depth = pickN(a.depth, [0, 1, 2], 0);
     if (F) {
       o.data = o.data && typeof o.data === 'object' && !Array.isArray(o.data) ? o.data : clone(F.data);
-      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (typeof v === 'string' && !TOKEN_RE.test(v) && !COLOR_RE.test(v)) delete o.data[k]; });
+      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (v != null && !(typeof v === 'string' && (TOKEN_RE.test(v) || COLOR_RE.test(v))) && !(typeof v === 'number' && isFinite(v))) delete o.data[k]; }); /* texto simples, cor ou número finito (ex.: espessura do traço do ícone em stroke); lista, objeto e booleano saem */
       if (o.data.colors != null) { /* cores das séries (gráficos): até 6 posições, só #rrggbb; posição inválida = '' (cor padrão) */
         var dc = Array.isArray(o.data.colors) ? o.data.colors.slice(0, 6).map(function (c) { return typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : ''; }) : [];
         while (dc.length && !dc[dc.length - 1]) dc.pop();
@@ -5363,7 +5458,8 @@ window.AMRT = (function () {
     if (!d) { if (!quiet) toast('Arquivo sem apresentação reconhecível.'); return false; }
     if (!d.id) d.id = deckId(); /* modelos prontos e arquivos antigos ganham id ao abrir */
     deck = d; cur = 0; pick([]); editingId = null; freshId = null; hist.length = 0; fut.length = 0; rev++; last = JSON.stringify(deck);
-    $('#title').value = deck.title || ''; renderAll(); updUndo(); if (msg) toast(msg);
+    $('#title').value = deck.title || ''; renderAll(); $('#thumbs').scrollTop = 0; /* outra obra: a lista começa no slide 1, não na rolagem da anterior */
+    updUndo(); if (msg) toast(msg);
     if (!noHist) histCall('put', JSON.parse(last)); /* arquivo aberto, projeto pronto ou rascunho entram em Minhas obras */
     return true;
   }
@@ -5440,8 +5536,8 @@ window.AMRT = (function () {
     }
     if (rotTip) html += '<div class="rottip" style="left:' + pc(rotTip.x, W) + ';top:' + pc(rotTip.y, H) + '">' + rotTip.a + '°</div>';
     /* barra do quadro (girar 90° e inverter): some ao editar texto e enquanto arrasta, redimensiona ou gira */
-    var bar = !busy && list.length && !editingId;
-    if (bar) html += '<div class="frbar" id="frBar" role="toolbar" aria-label="Girar e inverter">' + frBtns(list, 'data-fr') + '</div>';
+    var bar = !busy && list.length && !editingId && (list.length > 1 || canFlip(el));
+    if (bar) html += '<div class="frbar" id="frBar" role="toolbar" aria-label="Girar e inverter">' + barBtns(list) + '</div>';
     (guides || []).forEach(function (g) { html += g.v != null ? '<div class="guide v" style="left:' + pc(g.v, W) + '"></div>' : '<div class="guide h" style="top:' + pc(g.h, H) + '"></div>'; });
     selLayer.innerHTML = html;
     fitArrow();
@@ -5451,15 +5547,28 @@ window.AMRT = (function () {
      direito da alça (ou para o esquerdo, se faltar palco) */
   function fitArrow() {
     var fa = $('#fxArrow', selLayer), rh = $('.rhdl', selLayer); if (!fa || !rh) return;
-    var wr = wrap.getBoundingClientRect(), a = fa.getBoundingClientRect(), r = rh.getBoundingClientRect(), x;
+    var wr = wrap.getBoundingClientRect(), cr = $('#cv').getBoundingClientRect(), a = fa.getBoundingClientRect(), r = rh.getBoundingClientRect(), x;
     if (a.right < r.left - 6 || a.left > r.right + 6 || a.bottom < r.top - 6 || a.top > r.bottom + 6) return;
-    if (r.right + 8 + a.width <= wr.right - 4) x = r.right + 8 + a.width; else if (r.left - 8 - a.width >= wr.left + 4) x = r.left - 8; else return;
+    /* ao lado da alça dentro do slide; sem espaço (palco estreito e rótulo longo, ex.: “Efeito: Quadrante a quadrante”), ao lado da alça na
+       margem cinza do #cv; nem assim, acima da alça */
+    if (r.right + 8 + a.width <= wr.right - 4) x = r.right + 8 + a.width; else if (r.left - 8 - a.width >= wr.left + 4) x = r.left - 8;
+    else if (r.right + 8 + a.width <= cr.right - 4) x = r.right + 8 + a.width; else if (r.left - 8 - a.width >= cr.left + 4) x = r.left - 8;
+    else { fa.style.top = ((r.top - 8 - wr.top) / wr.height * 100) + '%'; return; }
     fa.style.left = ((x - wr.left) / wr.width * 100) + '%';
   }
+  /* barra presa: depois de um clique num botão dela, fica no mesmo lugar (o quadro muda de forma a cada 90°) enquanto o ponteiro estiver sobre
+     ela e a seleção for a mesma — assim o segundo clique cai no mesmo botão. Sai ao tirar o ponteiro da barra */
+  var barPin = null;
+  function pinBar() { var b = $('#frBar'); barPin = b ? { k: selIds.join(','), l: b.style.left, t: b.style.top } : null; }
+  document.addEventListener('pointermove', function (e) {
+    if (!barPin || (e.target && e.target.closest && e.target.closest('#frBar'))) return;
+    barPin = null; if (!busy && $('#frBar')) placeBar(sels(), sel());
+  }, { passive: true });
   /* posição da barra: no alto à esquerda do quadro (espelho do “Animação” à direita); quadro estreito, alça de girar ou topo do slide no
      caminho → embaixo do quadro. Nunca sobre o #fxArrow, a alça de girar ou o rótulo do grupo; sempre dentro do palco */
   function placeBar(list, el) {
     var bar = $('#frBar'); if (!bar) return;
+    if (barPin) { if (barPin.k === selIds.join(',')) { bar.style.left = barPin.l; bar.style.top = barPin.t; return; } barPin = null; }
     var wr = wrap.getBoundingClientRect(), k = wr.width / W, multi = list.length > 1, g = multi ? groupBox(list) : aabb(el), pad = multi ? 7 : el.type === 'line' ? 6 : 0;
     var bw = bar.offsetWidth, bh = bar.offsetHeight, gap = 8, X0 = g.x * k - pad, Y0 = g.y * k - pad, X1 = (g.x + g.w) * k + pad, Y1 = (g.y + g.h) * k + pad;
     var avoid = $$('#fxArrow,.rhdl,.gbox span', selLayer).map(function (n) { var r = n.getBoundingClientRect(); return { l: r.left - wr.left - 4, t: r.top - wr.top - 4, r: r.right - wr.left + 4, b: r.bottom - wr.top + 4 }; });
@@ -5482,6 +5591,11 @@ window.AMRT = (function () {
     if (list.some(canFlip)) return '';
     if (list.length > 1) return 'Nenhum elemento da seleção pode ser espelhado: textos, gráficos e modelos com texto ficariam de trás para frente.';
     return list[0] && list[0].type === 'text' ? 'Textos não se espelham: a leitura ficaria de trás para frente.' : 'Gráficos e modelos com texto não se espelham: a leitura ficaria de trás para frente.';
+  }
+  /* barra do quadro: só os botões que valem para a seleção (sem botões desativados no palco; o painel e o menu mostram o motivo) */
+  function barBtns(list) {
+    var fl = list.some(canFlip);
+    return FR.filter(function (f) { return fl || f[0].indexOf('flip') < 0; }).map(function (f) { return '<button type="button" data-fr="' + f[0] + '" title="' + esc(f[1]) + '" aria-label="' + esc(f[1]) + '">' + svgI(f[0]) + '</button>'; }).join('');
   }
   function hasRot(list) { return list.some(function (e) { return e.type !== 'line' && +e.rot; }); }
   function frBtns(list, attr, zero) {
@@ -5532,10 +5646,12 @@ window.AMRT = (function () {
     var F = RT.FX[el.kind], d = el.data || {}, n = Math.max(1, Math.min(6, +f[2].split(':')[1] || 1)), eff = F.cols ? F.cols(d) : [], nm = f[3], names;
     if (Array.isArray(nm)) names = nm.slice(0, n);
     else { var rows = Array.isArray(d[nm]) ? d[nm] : []; names = rows.slice(0, n).map(function (r, k) { return (r && typeof r.t === 'string' && r.t.trim()) || 'Série ' + (k + 1); }); if (!names.length) names = ['Série 1']; }
-    var custom = Array.isArray(d.colors) && d.colors.some(function (c) { return HEXC.test(c || ''); });
+    var u = Array.isArray(d.colors) ? d.colors : [], custom = u.some(function (c) { return HEXC.test(c || ''); });
+    /* a cor que o gráfico desenha: a escolhida (exata, também com “Cores do componente”) ou a padrão — que, com el.pal, vira o tom da paleta */
+    var shown = eff.map(function (c, k) { return HEXC.test(u[k] || '') ? String(u[k]).toUpperCase() : el.pal && RT.pal && HEXC.test(c || '') ? RT.pal.map(c, el.pal) : c; });
     return '<div class="cser-w"><span class="pf"><span>' + esc(f[1]) + '</span></span>' + names.map(function (t, k) {
-      return '<div class="cser"><span class="cser-n"><i style="background:' + (HEXC.test(eff[k] || '') ? eff[k] : '#FFFFFF') + '"></i>' + esc(t) + '</span>' + swatches('data.colors.' + k, eff[k], false, QUICK) + '</div>';
-    }).join('') + '<div class="row r1"><button type="button" class="btnw" data-act="colors-reset"' + (custom ? '' : ' disabled') + ' title="Volta às cores padrão do gráfico (paleta A&amp;M)">Cores A&amp;M</button></div></div>';
+      return '<div class="cser"><span class="cser-n"><i style="background:' + (HEXC.test(shown[k] || '') ? shown[k] : '#FFFFFF') + '"></i>' + esc(t) + '</span>' + swatches('data.colors.' + k, shown[k], false, QUICK) + '</div>';
+    }).join('') + (el.pal ? '<p class="note cser-pal">Com “Cores do componente”, as séries sem cor própria seguem a cor principal; uma cor escolhida aqui fica exatamente como foi escolhida.</p>' : '') + '<div class="row r1"><button type="button" class="btnw" data-act="colors-reset"' + (custom ? '' : ' disabled') + ' title="Volta às cores padrão do gráfico (paleta A&amp;M)">Cores A&amp;M</button></div></div>';
   }
   function seg(p, v, opts) { return '<div class="seg">' + opts.map(function (o) { return '<button class="' + (String(o[0]) === String(v) ? 'on' : '') + '" data-set="' + p + '" data-v="' + o[0] + '" title="' + (o[2] || o[1]) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
   /* alinhamento vertical; no card “Cabeçalho” o título fica sempre na faixa do alto, então os botões aparecem desativados */
@@ -5741,14 +5857,50 @@ window.AMRT = (function () {
   /* “Cores do componente” (S20): el.pal = {p, a}; o runtime (rt-05-pal.js) troca o azul-marinho/azuis pela cor principal e o laranja
      pela de destaque, só neste elemento. Não vale para a Marca A&M nem para ícones (que já têm cores próprias) */
   function palOk(el) { var F = el && el.type === 'fx' && RT.FX[el.kind]; return !!(F && RT.palTag && F.cat !== 'Marca A&M' && !isIcon(el)); }
+  /* contraste dos textos DESTE componente com as cores escolhidas × com as cores A&M: desenha as duas versões fora da tela (sem
+     animação) e compara texto a texto; devolve o pior texto que ficou abaixo de 3:1 e pior que no A&M ({t, c}) ou null. Guardado por
+     tipo/dados/paleta: o painel redesenha muitas vezes */
+  var palProbeMemo = {}, palProbeN = 0;
+  function palProbe(el) {
+    var key = JSON.stringify([el.kind, el.variant, el.w, el.h, el.data, el.pal, slide().bg]);
+    if (palProbeMemo.hasOwnProperty(key)) return palProbeMemo[key];
+    if (++palProbeN > 40) { palProbeMemo = {}; palProbeN = 1; }
+    var host = document.createElement('div'), sbg = /^#[0-9a-f]{6}$/i.test(slide().bg || '') ? slide().bg : '#FFFFFF', res = null;
+    host.className = 'am-stage am-edit'; host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = 'position:fixed;left:-40000px;top:0;width:' + W + 'px;opacity:0;pointer-events:none;background:' + sbg;
+    var mk = function (id, pal) { var o = clone(el); o.id = id; o.x = 0; o.y = 0; delete o.rot; delete o.opacity; o.anim = { in: 'none' }; if (pal) o.pal = pal; else delete o.pal; return RT.renderEl(o, 0); };
+    var na = mk('pal-probe-a', null), nb = mk('pal-probe-b', el.pal);
+    host.appendChild(na); host.appendChild(nb); document.body.appendChild(host);
+    try {
+      var rgb = function (s) { var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(s || ''); return m ? [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]] : null; };
+      var lin = function (c) { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }, lum = function (c) { return .2126 * lin(c[0]) + .7152 * lin(c[1]) + .0722 * lin(c[2]); };
+      var bgOf = function (e) { for (var x = e; x && x !== host; x = x.parentElement) { var c = rgb(getComputedStyle(x).backgroundColor); if (c && c[3] > .6) return c; } return rgb(getComputedStyle(host).backgroundColor) || [255, 255, 255]; };
+      var pairs = function (root) {
+        var out = [], tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), t;
+        while ((t = tw.nextNode())) {
+          var e = t.parentElement, tx = t.nodeValue.trim(); if (!tx || !e) continue;
+          var cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+          var f = rgb(e.closest('svg') ? cs.fill : '') || rgb(cs.color), b = bgOf(e); if (!f) continue;
+          var x = lum(f), y = lum(b); out.push({ t: tx, c: (Math.max(x, y) + .05) / (Math.min(x, y) + .05) });
+        }
+        return out;
+      };
+      var A = pairs(na), B = pairs(nb);
+      B.forEach(function (o, i) { if (A[i] && o.c < 3 && o.c < A[i].c - .05 && (!res || o.c < res.c)) res = o; });
+    } catch (er) { res = null; }
+    host.remove();
+    return (palProbeMemo[key] = res);
+  }
   function palSec(el) {
-    var pl = el.pal || {};
+    var pl = el.pal || {}, bad = el.pal && RT.pal ? palProbe(el) : null;
+    /* sem cor própria, a amostra marcada é a cor A&M da linha (navy / laranja); clicá-la volta só aquela cor (applyProp apaga a chave) */
+    var row = function (def) { return SW.map(function (c) { return [c, c === def ? 'Cor A&M (sem troca)' : c]; }); };
     return '<div class="sec" id="palSec"><h3>Cores do componente</h3>' +
-      '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p) +
-      '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a) +
+      '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p || '#002A46', false, row('#002A46')) +
+      '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a || '#F78C16', false, row('#F78C16')) +
       (el.pal && RT.pal ? '<div class="pal-tones" title="Tons que o componente usa com estas cores">' + ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#C9D6E8', '#EEF2F7', '|', '#F78C16', '#FEF1E2'].map(function (c) { return c === '|' ? '<b></b>' : '<i style="background:' + RT.pal.map(c, el.pal) + '"></i>'; }).join('') + '</div>' : '') +
       '<p class="note">Cada azul do modelo vira um tom da cor principal com a mesma claridade (o azul-marinho vira a versão escura dela), então os textos continuam legíveis; o laranja vira a cor de destaque. Vale só para este elemento, também na apresentação e no arquivo salvo.</p>' +
-      (pl.a && RT.pal && RT.pal.contrast(pl.a, RT.pal.map('#002A46', el.pal)) < 3 ? '<p class="note pal-warn">Pouco contraste entre a cor de destaque e a principal escura: textos de destaque sobre ela podem ficar difíceis de ler. Experimente um destaque mais claro.</p>' : '') +
+      (bad ? '<p class="note pal-warn">Pouco contraste com estas cores: “' + esc(bad.t.length > 32 ? bad.t.slice(0, 31) + '…' : bad.t) + '” fica difícil de ler (' + String(Math.round(bad.c * 10) / 10).replace('.', ',') + ':1; o mínimo recomendado é 3:1). Experimente outra cor de destaque ou principal.</p>' : '') +
       '<div class="row r1"><button class="btnw ic" data-act="palreset"' + (el.pal ? '' : ' disabled') + '>' + svgI('reset') + 'Restaurar cores A&amp;M</button></div></div>';
   }
   function focusPal() {
@@ -5844,6 +5996,11 @@ window.AMRT = (function () {
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    if (/^pal\.[pa]$/.test(path)) { /* cores do componente: a cor A&M da linha (navy / laranja) ou nenhuma = sem troca, apaga só essa chave */
+      var pk = path.slice(4), pv = typeof val === 'string' ? val.toUpperCase() : '';
+      if (!/^#[0-9A-F]{6}$/.test(pv) || pv === (pk === 'p' ? '#002A46' : '#F78C16')) { if (el.pal) { delete el.pal[pk]; if (!el.pal.p && !el.pal.a) delete el.pal; } rerenderEl(el); if (!live) commit(); return; }
+      val = pv;
+    }
     var mc = /^data\.colors\.([0-5])$/.exec(path);
     if (mc) { /* cor de uma série: data.colors[k] (as posições antes dela ficam '' = cor padrão) */
       if (el.type !== 'fx' || !el.data) return;
@@ -5920,13 +6077,15 @@ window.AMRT = (function () {
      Cor do seletor nativo arrastando: prévia ao vivo (sem commit); a escolha final grava */
   function openColorPop(b, kb) {
     if (!window.AMColorPop) return;
-    var path = b.dataset.cpick, lab = b.closest('.cser') ? $('.cser-n', b.closest('.cser')).textContent : (function () { var q = b.parentNode.previousElementSibling; return q && (q.classList.contains('pf') || q.tagName === 'H3') ? q.textContent : ''; })();
+    /* título do seletor: o nome do campo sem a dica em <small> (“Cor principal”, não “Cor principal (no lugar do…”) */
+    var path = b.dataset.cpick, lab = b.closest('.cser') ? $('.cser-n', b.closest('.cser')).textContent : (function () { var q = b.parentNode.previousElementSibling; if (!q || !(q.classList.contains('pf') || q.tagName === 'H3')) return ''; var c = (q.firstElementChild && q.classList.contains('pf') ? q.firstElementChild : q).cloneNode(true); $$('small', c).forEach(function (x) { x.remove(); }); return c.textContent.trim(); })();
+    flush(); /* pendências viram um passo próprio antes: a prévia do seletor do sistema volta exatamente ao que estava (onCancel) */
     var refocus = function () { var nb = $$('#props [data-cpick]').filter(function (x) { return x.dataset.cpick === path; })[0]; if (nb) nb.focus(); };
     window.AMColorPop.open(b, {
-      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW,
+      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
       onLive: function (c) { applyProp(path, c, true); },
       onPick: function (c, viaKey) { applyProp(path, c); renderProps(); if (viaKey) refocus(); },
-      onCancel: function (live) { if (live) { flush(); renderProps(); } },
+      onCancel: function (live) { if (live) { if (JSON.stringify(deck) !== last) restore(last); renderProps(); } }, /* Esc / clique fora depois da prévia: desfaz a prévia, sem gravar */
       onClose: function (viaKey) { if (viaKey) refocus(); }
     });
   }
@@ -6007,7 +6166,7 @@ window.AMRT = (function () {
   function bbox(el) { if (el.type === 'line') return { x: Math.min(el.x1, el.x2), y: Math.min(el.y1, el.y2), w: Math.abs(el.x2 - el.x1), h: Math.abs(el.y2 - el.y1) }; return { x: el.x, y: el.y, w: el.w, h: el.h }; }
   function groupBox(list) {
     var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
-    list.forEach(function (e) { var b = bbox(e); x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h); });
+    list.forEach(function (e) { var b = aabb(e); x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y); x1 = Math.max(x1, b.x + b.w); y1 = Math.max(y1, b.y + b.h); });
     return list.length ? { x: x0, y: y0, w: x1 - x0, h: y1 - y0 } : { x: 0, y: 0, w: 0, h: 0 };
   }
   function moveTo(el, nx, ny) { if (el.type === 'line') { var b = bbox(el), dx = nx - b.x, dy = ny - b.y; el.x1 += dx; el.x2 += dx; el.y1 += dy; el.y2 += dy; } else { el.x = nx; el.y = ny; } }
@@ -6026,19 +6185,19 @@ window.AMRT = (function () {
   function alignTo(list, k) {
     var ref = list.length > 1 ? groupBox(list) : { x: 0, y: 0, w: W, h: H };
     list.forEach(function (el) {
-      var b = bbox(el), x = b.x, y = b.y;
+      var b = aabb(el), o = bbox(el), x = b.x, y = b.y; /* mede pelo desenho (girado: a caixa que o contém); move a origem sem giro pelo mesmo tanto */
       if (k === 'l') x = ref.x; else if (k === 'c') x = ref.x + (ref.w - b.w) / 2; else if (k === 'r') x = ref.x + ref.w - b.w;
       else if (k === 't') y = ref.y; else if (k === 'm') y = ref.y + (ref.h - b.h) / 2; else if (k === 'b') y = ref.y + ref.h - b.h;
-      moveTo(el, Math.round(x), Math.round(y));
+      moveTo(el, Math.round(o.x + x - b.x), Math.round(o.y + y - b.y));
     });
   }
   function distribute(list, k) {
     if (list.length < 3) { toast('Selecione 3 ou mais elementos para distribuir.'); return false; }
-    var hz = k === 'h', o = list.map(function (el) { return { el: el, b: bbox(el) }; });
+    var hz = k === 'h', o = list.map(function (el) { return { el: el, b: aabb(el), o: bbox(el) }; });
     o.sort(function (p, q) { return hz ? (p.b.x + p.b.w / 2) - (q.b.x + q.b.w / 2) : (p.b.y + p.b.h / 2) - (q.b.y + q.b.h / 2); });
     var first = o[0].b, lastB = o[o.length - 1].b, span = hz ? (lastB.x + lastB.w) - first.x : (lastB.y + lastB.h) - first.y;
     var sum = o.reduce(function (a, q) { return a + (hz ? q.b.w : q.b.h); }, 0), gap = (span - sum) / (o.length - 1), pos = hz ? first.x : first.y;
-    o.forEach(function (q) { if (hz) moveTo(q.el, Math.round(pos), q.b.y); else moveTo(q.el, q.b.x, Math.round(pos)); pos += (hz ? q.b.w : q.b.h) + gap; });
+    o.forEach(function (q) { if (hz) moveTo(q.el, Math.round(q.o.x + pos - q.b.x), q.o.y); else moveTo(q.el, q.o.x, Math.round(q.o.y + pos - q.b.y)); pos += (hz ? q.b.w : q.b.h) + gap; });
     return true;
   }
   /* ---------- girar e inverter: cada elemento no próprio centro (linhas: as pontas giram/espelham em torno do meio, sem campos novos) ---------- */
@@ -6188,7 +6347,8 @@ window.AMRT = (function () {
     if (b.dataset.vall) { var ve = sel(), vF = ve && ve.type === 'fx' ? RT.FX[ve.kind] : null; closeMenus(); if (vF && vF.gal === 'icon') openGallery('icon'); else if (vF && vF.variants) openGallery(vF.model ? 'model' : 'cmp', vF.name); else openGallery('in'); return; }
     if (b.dataset.v) { closeMenus(); setVariant(sel(), b.dataset.v); }
   });
-  function closeOld() { if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
+  var menuFrom = null; /* { m: menu antigo, b: botão } quando o menu foi aberto pelo teclado: Esc devolve o foco ao botão */
+  function closeOld() { menuFrom = null; if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
   function closeMenus() { closeOld(); if (typeof closeAllX === 'function') closeAllX(); }
   document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#sideAdd,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar')) closeAllX(); });
   /* galeria “Formas ▾”: grupos (Retângulos e cards, Básicas, Setas, Fluxo, Chaves) em grade de 6; os cards prontos vêm com o retângulo */
@@ -6435,15 +6595,35 @@ window.AMRT = (function () {
     goSlide(i);
   });
   thumbs.addEventListener('dragstart', function (e) { var t = e.target.closest('.th'); if (!t) return; dragFrom = +t.dataset.i; e.dataTransfer.setData('text/plain', 'slide'); e.dataTransfer.effectAllowed = 'move'; });
-  thumbs.addEventListener('dragover', function (e) { if (dragFrom == null) return; e.preventDefault(); $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); var t = e.target.closest('.th'); if (t) t.classList.add('drop-before'); });
-  thumbs.addEventListener('drop', function (e) { if (dragFrom == null) return; e.preventDefault(); var t = e.target.closest('.th'), to = t ? +t.dataset.i : deck.slides.length; var s = deck.slides.splice(dragFrom, 1)[0]; if (to > dragFrom) to--; deck.slides.splice(to, 0, s); cur = to; dragFrom = null; pick([]); renderAll(); commit(); });
-  thumbs.addEventListener('dragend', function () { dragFrom = null; $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); });
+  /* posição de inserção (0…n) sob o ponteiro: sobre uma miniatura = antes dela; num vão (margem, espaço entre colunas ou entre linhas)
+     = antes da miniatura seguinte daquela linha/coluna; abaixo da última linha, ou na casa vazia ao lado da última = no fim */
+  function dropIndex(e) {
+    var t = e.target.closest && e.target.closest('#thumbs .th'); if (t) return +t.dataset.i;
+    var ths = $$('#thumbs .th'), n = ths.length, x = e.clientX, y = e.clientY; if (!n) return 0;
+    var R = ths.map(function (q) { return q.getBoundingClientRect(); }), cols = 1, i = 0, j, k;
+    while (cols < n && Math.abs(R[cols].top - R[0].top) < 2) cols++;
+    while (i < n && R[i].bottom < y) i++; /* primeira linha que não fica toda acima do ponteiro */
+    if (i === n) return n;
+    for (j = i; j < n && Math.abs(R[j].top - R[i].top) < 2; j++); /* a linha é [i, j) */
+    for (k = i; k < j; k++) if (x < R[k].right) return k;
+    return j === n && j - i < cols ? n : j - 1; /* à direita da linha: antes da última dela (como soltar sobre ela); na linha final incompleta, no fim */
+  }
+  function dropMark(to) {
+    $$('#thumbs .th.drop-before, #thumbs .th.drop-after').forEach(function (x) { x.classList.remove('drop-before', 'drop-after'); });
+    var ths = $$('#thumbs .th'); if (to == null || !ths.length) return;
+    if (to < ths.length) ths[to].classList.add('drop-before'); else ths[ths.length - 1].classList.add('drop-after');
+  }
+  thumbs.addEventListener('dragover', function (e) { if (dragFrom == null) return; e.preventDefault(); dropMark(dropIndex(e)); });
+  thumbs.addEventListener('drop', function (e) { if (dragFrom == null) return; e.preventDefault(); var to = dropIndex(e); dropMark(null); var s = deck.slides.splice(dragFrom, 1)[0]; if (to > dragFrom) to--; deck.slides.splice(to, 0, s); cur = to; dragFrom = null; pick([]); renderAll(); commit(); });
+  thumbs.addEventListener('dragend', function () { dragFrom = null; dropMark(null); });
 
   /* ---------------- painel de slides: largura ajustável e recolher (S18) ----------------
      --side-w no <body> alimenta a grade; a divisória (#sideSplit) arrasta, aceita ← → Home End e duplo clique (padrão);
      recolhido vira uma faixa de 40 px (», posição "3/14", +). Largura e estado ficam no localStorage (amStudio.sideW / amStudio.sideOff). */
-  var SIDE_MIN = 132, SIDE_DEF = 196, SIDE_MAX = 440, SIDE_OFF_W = 40, SIDE_COLS2 = 340;
-  var sideW = SIDE_DEF, sideOff = false, sideRaf = 0;
+  /* SIDE_COLS2: 2 colunas só quando cada miniatura fica pelo menos do tamanho da miniatura na largura padrão
+     (196 px → 147 px de largura; em 2 colunas: (w − 31) / 2 − 24 ≥ 147 ⇔ w ≥ 373) */
+  var SIDE_MIN = 132, SIDE_DEF = 196, SIDE_MAX = 440, SIDE_OFF_W = 40, SIDE_COLS2 = 380;
+  var sideW = SIDE_DEF, sideOff = false, sideRaf = 0, sideKey = '', sideFrz = 0, sideFree = false, sideWheel = 0, sideWheelT = 0;
   try {
     var sw0 = parseInt(localStorage.getItem('amStudio.sideW'), 10); if (isFinite(sw0)) sideW = sw0;
     sideOff = localStorage.getItem('amStudio.sideOff') === '1';
@@ -6457,59 +6637,98 @@ window.AMRT = (function () {
     if (ps) { ps.innerHTML = '<b></b><span></span>'; ps.firstChild.textContent = cur + 1; ps.lastChild.textContent = '/' + n; ps.title = 'Slide ' + (cur + 1) + ' de ' + n; }
   }
   /* aplica a largura (sem salvar); a mesma largura vale para o recolhido voltar */
+  function drawerOpen() { var d = $('#drawer'); return !!(d && d.classList.contains('open')); }
+  /* largura à vista: com a Biblioteca aberta o painel fica no máximo na largura padrão, para a gaveta não cobrir metade do slide;
+     se a pessoa ajustar a largura com a gaveta aberta, vale o que ela escolheu (sideFree) até a gaveta fechar */
+  function sideNow() { var w = sideClamp(sideW); return drawerOpen() && !sideFree ? Math.min(w, SIDE_DEF) : w; }
+  function sideTouch() { if (drawerOpen() && !sideFree) { sideW = sideNow(); sideFree = true; } return sideClamp(sideW); }
+  function sideKeyNow() { var w = sideNow(); return sideOff ? 'off' : w + (w >= SIDE_COLS2 ? 'c' : ''); }
+  /* a miniatura do slide atual fica no mesmo ponto da lista quando a largura muda (e, se estava fora, volta para a vista) */
+  function keepThumb(on, rel) {
+    var tb = $('#thumbs'), r = tb.getBoundingClientRect(), o = on.getBoundingClientRect();
+    rel = Math.max(0, Math.min(rel, tb.clientHeight - o.height)); tb.scrollTop += (o.top - r.top) - rel;
+  }
   function applySide() {
-    var w = sideClamp(sideW), sp = $('#sideSplit'), cols = !sideOff && w >= SIDE_COLS2;
+    var w = sideNow(), sp = $('#sideSplit'), cols = !sideOff && w >= SIDE_COLS2, key = sideKeyNow(), tb = $('#thumbs'), on = $('#thumbs .th.on'), rel = null;
+    if (on && key !== sideKey && sideKey && sideKey !== 'off' && key !== 'off') rel = on.getBoundingClientRect().top - tb.getBoundingClientRect().top;
     document.body.style.setProperty('--side-w', (sideOff ? SIDE_OFF_W : w) + 'px');
     document.body.classList.toggle('side-off', sideOff);
     $('#side').classList.toggle('cols2', cols);
     if (sp) { sp.setAttribute('aria-valuenow', w); sp.setAttribute('aria-valuemax', sideMax()); sp.setAttribute('aria-valuemin', SIDE_MIN); sp.setAttribute('aria-valuetext', w + ' pixels'); }
+    if (sideFrz) { var bx = $('#thumbs .th .box'); if (bx) tb.style.setProperty('--tk', bx.getBoundingClientRect().width / sideFrz); }
+    if (rel != null) keepThumb(on, rel);
+    sideKey = key;
     fit(); drawSel();
+  }
+  /* durante o arraste da divisória as miniaturas guardam o tamanho do início e só escalam (CSS #thumbs.frz): cada quadro refaz
+     só as caixas, não o conteúdo dos slides; ao soltar, um único layout de verdade (as fora da vista ficam para quando aparecerem) */
+  function freezeThumbs(on) {
+    var tb = $('#thumbs');
+    if (on) { var bx = !sideOff && $('#thumbs .th .box'), bw = bx ? bx.getBoundingClientRect().width : 0; if (!bw) return; sideFrz = bw; tb.style.setProperty('--tw0', bw + 'px'); tb.style.setProperty('--tk', '1'); tb.classList.add('frz'); }
+    else if (sideFrz) { sideFrz = 0; tb.classList.remove('frz'); tb.style.removeProperty('--tw0'); tb.style.removeProperty('--tk'); }
   }
   function setSideW(w, save) { sideW = sideClamp(w); if (sideRaf) { cancelAnimationFrame(sideRaf); sideRaf = 0; } applySide(); if (save) sideSave(); }
   function sideLater(w) { sideW = sideClamp(w); if (!sideRaf) sideRaf = requestAnimationFrame(function () { sideRaf = 0; applySide(); }); }
-  function toggleSide(off) {
+  function toggleSide(off, kb) {
     off = off == null ? !sideOff : !!off; if (off === sideOff) return;
-    var hadFocus = document.activeElement && $('#side').contains(document.activeElement);
+    var ae = document.activeElement, hadFocus = ae && $('#side').contains(ae);
     sideOff = off; applySide(); sideSave();
+    if (off && zone === 'thumbs') setZone('canvas'); /* miniaturas escondidas: setas, Delete, Ctrl+D e Shift+F10 voltam a agir no slide à vista */
     var on = $('#thumbs .th.on'); if (!off && on) on.scrollIntoView({ block: 'nearest' });
-    if (hadFocus) { var f = $(off ? '#sideExpand' : '#sideCollapse'); if (f) f.focus(); }
+    /* pelo teclado o foco passa ao botão par (« ↔ »); com o mouse o botão solta o foco, e ↓/PageDown/Espaço voltam ao slide */
+    if (hadFocus) { if (kb) { var f = $(off ? '#sideExpand' : '#sideCollapse'); if (f) f.focus(); } else ae.blur(); }
   }
   var split = $('#sideSplit'), sDrag = null;
   split.addEventListener('pointerdown', function (e) {
     if (e.button !== 0) return; e.preventDefault(); closeMenus();
-    sDrag = { x: e.clientX, w: sideClamp(sideW), id: e.pointerId };
+    sDrag = { x: e.clientX, w: sideTouch(), id: e.pointerId };
     try { split.setPointerCapture(e.pointerId); } catch (er) { }
-    split.classList.add('drag'); document.body.classList.add('side-drag');
+    split.classList.add('drag'); document.body.classList.add('side-drag'); freezeThumbs(true);
   });
   split.addEventListener('pointermove', function (e) { if (sDrag && e.pointerId === sDrag.id) sideLater(sDrag.w + e.clientX - sDrag.x); });
   function endSideDrag(e) {
     if (!sDrag || (e && e.pointerId !== sDrag.id)) return;
     if (e && e.type === 'pointerup') sideW = sideClamp(sDrag.w + e.clientX - sDrag.x);
-    sDrag = null; split.classList.remove('drag'); document.body.classList.remove('side-drag'); setSideW(sideW, true);
+    sDrag = null; split.classList.remove('drag'); document.body.classList.remove('side-drag'); freezeThumbs(false); setSideW(sideW, true);
   }
   split.addEventListener('pointerup', endSideDrag);
   split.addEventListener('pointercancel', endSideDrag);
   split.addEventListener('lostpointercapture', endSideDrag);
-  split.addEventListener('dblclick', function () { setSideW(SIDE_DEF, true); toast('Painel de slides na largura padrão'); });
+  /* Esc durante o arraste cancela: volta à largura do início e não salva (como girar/redimensionar no slide) */
+  addEventListener('keydown', function (e) {
+    if (!sDrag || e.key !== 'Escape') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var d = sDrag; sDrag = null; try { split.releasePointerCapture(d.id); } catch (er) { }
+    split.classList.remove('drag'); document.body.classList.remove('side-drag'); freezeThumbs(false); setSideW(d.w, false);
+  }, true);
+  split.addEventListener('dblclick', function () { sideTouch(); setSideW(SIDE_DEF, true); toast('Painel de slides na largura padrão'); });
   split.addEventListener('keydown', function (e) {
-    var w = sideClamp(sideW), st = e.shiftKey ? 64 : 16, n = null;
+    var w = sideNow(), st = e.shiftKey ? 64 : 16, n = null;
     if (e.key === 'ArrowLeft') n = w - st; else if (e.key === 'ArrowRight') n = w + st;
     else if (e.key === 'Home') n = SIDE_MIN; else if (e.key === 'End') n = sideMax();
     else if (e.key === 'Enter' || e.key === ' ') n = SIDE_DEF;
     if (n == null || e.ctrlKey || e.metaKey || e.altKey) return;
-    e.preventDefault(); e.stopPropagation(); setSideW(n, true);
+    e.preventDefault(); e.stopPropagation(); sideTouch(); setSideW(n, true);
   });
-  /* Ctrl/⌘ + rolar sobre as miniaturas muda a largura (no lugar do zoom da página) */
+  /* Ctrl/⌘ + rolar sobre as miniaturas muda a largura (no lugar do zoom da página): proporcional ao giro (16 px por “dente” de 100),
+     no máximo 16 px por evento, para a pinça do trackpad (muitos eventos pequenos) não saltar; aplica no quadro seguinte e salva quando para */
   $('#side').addEventListener('wheel', function (e) {
     if (!(e.ctrlKey || e.metaKey) || sideOff || !e.deltaY) return;
-    e.preventDefault(); setSideW(sideClamp(sideW) + (e.deltaY < 0 ? 16 : -16), true);
+    e.preventDefault();
+    var dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
+    sideWheel += Math.max(-16, Math.min(16, -dy * 0.16));
+    var n = sideWheel < 0 ? Math.ceil(sideWheel) : Math.floor(sideWheel); if (!n) return;
+    sideWheel -= n; sideLater(sideTouch() + n);
+    clearTimeout(sideWheelT); sideWheelT = setTimeout(sideSave, 300);
   }, { passive: false });
-  $('#sideCollapse').addEventListener('click', function () { toggleSide(true); });
-  $('#sideExpand').addEventListener('click', function () { toggleSide(false); });
+  $('#sideCollapse').addEventListener('click', function (e) { toggleSide(true, !e.detail); });
+  $('#sideExpand').addEventListener('click', function (e) { toggleSide(false, !e.detail); });
   $('#sideAdd').addEventListener('click', function (e) {
     var m = $('#mSlide'), open = m.classList.contains('open'); closeMenus(); if (open) return;
     var r = e.currentTarget.getBoundingClientRect(); m.classList.add('open');
     m.style.left = (r.right + 8) + 'px'; m.style.top = Math.max(60, Math.min(r.top, innerHeight - m.offsetHeight - 8)) + 'px';
+    /* pelo teclado (Enter/Espaço) o foco entra no primeiro layout; Esc fecha e devolve o foco ao + */
+    if (!e.detail) { var f = m.querySelector('button[data-layout]'); if (f) f.focus(); menuFrom = { m: m, b: e.currentTarget }; }
   });
 
   /* ---------------- canvas: selecionar, mover, redimensionar, editar ---------------- */
@@ -6538,7 +6757,7 @@ window.AMRT = (function () {
   });
   /* barra do quadro (girar 90° / inverter): o mouse não tira o foco nem a seleção; o clique age em toda a seleção */
   selLayer.addEventListener('mousedown', function (e) { if (e.target.closest('#frBar')) e.preventDefault(); });
-  selLayer.addEventListener('click', function (e) { var b = e.target.closest('#frBar button[data-fr]'); if (!b) return; e.stopPropagation(); act(b.dataset.fr); });
+  selLayer.addEventListener('click', function (e) { var b = e.target.closest('#frBar button[data-fr]'); if (!b) return; e.stopPropagation(); pinBar(); act(b.dataset.fr); });
   /* laço de seleção: arrastar no espaço vazio seleciona os elementos tocados (Shift soma) */
   function startMarquee(e, add) {
     var p0 = toLogical(e), base = add ? selIds.slice() : [], moved = false, mq = $('#marq');
@@ -6547,7 +6766,7 @@ window.AMRT = (function () {
       var p = toLogical(ev); if (!moved && Math.abs(p.x - p0.x) < 4 && Math.abs(p.y - p0.y) < 4) return; moved = true; busy = 'marq';
       var r = { x: Math.min(p.x, p0.x), y: Math.min(p.y, p0.y), w: Math.abs(p.x - p0.x), h: Math.abs(p.y - p0.y) };
       mq.style.cssText = boxCss(r); mq.classList.add('on');
-      var hit = slide().els.filter(function (el) { var b = bbox(el), pad = el.type === 'line' ? 4 : 0; return b.x - pad < r.x + r.w && b.x + b.w + pad > r.x && b.y - pad < r.y + r.h && b.y + b.h + pad > r.y; }).map(function (el) { return el.id; });
+      var hit = slide().els.filter(function (el) { var b = aabb(el), pad = el.type === 'line' ? 4 : 0; return b.x - pad < r.x + r.w && b.x + b.w + pad > r.x && b.y - pad < r.y + r.h && b.y + b.h + pad > r.y; }).map(function (el) { return el.id; });
       var ids = base.concat(hit.filter(function (id) { return base.indexOf(id) < 0; }));
       selIds = ids; selId = ids.length ? ids[ids.length - 1] : null; drawSel();
     }
@@ -6562,7 +6781,7 @@ window.AMRT = (function () {
   function startMove(e, list, cyc, collapseTo) {
     var p0 = toLogical(e), moved = false, b0 = groupBox(list), ids = list.map(function (el) { return el.id; });
     var s0 = list.map(function (el) { return el.type === 'line' ? [el.x1, el.y1, el.x2, el.y2] : [el.x, el.y]; });
-    var others = slide().els.filter(function (o) { return ids.indexOf(o.id) < 0; }).map(bbox);
+    var others = slide().els.filter(function (o) { return ids.indexOf(o.id) < 0; }).map(aabb); /* guias pelo desenho girado (a caixa que o contém), não pela caixa sem giro */
     function mv(ev) {
       var p = toLogical(ev), dx = p.x - p0.x, dy = p.y - p0.y;
       if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return; moved = true; busy = 'move';
@@ -6612,14 +6831,17 @@ window.AMRT = (function () {
   function startRotate(e) {
     var el = sel(); if (!el || el.type === 'line') return;
     var cx = el.x + el.w / 2, cy = el.y + el.h / 2, p0 = toLogical(e), a0 = Math.atan2(p0.y - cy, p0.x - cx), r0 = +el.rot || 0, moved = false;
-    busy = 'rotate'; document.body.classList.add('am-rotating');
+    var node = stage.querySelector('.am-el[data-id="' + el.id + '"]'), rn = node && node.querySelector(':scope>.am-rot');
+    stopPreview(); busy = 'rotate'; document.body.classList.add('am-rotating');
     function mv(ev) {
       var p = toLogical(ev), r = r0 + (Math.atan2(p.y - cy, p.x - cx) - a0) * 180 / Math.PI;
       if (ev.shiftKey) r = Math.round(r / 15) * 15;
       else { var m = Math.round(r / 90) * 90; if (Math.abs(r - m) <= 3) r = m; }
       r = normRot(r); moved = true;
       if (r) el.rot = r; else delete el.rot;
-      rotTip = { x: p.x, y: p.y, a: r }; rerenderEl(el);
+      rotTip = { x: p.x, y: p.y, a: r };
+      /* o conteúdo não depende do giro: durante o arraste só o transform do .am-rot muda (sem refazer a foto de vários MB a cada movimento) */
+      if (rn) { rn.style.transform = r ? 'rotate(' + r + 'deg)' : ''; drawSel(); } else rerenderEl(el);
     }
     function up() {
       removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
@@ -6689,7 +6911,15 @@ window.AMRT = (function () {
     var n = stage.querySelector('.am-el[data-id="' + el.id + '"]'), tx = n && n.querySelector('.am-tx'); if (!tx) return;
     n.classList.add('editing'); tx.contentEditable = 'true'; tx.focus();
     var r = document.createRange(); r.selectNodeContents(tx); if (!selectAll) r.collapse(false); var s = getSelection(); s.removeAllRanges(); s.addRange(r);
-    tx.oninput = function () { if (el.type !== 'text') return; var need = textNeed(n) + 4; if (need > el.h) { el.h = Math.min(H, Math.ceil(need)); n.style.height = pc(el.h, H); var hi = $('#props [data-p="h"]'); if (hi) hi.value = el.h; } drawSel(); };
+    tx.oninput = function () {
+      if (el.type !== 'text') return; var need = textNeed(n) + 4;
+      if (need > el.h) {
+        var r0 = +el.rot; growText(el, Math.min(H, Math.ceil(need))); n.style.height = pc(el.h, H);
+        if (r0) { n.style.left = pc(el.x, W); n.style.top = pc(el.y, H); }
+        ['h', 'x', 'y'].forEach(function (k) { var fi = $('#props [data-p="' + k + '"]'); if (fi && (k === 'h' || r0)) fi.value = Math.round(el[k] * 100) / 100; });
+      }
+      drawSel();
+    };
     tx.onpaste = function (ev) { ev.preventDefault(); document.execCommand('insertText', false, clipPlain((ev.clipboardData || window.clipboardData).getData('text/plain'))); };
     tx.onblur = function () { setTimeout(function () { if (editingId === el.id) endEdit(); }, 0); };
     drawSel();
@@ -6833,7 +7063,13 @@ window.AMRT = (function () {
   }
   function fitTextEl(el) {
     var n = stage && stage.querySelector('.am-el[data-id="' + el.id + '"]'); if (!n || el.type !== 'text') return;
-    var need = Math.ceil(textNeed(n) + 6); if (need > el.h) { el.h = Math.min(need, H); rerenderEl(el); }
+    var need = Math.ceil(textNeed(n) + 6); if (need > el.h) { growText(el, Math.min(need, H)); rerenderEl(el); }
+  }
+  /* texto que cresce ao digitar: sem giro, cresce para baixo (x/y iguais); girado, o meio da borda de cima (a primeira linha) fica parado
+     no slide — o centro anda R(θ)(0, dh/2), então x −= dh/2·sen θ e y += dh/2·(cos θ − 1) */
+  function growText(el, nh) {
+    var dh = nh - el.h, t = (+el.rot || 0) * Math.PI / 180; el.h = nh;
+    if (t && dh) { el.x = r2(el.x - dh / 2 * Math.sin(t)); el.y = r2(el.y + dh / 2 * (Math.cos(t) - 1)); }
   }
   function pastePlain(txt, at) {
     var t = String(txt).replace(/\r\n?/g, '\n').replace(/\t/g, '    ').replace(/^\n+|\s+$/g, ''); if (!t) return false;
@@ -6956,12 +7192,16 @@ window.AMRT = (function () {
       bs[(i + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : bs.length - 1) + bs.length) % bs.length].focus(); return;
     }
     if ((k === 'Enter' || k === ' ') && i >= 0) return; /* o próprio botão em foco é ativado */
+    var back = k === 'Escape' && menuFrom && menuFrom.m === m ? menuFrom.b : null;
     e.preventDefault(); closeOld();
+    if (back && back.offsetParent) back.focus();
   }
   var kbCtx = 0;
   function openCtxKeyboard() {
     var r, items;
-    if (zone === 'thumbs') { var th = $('#thumbs .th.on .box'); if (!th) return; r = th.getBoundingClientRect(); items = ctxThumbItems; }
+    if (zone === 'thumbs') { /* painel recolhido: o menu do slide abre ao lado da faixa (posição “3/14”), não no canto da tela */
+      var th = $(sideOff ? '#sidePos' : '#thumbs .th.on .box'); if (!th) return; r = th.getBoundingClientRect(); if (sideOff) r = { left: $('#side').getBoundingClientRect().right - 4, top: r.top - 8 }; items = ctxThumbItems;
+    }
     else {
       var wr = wrap.getBoundingClientRect(), g = selIds.length ? groupBox(sels()) : { x: W / 2, y: H / 2, w: 0, h: 0 };
       r = { left: wr.left + (g.x + g.w / 2) / W * wr.width, top: wr.top + (g.y + g.h / 2) / H * wr.height };
@@ -7017,7 +7257,12 @@ window.AMRT = (function () {
       nudge(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0); return;
     }
     /* miniaturas em 2 colunas (painel largo): ↑ ↓ andam uma linha (2 slides) */
-    if (!list.length && zone === 'thumbs' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && $('#side').classList.contains('cols2')) { e.preventDefault(); goSlide(cur + (e.key === 'ArrowDown' ? 2 : -2)); return; }
+    if (!list.length && zone === 'thumbs' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && $('#side').classList.contains('cols2')) {
+      /* como na grade do PowerPoint: ↑ na primeira linha e ↓ na última ficam onde estão; ↓ vai ao último slide só se ele estiver na linha de baixo */
+      e.preventDefault(); var last = deck.slides.length - 1, to = cur + (e.key === 'ArrowDown' ? 2 : -2);
+      if (to > last && e.key === 'ArrowDown' && (cur >> 1) < (last >> 1)) to = last;
+      if (to >= 0 && to <= last) goSlide(to); return;
+    }
     if (!list.length && (e.key === 'PageDown' || e.key === 'ArrowDown' || (zone === 'thumbs' && e.key === 'ArrowRight'))) { e.preventDefault(); goSlide(cur + 1); }
     if (!list.length && (e.key === 'PageUp' || e.key === 'ArrowUp' || (zone === 'thumbs' && e.key === 'ArrowLeft'))) { e.preventDefault(); goSlide(cur - 1); }
   });
@@ -7106,6 +7351,7 @@ window.AMRT = (function () {
     var d = $('#drawer'), open = v == null ? !(d.classList.contains('open') && (!tab || tab === drawerTab)) : v;
     if (tab) setTab(tab);
     d.classList.toggle('open', open); $('#bFx').classList.toggle('open', open && drawerTab === 'fx'); $('#bModels').classList.toggle('open', open && drawerTab === 'models');
+    if (!open) sideFree = false; if (sideKeyNow() !== sideKey) applySide(); /* painel de slides largo: estreita enquanto a gaveta está aberta (S18) */
     drawerTimers.forEach(clearInterval); drawerTimers = [];
     if (open) { playPreviews(); drawerTimers.push(setInterval(playPreviews, 5200)); }
     else { $$('.fxi', d).forEach(stopCard); gxClose(true); if (d.contains(document.activeElement)) document.activeElement.blur(); } /* fechada: para contadores e ciclos das prévias e solta o foco (setas e Espaço voltam ao slide e ao modo apresentação) */
@@ -7896,11 +8142,13 @@ window.AMRT = (function () {
 
 </script>
 <script id="am-ed-colors">/* ===== “Mais cores…” (S19): seletor de cores do painel de propriedades (só no editor; não vai para o arquivo exportado) =====
-   AMColorPop.open(botão, {value, title, brand, keyboard, onPick(cor, viaTeclado), onLive(cor), onCancel(houvePrevia), onClose(viaTeclado)})
+   AMColorPop.open(botão, {value, title, brand, keyboard, row, onPick(cor, viaTeclado), onLive(cor), onCancel(houvePrevia), onClose(viaTeclado)})
    Popover fixo (position: fixed, preso dentro da janela) com: Cores A&M · Mais cores (paleta ampliada, 6 famílias × 8 tons, claro → escuro)
    · Recentes (8 últimas cores personalizadas, localStorage 'amStudio.recentColors') · Personalizada (#RRGGBB, seletor do sistema e
    conta-gotas quando o navegador tem EyeDropper). Não usa #modal (ARCH regra 15): as teclas ficam dentro do popover (stopPropagation).
-   Esc fecha e devolve o foco ao botão; clique fora fecha; setas andam entre as amostras; Tab circula dentro do popover. */
+   Esc fecha e devolve o foco ao botão; clique fora fecha; setas andam entre as amostras; Tab circula dentro do popover.
+   F5 / F1 / Ctrl+S / Ctrl+O fecham o popover e seguem para o editor (apresentar, ajuda, salvar, abrir); Ctrl+P/D/A são engolidos.
+   Sem espaço acima nem abaixo do botão, abre ao lado (à esquerda), sem cobrir o botão. */
 window.AMColorPop = (function () {
   'use strict';
   var EXT = [
@@ -7914,9 +8162,13 @@ window.AMColorPop = (function () {
   var KEY = 'amStudio.recentColors', HEX = /^#[0-9a-f]{6}$/i, BRAND = ['#002A46', '#001E32', '#13315C', '#43698F', '#4A6FA5', '#7EA1C3', '#A3B8D6', '#E3EAF2', '#EBEEF1', '#FFFFFF', '#F78C16', '#3E4C5E', '#6B7A90'];
   var pop = null, st = null, lastClose = { a: null, t: 0 };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  /* '#abc', 'abc', '#AABBCC' → '#AABBCC'; qualquer outra coisa → null */
+  /* '#abc', 'abc', '#AABBCC', ' #aabbcc ', 'rgb(170, 187, 204)' → '#AABBCC'; qualquer outra coisa → null (código colado de um
+     documento ou e-mail costuma vir com espaços) */
   function norm(v) {
-    v = String(v == null ? '' : v).trim(); if (v && v[0] !== '#') v = '#' + v;
+    v = String(v == null ? '' : v).replace(/\s+/g, '');
+    var m = /^rgba?\((\d{1,3}),(\d{1,3}),(\d{1,3})(?:,[\d.]+%?)?\)$/i.exec(v);
+    if (m && +m[1] < 256 && +m[2] < 256 && +m[3] < 256) v = '#' + [m[1], m[2], m[3]].map(function (x) { return (+x < 16 ? '0' : '') + (+x).toString(16); }).join('');
+    if (v && v[0] !== '#') v = '#' + v;
     if (/^#[0-9a-f]{3}$/i.test(v)) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
     return HEX.test(v) ? v.toUpperCase() : null;
   }
@@ -7940,7 +8192,7 @@ window.AMColorPop = (function () {
     h += '<div class="cp-sec"><h4>Cores A&amp;M</h4><div class="cp-g">' + brand.map(function (c) { return sw(c, cur); }).join('') + '</div></div>';
     h += '<div class="cp-sec"><h4>Mais cores</h4><div class="cp-g cp-ext">' + EXT.map(function (r) { return r[1].map(function (c) { return sw(c, cur, r[0]); }).join(''); }).join('') + '</div></div>';
     h += '<div class="cp-sec cp-rec"><h4>Recentes</h4>' + (rec.length ? '<div class="cp-g">' + rec.map(function (c) { return sw(c, cur); }).join('') + '</div>' : '<p class="cp-empty">As cores personalizadas que você usar aparecem aqui.</p>') + '</div>';
-    h += '<div class="cp-sec"><h4>Personalizada</h4><div class="cp-cu"><input type="text" class="cp-hex" maxlength="7" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" aria-label="Código da cor (#RRGGBB)" value="' + (cur || '') + '">' +
+    h += '<div class="cp-sec"><h4>Personalizada</h4><div class="cp-cu"><input type="text" class="cp-hex" maxlength="40" spellcheck="false" autocomplete="off" placeholder="#RRGGBB" aria-label="Código da cor (#RRGGBB)" value="' + (cur || '') + '">' +
       '<button type="button" class="cp-ok" title="Aplicar a cor digitada (Enter)">Aplicar</button>' +
       '<input type="color" class="cp-nat" value="' + (cur || '#002A46').toLowerCase() + '" title="Seletor de cores do sistema" aria-label="Seletor de cores do sistema">' +
       (window.EyeDropper ? '<button type="button" class="cp-eye" title="Conta-gotas: pegar uma cor da tela" aria-label="Conta-gotas">' + EYE + '</button>' : '') +
@@ -7950,13 +8202,18 @@ window.AMColorPop = (function () {
   function place() {
     if (!pop || !st) return;
     var m = 8, vw = window.innerWidth, vh = window.innerHeight, r = st.anchor.isConnected ? st.anchor.getBoundingClientRect() : st.rect;
+    var rw = st.o.row && st.o.row.isConnected ? st.o.row.getBoundingClientRect() : r;
     pop.style.maxHeight = (vh - m * 2) + 'px';
-    var pw = pop.offsetWidth, ph = pop.offsetHeight, left = Math.max(m, Math.min(r.right - pw, vw - pw - m)), top;
-    if (r.bottom + 6 + ph <= vh - m) top = r.bottom + 6;
-    else if (r.top - 6 - ph >= m) top = r.top - 6 - ph;
-    else top = Math.max(m, vh - ph - m);
+    var pw = pop.offsetWidth, ph = pop.offsetHeight, left = Math.max(m, Math.min(r.right - pw, vw - pw - m)), top, side;
+    if (r.bottom + 6 + ph <= vh - m) { top = r.bottom + 6; side = 'below'; }
+    else if (r.top - 6 - ph >= m) { top = r.top - 6 - ph; side = 'above'; }
+    else if (Math.min(r.left, rw.left) - 8 - pw >= m) { left = Math.min(r.left, rw.left) - 8 - pw; top = Math.max(m, Math.min(r.top + r.height / 2 - ph / 2, vh - ph - m)); side = 'left'; } /* sem espaço em cima nem embaixo: ao lado (sobre o quadro), sem cobrir o botão nem a linha dele (o.row) */
+    else { /* janela estreita: no lado maior, mais baixo e com rolagem interna */
+      var up = r.top - 6 - m, dn = vh - m - r.bottom - 6; pop.style.maxHeight = Math.max(120, Math.max(up, dn)) + 'px'; ph = pop.offsetHeight;
+      if (dn >= up) { top = r.bottom + 6; side = 'below'; } else { top = Math.max(m, r.top - 6 - ph); side = 'above'; }
+    }
     pop.style.left = Math.round(left) + 'px'; pop.style.top = Math.round(top) + 'px';
-    pop.dataset.side = top >= r.bottom ? 'below' : 'above';
+    pop.dataset.side = side;
   }
   function swatches() { return Array.prototype.slice.call(pop.querySelectorAll('.cp-s')); }
   function focusables() { return Array.prototype.slice.call(pop.querySelectorAll('button,input')).filter(function (x) { return !x.disabled && x.offsetParent !== null; }); }
@@ -8034,8 +8291,12 @@ window.AMColorPop = (function () {
     });
     pop.addEventListener('change', function (e) { if (e.target.classList.contains('cp-nat')) pick(e.target.value, false); });
     pop.addEventListener('keydown', function (e) {
-      e.stopPropagation(); /* as teclas do seletor não chegam ao editor (setas não movem o elemento, Delete não apaga) */
-      var t = e.target, k = e.key;
+      var t = e.target, k = e.key, mod = (e.ctrlKey || e.metaKey) && !e.altKey, lk = String(k || '').toLowerCase();
+      /* atalhos do editor (F5 apresentar, F1 ajuda, Ctrl+S salvar, Ctrl+O abrir): o seletor fecha (sem gravar a prévia) e a tecla segue
+         para o editor, como fora do popover — nunca para o navegador (recarregar, "Salvar página como", ajuda do Chrome) */
+      if (k === 'F5' || k === 'F1' || (mod && (lk === 's' || lk === 'o'))) { e.preventDefault(); close(false); return; }
+      e.stopPropagation(); /* as demais teclas do seletor não chegam ao editor (setas não movem o elemento, Delete não apaga) */
+      if (mod && (lk === 'p' || lk === 'd' || (lk === 'a' && !t.classList.contains('cp-hex')))) { e.preventDefault(); return; } /* imprimir / favoritos / selecionar a página: engolidos */
       if (k === 'Escape') { e.preventDefault(); close(true); return; }
       if (k === 'Tab') {
         var F = focusables(), i = F.indexOf(t); if (!F.length) return; e.preventDefault();

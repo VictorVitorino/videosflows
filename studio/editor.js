@@ -218,7 +218,7 @@
     if (a.depth != null) o.anim.depth = pickN(a.depth, [0, 1, 2], 0);
     if (F) {
       o.data = o.data && typeof o.data === 'object' && !Array.isArray(o.data) ? o.data : clone(F.data);
-      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (v != null && !(typeof v === 'string' && (TOKEN_RE.test(v) || COLOR_RE.test(v)))) delete o.data[k]; }); /* só texto simples ou cor: número, lista ou objeto saem */
+      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (v != null && !(typeof v === 'string' && (TOKEN_RE.test(v) || COLOR_RE.test(v))) && !(typeof v === 'number' && isFinite(v))) delete o.data[k]; }); /* texto simples, cor ou número finito (ex.: espessura do traço do ícone em stroke); lista, objeto e booleano saem */
       if (o.data.colors != null) { /* cores das séries (gráficos): até 6 posições, só #rrggbb; posição inválida = '' (cor padrão) */
         var dc = Array.isArray(o.data.colors) ? o.data.colors.slice(0, 6).map(function (c) { return typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : ''; }) : [];
         while (dc.length && !dc[dc.length - 1]) dc.pop();
