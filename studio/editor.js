@@ -173,6 +173,8 @@
      EL_TOKENS: campos do elemento com valores fechados (linhas e cards); os booleanos antigos dash/headStart/headEnd continuam valendo */
   var HEADS = ['arrow', 'open', 'dot', 'diamond', 'bar'], EL_TOKENS = { curve: ['straight', 'elbow', 'curve'], dashS: ['dash', 'dot', 'dashdot', 'long'], headS: HEADS, headE: HEADS, look: ['flat', 'outline', 'lift', 'accent', 'topbar', 'header', 'gradient', 'ice'] };
   function numOr(v, d) { v = +v; return isFinite(v) ? v : d; }
+  /* giro normalizado: inteiro em (-180, 180] (270 → -90, -180 → 180) */
+  function normRot(v) { v = Math.round(+v) || 0; v = ((v % 360) + 360) % 360; return v > 180 ? v - 360 : v; }
   function safeStr(v, n) { return typeof v === 'string' ? v.slice(0, n) : null; }
   function pickN(v, list, def) { v = +v; return list.indexOf(v) >= 0 ? v : def; }
   function safeSrc(s) { return typeof s === 'string' && /^(data:image\/[\w.+-]+[;,]|https?:|blob:)/i.test(s) && !/["\\\n\r]/.test(s) ? s : null; }
@@ -188,6 +190,8 @@
     ['align', 'valign', 'fit', 'shape', 'font'].forEach(function (k) { if (o[k] != null && !(typeof o[k] === 'string' && TOKEN_RE.test(o[k]))) delete o[k]; });
     ['weight', 'lh', 'ls', 'size', 'radius', 'strokeW', 'rot', 'opacity'].forEach(function (k) { if (o[k] != null) { var v = +o[k]; if (isFinite(v)) o[k] = v; else delete o[k]; } });
     Object.keys(EL_TOKENS).forEach(function (k) { if (o[k] != null && EL_TOKENS[k].indexOf(o[k]) < 0) delete o[k]; });
+    if (o.rot != null) { var rr = normRot(o.rot); if (rr) o.rot = rr; else delete o.rot; } /* giro em graus inteiros, (-180, 180] */
+    ['flipH', 'flipV'].forEach(function (k) { if (o[k] !== true || !RT.flipOK || !RT.flipOK(o)) delete o[k]; }); /* espelho: só true, e só onde ele existe (foto, forma, ícone) */
     if (o.bend != null) { if (isFinite(+o.bend)) o.bend = Math.max(0.05, Math.min(0.95, +o.bend)); else delete o.bend; }
     if (o.zoom != null) { if (o.zoom === false || o.zoom === true) { } else delete o.zoom; } /* ampliar na apresentação: só booleano (false desliga num modelo/imagem; true liga num componente) */
     if (o.html != null) o.html = cleanHTML(String(o.html));
@@ -272,8 +276,24 @@
   }
   function pc(v, t) { return (v / t * 100) + '%'; }
   function boxCss(b) { return 'left:' + pc(b.x, W) + ';top:' + pc(b.y, H) + ';width:' + pc(b.w, W) + ';height:' + pc(b.h, H); }
+  /* girar e inverter no quadro: busy = arrastando / redimensionando / girando / laço (a barra do quadro some); rotTip = ângulo ao vivo junto do ponteiro */
+  var busy = null, rotTip = null;
+  var RCUR = ['e', 'se', 's', 'sw', 'w', 'nw', 'n', 'ne'], HANG = { e: 0, se: 1, s: 2, sw: 3, w: 4, nw: 5, n: 6, ne: 7 };
+  /* cursor da alça num elemento girado: o mais próximo dos 8 de redimensionar (sem giro = o próprio nome da alça) */
+  function hdlCur(h, rot) { return RCUR[((HANG[h] + Math.round((+rot || 0) / 45)) % 8 + 8) % 8] + '-resize'; }
+  /* quadro girado: centro e ponto do mundo para um ponto local da caixa sem giro (c + R(θ)(p − c)) */
+  function rotFrame(el) {
+    var t = (+el.rot || 0) * Math.PI / 180, cx = el.x + el.w / 2, cy = el.y + el.h / 2, c = Math.cos(t), s = Math.sin(t);
+    return { cx: cx, cy: cy, p: function (lx, ly) { var dx = lx - cx, dy = ly - cy; return { x: cx + dx * c - dy * s, y: cy + dx * s + dy * c }; } };
+  }
+  /* caixa alinhada aos eixos que contém o elemento girado (sem giro = a própria caixa) */
+  function aabb(el) {
+    if (el.type === 'line' || !+el.rot) return bbox(el);
+    var f = rotFrame(el), q = [f.p(el.x, el.y), f.p(el.x + el.w, el.y), f.p(el.x + el.w, el.y + el.h), f.p(el.x, el.y + el.h)], xs = q.map(function (a) { return a.x; }), ys = q.map(function (a) { return a.y; });
+    var x0 = Math.min.apply(null, xs), y0 = Math.min.apply(null, ys); return { x: x0, y: y0, w: Math.max.apply(null, xs) - x0, h: Math.max.apply(null, ys) - y0 };
+  }
   function drawSel(guides) {
-    var html = '', list = sels(), el = sel();
+    var html = '', list = sels(), el = sel(), k = wrap.clientWidth / W || 1;
     if (list.length > 1) {
       list.forEach(function (e) { var b = bbox(e); if (e.type === 'line') b = { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 }; html += '<div class="sbox multi" style="' + boxCss(b) + (e.rot && e.type !== 'line' ? ';transform:rotate(' + e.rot + 'deg)' : '') + '"></div>'; });
       html += '<div class="gbox" style="' + boxCss(groupBox(list)) + '"><span><b>' + list.length + '</b> elementos</span></div>';
@@ -286,21 +306,79 @@
         var box = 'left:' + pc(el.x, W) + ';top:' + pc(el.y, H) + ';width:' + pc(el.w, W) + ';height:' + pc(el.h, H);
         html += '<div class="sbox' + (editingId === el.id ? ' edit' : '') + '" style="' + box + (el.rot ? ';transform:rotate(' + el.rot + 'deg)' : '') + '"></div>';
         if (editingId !== el.id) {
+          var fr = rotFrame(el);
+          /* alças nos cantos e lados do quadro girado; o cursor gira junto */
           [['nw', 0, 0], ['n', .5, 0], ['ne', 1, 0], ['e', 1, .5], ['se', 1, 1], ['s', .5, 1], ['sw', 0, 1], ['w', 0, .5]].forEach(function (h) {
-            html += '<div class="hdl" data-h="' + h[0] + '" style="left:' + pc(el.x + el.w * h[1], W) + ';top:' + pc(el.y + el.h * h[2], H) + ';cursor:' + h[0] + '-resize"></div>';
+            var q = fr.p(el.x + el.w * h[1], el.y + el.h * h[2]);
+            html += '<div class="hdl" data-h="' + h[0] + '" style="left:' + pc(q.x, W) + ';top:' + pc(q.y, H) + ';cursor:' + hdlCur(h[0], el.rot) + '"></div>';
           });
+          /* alça de girar: ~26 px acima do meio da borda de cima (gira com o elemento); sem espaço acima do palco, vai para baixo */
+          var dd = 26 / k, st = fr.p(el.x + el.w / 2, el.y), hp = fr.p(el.x + el.w / 2, el.y - dd), dn = false, mt = (($('#cv').clientHeight - wrap.clientHeight) / 2 - 12) / k;
+          if (hp.y < -mt) { dn = true; st = fr.p(el.x + el.w / 2, el.y + el.h); hp = fr.p(el.x + el.w / 2, el.y + el.h + dd); }
+          html += '<div class="rstem" style="left:' + pc(st.x, W) + ';top:' + pc(st.y, H) + ';transform:translate(-50%,-100%) rotate(' + ((+el.rot || 0) + (dn ? 180 : 0)) + 'deg)"></div>' +
+            '<div class="rhdl" data-h="rot" title="Arraste para girar · Shift: de 15 em 15°" style="left:' + pc(hp.x, W) + ';top:' + pc(hp.y, H) + '"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12.5a7.5 7.5 0 1 1-2.2-5.8"/><path d="M19.5 3.5v4.5H15"/></svg></div>';
         }
       }
     }
     if (el && editingId !== el.id) {
-      var FDx = el.type === 'fx' ? RT.FX[el.kind] : null, lbl, bx = bbox(el);
+      var FDx = el.type === 'fx' ? RT.FX[el.kind] : null, lbl, bx = aabb(el);
       if (FDx && FDx.variants) { var vv = el.variant || FDx.variant; lbl = (FDx.gal === 'icon' ? 'Movimento' : 'Efeito') + ': <b>' + esc((FDx.variants.find(function (x) { return x[0] === vv; }) || FDx.variants[0])[1]) + '</b>'; }
       else { var ai = (el.anim && el.anim.in) || 'none'; lbl = 'Animação: <b>' + esc((ANIM_IN.find(function (x) { return x[0] === ai; }) || ANIM_IN[0])[1]) + '</b>'; }
       var ax = Math.min(bx.x + bx.w, W - 10), ay = Math.max(bx.y, 40);
       html += '<button class="fxarrow" id="fxArrow" style="left:' + pc(ax, W) + ';top:' + pc(ay, H) + ';transform:translate(-100%,calc(-100% - 8px))" title="Escolher o efeito deste elemento"><svg viewBox="0 0 24 24" style="stroke:#F78C16"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></svg>' + lbl + '<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>';
     }
+    if (rotTip) html += '<div class="rottip" style="left:' + pc(rotTip.x, W) + ';top:' + pc(rotTip.y, H) + '">' + rotTip.a + '°</div>';
+    /* barra do quadro (girar 90° e inverter): some ao editar texto e enquanto arrasta, redimensiona ou gira */
+    var bar = !busy && list.length && !editingId;
+    if (bar) html += '<div class="frbar" id="frBar" role="toolbar" aria-label="Girar e inverter">' + frBtns(list, 'data-fr') + '</div>';
     (guides || []).forEach(function (g) { html += g.v != null ? '<div class="guide v" style="left:' + pc(g.v, W) + '"></div>' : '<div class="guide h" style="top:' + pc(g.h, H) + '"></div>'; });
     selLayer.innerHTML = html;
+    fitArrow();
+    if (bar) placeBar(list, el);
+  }
+  /* quadro estreito: o “Animação” (#fxArrow, ancorado no canto de cima à direita) cobriria a alça de girar; ele passa para o lado
+     direito da alça (ou para o esquerdo, se faltar palco) */
+  function fitArrow() {
+    var fa = $('#fxArrow', selLayer), rh = $('.rhdl', selLayer); if (!fa || !rh) return;
+    var wr = wrap.getBoundingClientRect(), a = fa.getBoundingClientRect(), r = rh.getBoundingClientRect(), x;
+    if (a.right < r.left - 6 || a.left > r.right + 6 || a.bottom < r.top - 6 || a.top > r.bottom + 6) return;
+    if (r.right + 8 + a.width <= wr.right - 4) x = r.right + 8 + a.width; else if (r.left - 8 - a.width >= wr.left + 4) x = r.left - 8; else return;
+    fa.style.left = ((x - wr.left) / wr.width * 100) + '%';
+  }
+  /* posição da barra: no alto à esquerda do quadro (espelho do “Animação” à direita); quadro estreito, alça de girar ou topo do slide no
+     caminho → embaixo do quadro. Nunca sobre o #fxArrow, a alça de girar ou o rótulo do grupo; sempre dentro do palco */
+  function placeBar(list, el) {
+    var bar = $('#frBar'); if (!bar) return;
+    var wr = wrap.getBoundingClientRect(), k = wr.width / W, multi = list.length > 1, g = multi ? groupBox(list) : aabb(el), pad = multi ? 7 : el.type === 'line' ? 6 : 0;
+    var bw = bar.offsetWidth, bh = bar.offsetHeight, gap = 8, X0 = g.x * k - pad, Y0 = g.y * k - pad, X1 = (g.x + g.w) * k + pad, Y1 = (g.y + g.h) * k + pad;
+    var avoid = $$('#fxArrow,.rhdl,.gbox span', selLayer).map(function (n) { var r = n.getBoundingClientRect(); return { l: r.left - wr.left - 4, t: r.top - wr.top - 4, r: r.right - wr.left + 4, b: r.bottom - wr.top + 4 }; });
+    var rh = $('.rhdl', selLayer), rhl = rh ? rh.getBoundingClientRect().left - wr.left - 8 : null;
+    /* acima à esquerda; acima, terminando antes da alça de girar (quadro estreito); embaixo à esquerda / à direita; ao lado esquerdo */
+    var cands = multi ? [[X1 - bw, Y0 - gap - bh], [X1 - bw, Y1 + gap], [X0, Y1 + gap]] : [[X0, Y0 - gap - bh]].concat(rhl != null ? [[rhl - bw, Y0 - gap - bh]] : [], [[X0, Y1 + gap], [X1 - bw, Y1 + gap], [X0 - gap - bw, Y0]]), best = null;
+    cands.forEach(function (c, i) {
+      var x = Math.max(4, Math.min(wr.width - bw - 4, c[0])), y = Math.max(4, Math.min(wr.height - bh - 4, c[1])), o = 0;
+      avoid.forEach(function (a) { var ox = Math.min(x + bw, a.r) - Math.max(x, a.l), oy = Math.min(y + bh, a.b) - Math.max(y, a.t); if (ox > 0 && oy > 0) o += ox * oy; });
+      var sc = o * 100 + Math.abs(x - c[0]) + Math.abs(y - c[1]) * 3 + i;
+      if (!best || sc < best.s) best = { s: sc, x: x, y: y };
+    });
+    bar.style.left = (best.x / wr.width * 100) + '%'; bar.style.top = (best.y / wr.height * 100) + '%';
+  }
+  /* botões de girar e inverter (barra do quadro, painel e menu usam as mesmas ações) */
+  var FR = [['rot-l', 'Girar 90° à esquerda'], ['rot-r', 'Girar 90° à direita'], ['flip-h', 'Inverter na horizontal'], ['flip-v', 'Inverter na vertical']];
+  function canFlip(el) { return !!el && (el.type === 'line' || !!(RT.flipOK && RT.flipOK(el))); }
+  /* '' = ao menos um elemento da lista pode ser espelhado; senão, o motivo (vai no title do botão desativado e no aviso) */
+  function flipWhy(list) {
+    if (list.some(canFlip)) return '';
+    if (list.length > 1) return 'Nenhum elemento da seleção pode ser espelhado: textos, gráficos e modelos com texto ficariam de trás para frente.';
+    return list[0] && list[0].type === 'text' ? 'Textos não se espelham: a leitura ficaria de trás para frente.' : 'Gráficos e modelos com texto não se espelham: a leitura ficaria de trás para frente.';
+  }
+  function hasRot(list) { return list.some(function (e) { return e.type !== 'line' && +e.rot; }); }
+  function frBtns(list, attr, zero) {
+    var why = flipWhy(list);
+    return FR.map(function (f) {
+      var off = why && f[0].indexOf('flip') === 0, t = off ? f[1] + ' (indisponível). ' + why : f[1];
+      return '<button type="button" ' + attr + '="' + f[0] + '"' + (off ? ' class="off" aria-disabled="true"' : '') + ' title="' + esc(t) + '" aria-label="' + esc(t) + '">' + svgI(f[0]) + '</button>';
+    }).join('') + (zero ? '<button type="button" ' + attr + '="rot-0"' + (hasRot(list) ? '' : ' class="off" aria-disabled="true"') + ' title="Zerar rotação" aria-label="Zerar rotação">' + svgI('rot-0') + '</button>' : '');
   }
   function renderThumbs() {
     var box = $('#thumbs'); box.innerHTML = '';
@@ -398,10 +476,18 @@
     chart: '<path d="M4 20h16"/><path d="M6 16v-5M11 16V6M16 16v-8"/><path d="M20 4l-4 4"/>',
     zoom: '<path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/>',
     flip: '<path d="M4 8h15M15 4l4 4-4 4"/><path d="M20 16H5M9 12l-4 4 4 4"/>',
+    /* girar e inverter (barra do quadro, painel, menu de contexto) */
+    'rot-l': '<path d="M4.5 12.5a7.5 7.5 0 1 0 2.2-5.8"/><path d="M4.5 3.5v4.5H9"/><rect x="9.5" y="10" width="5" height="5" rx="1"/>',
+    'rot-r': '<path d="M19.5 12.5a7.5 7.5 0 1 1-2.2-5.8"/><path d="M19.5 3.5v4.5H15"/><rect x="9.5" y="10" width="5" height="5" rx="1"/>',
+    'flip-h': '<path d="M12 3v18" stroke-dasharray="2 2.4"/><path d="M9 6.5L3 17.5h6z"/><path class="fl" d="M15 6.5l6 11h-6z"/>',
+    'flip-v': '<path d="M3 12h18" stroke-dasharray="2 2.4"/><path d="M6.5 9L17.5 3v6z"/><path class="fl" d="M6.5 15l11 6v-6z"/>',
+    'rot-0': '<path d="M3 20h18"/><rect x="6" y="9" width="12" height="8" rx="1.5"/><path d="M12 3v3"/>',
     smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>'
   };
   function svgI(k, cls) { return '<svg viewBox="0 0 24 24"' + (cls ? ' class="' + cls + '"' : '') + '>' + (IC[k] || '') + '</svg>'; }
   var ALIGNS = [['al-l', 'Alinhar à esquerda'], ['al-c', 'Centralizar na horizontal'], ['al-r', 'Alinhar à direita'], ['al-t', 'Alinhar ao topo'], ['al-m', 'Centralizar na vertical'], ['al-b', 'Alinhar à base']];
+  /* linha “Girar e inverter” do painel (girar 90°, espelhar e, fora das linhas, zerar a rotação) */
+  function frRow(list, zero) { return '<span class="pf frlbl"><span>Girar e inverter</span></span><div class="seg ic frseg" role="group" aria-label="Girar e inverter">' + frBtns(list, 'data-act', zero) + '</div>'; }
   function alignSeg() { return '<div class="seg ic">' + ALIGNS.map(function (a) { return '<button data-act="' + a[0] + '" title="' + a[1] + '">' + svgI(a[0]) + '</button>'; }).join('') + '</div>'; }
   var TYPE_NAME = { text: 'Texto', shape: 'Forma', line: 'Linha / seta', image: 'Imagem' };
   /* nome do elemento: fx usa AMRT.fxLabel (FX.kind.label(el) opcional, ex. “SmartArt · Processo”, senão o nome do modelo) — o mesmo do rodapé do “Ampliar” */
@@ -431,6 +517,7 @@
       h += '<div class="sec"><h3>Seleção</h3><div class="msel">' + list.map(function (e) { return '<span><i></i>' + esc(elName(e)) + '</span>'; }).join('') + '</div></div>';
       h += '<div class="sec"><h3>Alinhar entre si</h3>' + alignSeg() + '<p class="note">Com vários elementos, o alinhamento usa os limites da seleção.</p></div>';
       h += '<div class="sec"><h3>Distribuir</h3><div class="row"><button class="btnw ic" data-act="dist-h"' + (n3 ? '' : ' disabled') + '>' + svgI('dist-h') + 'Horizontal</button><button class="btnw ic" data-act="dist-v"' + (n3 ? '' : ' disabled') + '>' + svgI('dist-v') + 'Vertical</button></div><p class="note">' + (n3 ? 'Deixa o mesmo espaço entre os elementos, mantendo os das pontas no lugar.' : 'Selecione 3 ou mais elementos para distribuir.') + '</p></div>';
+      h += '<div class="sec"><h3>Girar e inverter</h3><div class="seg ic frseg" role="group" aria-label="Girar e inverter">' + frBtns(list, 'data-act', hasRot(list)) + '</div><p class="note">Cada elemento gira ou espelha no próprio lugar.</p></div>';
       h += '<div class="sec"><h3>Organizar</h3><div class="seg ic">' + [['front', 'Trazer para frente'], ['back', 'Enviar para trás'], ['top', 'Trazer ao topo'], ['bottom', 'Enviar ao fundo']].map(function (a) { return '<button data-act="' + a[0] + '" title="' + a[1] + '">' + svgI(a[0]) + '</button>'; }).join('') + '</div></div>';
       h += '<div class="sec"><h3>Ações</h3><div class="row"><button class="btnw ic" data-act="dup">' + svgI('dup') + 'Duplicar</button><button class="btnw ic" data-act="del">' + svgI('del') + 'Apagar</button></div><div class="row"><button class="btnw ic" data-act="copy">' + svgI('copy') + 'Copiar</button><button class="btnw ic" data-act="cut">' + svgI('cut') + 'Recortar</button></div><div class="row r1"><button class="btnw ic" data-act="seqsel">' + svgI('fx') + 'Animar a seleção em sequência</button></div></div>';
       h += '<div class="empty">Arraste qualquer elemento da seleção para mover o grupo; use as <b>setas</b> para ajustes finos (Shift = 10 px).</div>';
@@ -477,10 +564,10 @@
     }
     if (FD && FD.gal === 'icon') { var hv = h.slice(h0.length), ci = hv.indexOf('<div class="sec"><h3>Conteúdo</h3>'); if (ci > 0) h = h0 + hv.slice(ci) + hv.slice(0, ci); }
     if (el.type === 'line') {
-      h += '<div class="sec"><h3>Posição</h3><div class="row r4">' + fld('X1', num('x1', el.x1)) + fld('Y1', num('y1', el.y1)) + fld('X2', num('x2', el.x2)) + fld('Y2', num('y2', el.y2)) + '</div></div>';
+      h += '<div class="sec"><h3>Posição</h3><div class="row r4">' + fld('X1', num('x1', el.x1)) + fld('Y1', num('y1', el.y1)) + fld('X2', num('x2', el.x2)) + fld('Y2', num('y2', el.y2)) + '</div>' + frRow([el], false) + '</div>';
       h += RT.LINE_ROUTES ? lineSec(el) : '<div class="sec"><h3>Linha</h3>' + swatches('stroke', el.stroke) + '<div class="row" style="margin-top:10px">' + fld('Espessura', num('strokeW', el.strokeW, 1, 1, 40)) + '<label class="pf"><span>&nbsp;</span>' + tog('dash', el.dash, 'Tracejada') + '</label></div><div class="chips">' + tog('headStart', el.headStart, '← Seta no início') + tog('headEnd', el.headEnd, 'Seta no fim →') + '</div></div>';
     } else {
-      h += '<div class="sec"><h3>Posição e tamanho</h3><div class="row r4">' + fld('X', num('x', el.x)) + fld('Y', num('y', el.y)) + fld('Largura', num('w', el.w, 1, 8)) + fld('Altura', num('h', el.h, 1, 8)) + '</div><div class="row">' + fld('Rotação (°)', num('rot', el.rot || 0, 1, -360, 360)) + fld('Opacidade', num('opacity', el.opacity == null ? 1 : el.opacity, .05, 0, 1)) + '</div><h3 style="margin-top:6px">Alinhar no slide</h3>' + alignSeg() + '</div>';
+      h += '<div class="sec"><h3>Posição e tamanho</h3><div class="row r4">' + fld('X', num('x', el.x)) + fld('Y', num('y', el.y)) + fld('Largura', num('w', el.w, 1, 8)) + fld('Altura', num('h', el.h, 1, 8)) + '</div><div class="row">' + fld('Rotação (°)', num('rot', el.rot || 0, 1, -360, 360)) + fld('Opacidade', num('opacity', el.opacity == null ? 1 : el.opacity, .05, 0, 1)) + '</div>' + frRow([el], true) + '<h3 style="margin-top:6px">Alinhar no slide</h3>' + alignSeg() + '</div>';
     }
     if (el.type === 'shape') {
       var cardOk = LOOKS.length > 1 && (!el.shape || /^(rect|round|pill)$/.test(el.shape)), lk = el.look || 'flat';
@@ -599,6 +686,7 @@
     if (path === 'anim.in' && val === 'draw' && !canDraw(el)) toast('“Desenhar” funciona em linhas, setas, Linhas A&M e ícones animados.');
     if (path === 'anim.in' && val === 'words' && !hasText(el)) toast('“Palavra a palavra” funciona em textos e formas com texto.');
     if (path === 'shape' && el.type === 'shape') shapeSwitch(el, val);
+    if (path === 'rot') { val = normRot(val); if (!val) { delete el.rot; rerenderEl(el); if (!live) commit(); return; } } /* giro sempre em (-180, 180] */
     setPath(el, path, val);
     rerenderEl(el);
     if (!live) { commit(); }
@@ -642,7 +730,7 @@
     g.querySelector('.icf-none').hidden = n > 0;
   });
   props.addEventListener('change', function (e) {
-    var t = e.target; if (!t.dataset.p) return; commit(); if (t.tagName === 'SELECT' || t.type === 'color') renderProps();
+    var t = e.target; if (!t.dataset.p) return; commit(); if (t.tagName === 'SELECT' || t.type === 'color' || t.dataset.p === 'rot') renderProps();
     /* campos do slide: o cabeçalho (capítulo), os placeholders e a dica dependem deles; redesenha depois que o foco saiu do painel, sem engolir o clique */
     else if (/^s\.(title|sec|secSub|notes)$/.test(t.dataset.p)) setTimeout(function () { if (!props.contains(document.activeElement) && !sel()) renderProps(); }, 0);
   });
@@ -766,8 +854,42 @@
     o.forEach(function (q) { if (hz) moveTo(q.el, Math.round(pos), q.b.y); else moveTo(q.el, q.b.x, Math.round(pos)); pos += (hz ? q.b.w : q.b.h) + gap; });
     return true;
   }
+  /* ---------- girar e inverter: cada elemento no próprio centro (linhas: as pontas giram/espelham em torno do meio, sem campos novos) ---------- */
+  function r2(v) { return Math.round(v * 100) / 100; }
+  function turnEl(el, deg) {
+    if (el.type === 'line') {
+      var mx = (el.x1 + el.x2) / 2, my = (el.y1 + el.y2) / 2, t = deg * Math.PI / 180, c = Math.cos(t), sn = Math.sin(t);
+      [['x1', 'y1'], ['x2', 'y2']].forEach(function (k) { var dx = el[k[0]] - mx, dy = el[k[1]] - my; el[k[0]] = r2(mx + dx * c - dy * sn); el[k[1]] = r2(my + dx * sn + dy * c); });
+      return true;
+    }
+    var r = normRot((+el.rot || 0) + deg); if (r) el.rot = r; else delete el.rot; return true;
+  }
+  /* espelhar: a linha troca as pontas de lado (o cotovelo mantém a dobra); foto, forma e ícone ganham flipH/flipV.
+     Como no PowerPoint, espelhar um elemento girado também espelha o giro (30° vira -30°) */
+  function flipEl(el, ax) {
+    if (el.type === 'line') { var a = ax === 'h' ? ['x1', 'x2'] : ['y1', 'y2'], t = el[a[0]]; el[a[0]] = el[a[1]]; el[a[1]] = t; return true; }
+    if (!canFlip(el)) return false;
+    var k = ax === 'h' ? 'flipH' : 'flipV'; if (el[k]) delete el[k]; else el[k] = true;
+    if (+el.rot) { var r = normRot(-el.rot); if (r) el.rot = r; else delete el.rot; }
+    return true;
+  }
+  function frameAct(a) {
+    var list = sels(); if (!list.length) return;
+    if (editingId) endEdit();
+    var n = 0;
+    list.forEach(function (el) {
+      var ok = a === 'rot-l' ? turnEl(el, -90) : a === 'rot-r' ? turnEl(el, 90) : a === 'flip-h' ? flipEl(el, 'h') : a === 'flip-v' ? flipEl(el, 'v') : (el.type !== 'line' && +el.rot ? (delete el.rot, true) : false);
+      if (ok) { n++; rerenderEl(el); }
+    });
+    if (!n) { toast(a === 'rot-0' ? 'A rotação já está em 0°.' : flipWhy(list)); return; }
+    drawSel(); renderProps(); commit();
+    if (a.indexOf('flip') === 0 && n < list.length) toast('Textos, gráficos e modelos com texto ficaram como estavam: espelhados, seriam lidos de trás para frente.');
+  }
+  /* Alt+← / Alt+→: gira a seleção 15° (Alt+Shift: 1°), um passo de desfazer por toque */
+  function turnSel(deg) { var list = sels(); if (!list.length) return; list.forEach(function (el) { turnEl(el, deg); rerenderEl(el); }); drawSel(); renderProps(); commit(); }
   function act(a) {
     var el = sel(), s = slide(), list = sels();
+    if (/^(rot-[lr0]|flip-[hv])$/.test(a)) return frameAct(a);
     if (a === 'del') return delSel();
     if (a === 'dup') return dupSel();
     if (a === 'copy') return doCopy(false);
@@ -1136,6 +1258,8 @@
     stopPreview(); if (e.button !== 0) return;
     setZone('canvas');
     if (e.target.closest('#fxArrow')) { e.preventDefault(); openVarMenu(e.target.closest('#fxArrow')); return; }
+    if (e.target.closest('#frBar')) { e.preventDefault(); return; } /* barra do quadro: o clique age (selLayer click); a seleção fica */
+    if (e.target.closest('.rhdl')) { e.preventDefault(); startRotate(e); return; }
     var hd = e.target.closest('.hdl');
     if (hd) { e.preventDefault(); startResize(e, hd.dataset.h); return; }
     var n = stageNode(e.target);
@@ -1150,12 +1274,15 @@
     if (selIds.length > 1 && selIds.indexOf(id) >= 0) { selId = id; startMove(e, sels(), null, id); return; }
     var wasSel = selIds.length === 1 && selId === id; select(id); startMove(e, [getEl(id)], wasSel ? e.target.closest('[data-cyc]') : null);
   });
+  /* barra do quadro (girar 90° / inverter): o mouse não tira o foco nem a seleção; o clique age em toda a seleção */
+  selLayer.addEventListener('mousedown', function (e) { if (e.target.closest('#frBar')) e.preventDefault(); });
+  selLayer.addEventListener('click', function (e) { var b = e.target.closest('#frBar button[data-fr]'); if (!b) return; e.stopPropagation(); act(b.dataset.fr); });
   /* laço de seleção: arrastar no espaço vazio seleciona os elementos tocados (Shift soma) */
   function startMarquee(e, add) {
     var p0 = toLogical(e), base = add ? selIds.slice() : [], moved = false, mq = $('#marq');
     if (!add) select(null);
     function mv(ev) {
-      var p = toLogical(ev); if (!moved && Math.abs(p.x - p0.x) < 4 && Math.abs(p.y - p0.y) < 4) return; moved = true;
+      var p = toLogical(ev); if (!moved && Math.abs(p.x - p0.x) < 4 && Math.abs(p.y - p0.y) < 4) return; moved = true; busy = 'marq';
       var r = { x: Math.min(p.x, p0.x), y: Math.min(p.y, p0.y), w: Math.abs(p.x - p0.x), h: Math.abs(p.y - p0.y) };
       mq.style.cssText = boxCss(r); mq.classList.add('on');
       var hit = slide().els.filter(function (el) { var b = bbox(el), pad = el.type === 'line' ? 4 : 0; return b.x - pad < r.x + r.w && b.x + b.w + pad > r.x && b.y - pad < r.y + r.h && b.y + b.h + pad > r.y; }).map(function (el) { return el.id; });
@@ -1164,6 +1291,7 @@
     }
     function up() {
       removeEventListener('pointermove', mv); removeEventListener('pointerup', up); mq.classList.remove('on');
+      if (busy === 'marq') busy = null;
       if (moved) setSel(selIds, selId);
     }
     addEventListener('pointermove', mv); addEventListener('pointerup', up);
@@ -1175,7 +1303,7 @@
     var others = slide().els.filter(function (o) { return ids.indexOf(o.id) < 0; }).map(bbox);
     function mv(ev) {
       var p = toLogical(ev), dx = p.x - p0.x, dy = p.y - p0.y;
-      if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return; moved = true;
+      if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return; moved = true; busy = 'move';
       var nx = b0.x + dx, ny = b0.y + dy, g = [];
       if (!ev.altKey) {
         var xs = [0, W / 2, W], ys = [0, H / 2, H]; others.forEach(function (o) { xs.push(o.x, o.x + o.w / 2, o.x + o.w); ys.push(o.y, o.y + o.h / 2, o.y + o.h); });
@@ -1190,6 +1318,7 @@
     }
     function up() {
       removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
+      if (busy === 'move') busy = null;
       if (moved) { drawSel(); commit(); renderProps(); return; }
       if (collapseTo) { select(collapseTo); return; }
       var el = list[0];
@@ -1216,11 +1345,36 @@
     };
     drawSel();
   }
+  /* alça de girar: gira em torno do centro, com o ângulo ao vivo junto do ponteiro; Shift = passos de 15°; sem Shift, ímã em 0/90/180/270 (±3°).
+     Um passo de desfazer ao soltar */
+  function startRotate(e) {
+    var el = sel(); if (!el || el.type === 'line') return;
+    var cx = el.x + el.w / 2, cy = el.y + el.h / 2, p0 = toLogical(e), a0 = Math.atan2(p0.y - cy, p0.x - cx), r0 = +el.rot || 0, moved = false;
+    busy = 'rotate'; document.body.classList.add('am-rotating');
+    function mv(ev) {
+      var p = toLogical(ev), r = r0 + (Math.atan2(p.y - cy, p.x - cx) - a0) * 180 / Math.PI;
+      if (ev.shiftKey) r = Math.round(r / 15) * 15;
+      else { var m = Math.round(r / 90) * 90; if (Math.abs(r - m) <= 3) r = m; }
+      r = normRot(r); moved = true;
+      if (r) el.rot = r; else delete el.rot;
+      rotTip = { x: p.x, y: p.y, a: r }; rerenderEl(el);
+    }
+    function up() {
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', up);
+      busy = null; rotTip = null; document.body.classList.remove('am-rotating'); drawSel();
+      if (moved) { commit(); renderProps(); }
+    }
+    addEventListener('pointermove', mv); addEventListener('pointerup', up);
+  }
   function startResize(e, h) {
     var el = sel(); if (!el) return;
     var p0 = toLogical(e), o = clone(el), keep = el.type === 'image';
+    /* elemento girado: o arraste vira coordenada local (gira −θ); a caixa nova volta ao mundo pelo centro, então a alça oposta fica parada na tela */
+    var th = el.type === 'line' ? 0 : (+el.rot || 0) * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th);
+    busy = 'resize';
     function mv(ev) {
       var p = toLogical(ev), dx = p.x - p0.x, dy = p.y - p0.y;
+      if (th) { var lx = dx * cs + dy * sn, ly = -dx * sn + dy * cs; dx = lx; dy = ly; }
       if (h === 'bend') { /* dobra do cotovelo: posição do segmento do meio entre as pontas (5–95 %) */
         var bx = el.x2 - el.x1, by = el.y2 - el.y1, hz = Math.abs(bx) >= Math.abs(by), bv = hz ? (bx ? (p.x - el.x1) / bx : .5) : (by ? (p.y - el.y1) / by : .5);
         el.bend = Math.round(Math.max(.05, Math.min(.95, bv)) * 100) / 100;
@@ -1236,16 +1390,17 @@
         if ((keep !== ev.shiftKey) && h.length === 2) { /* proporção travada: a escala segue o eixo mais arrastado (como no PowerPoint), para aumentar e diminuir com naturalidade */
           var sx = nw / o.w, sy = nh / o.h, sc = Math.max(8 / Math.min(o.w, o.h), Math.abs(sx - 1) >= Math.abs(sy - 1) ? sx : sy); nw = o.w * sc; nh = o.h * sc;
           if (h.indexOf('w') >= 0) x0 = x1 - nw; else x1 = x0 + nw; if (h.indexOf('n') >= 0) y0 = y1 - nh; else y1 = y0 + nh; }
+        if (th) { var ocx = o.x + o.w / 2, ocy = o.y + o.h / 2, ux = (x0 + x1) / 2 - ocx, uy = (y0 + y1) / 2 - ocy; x0 = ocx + ux * cs - uy * sn - nw / 2; y0 = ocy + ux * sn + uy * cs - nh / 2; }
         el.x = Math.round(x0); el.y = Math.round(y0); el.w = Math.round(nw); el.h = Math.round(nh);
       }
       rerenderEl(el);
     }
-    function up() { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); commit(); renderProps(); }
+    function up() { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); busy = null; drawSel(); commit(); renderProps(); }
     addEventListener('pointermove', mv); addEventListener('pointerup', up);
   }
   wrap.addEventListener('dblclick', function (e) {
     stopPreview(); var n = stageNode(e.target);
-    if (!n) { if (!e.target.closest('.hdl,#fxArrow,.gbox')) createTextAt(toLogical(e)); return; }
+    if (!n) { if (!e.target.closest('.hdl,#fxArrow,.gbox,.rhdl,#frBar')) createTextAt(toLogical(e)); return; }
     var el = getEl(n.dataset.id); if (!el) return;
     if (el.type === 'text' || el.type === 'shape') { startEdit(el, false); selectWordAt(e.clientX, e.clientY, stage.querySelector('.am-el[data-id="' + el.id + '"] .am-tx')); }
     else if (el.type === 'image') act('replace');
@@ -1593,6 +1748,8 @@
     var altgr = e.getModifierState && e.getModifierState('AltGraph'), plain = !e.ctrlKey && !e.metaKey && !e.altKey;
     if (e.key.length === 1 && (plain || altgr) && el && (el.type === 'text' || el.type === 'shape') && zone === 'canvas') { e.preventDefault(); startEdit(el, false); document.execCommand('insertText', false, e.key); return; }
     if (e.key === '?') { e.preventDefault(); showHelp(); return; }
+    /* Alt+← / Alt+→ giram a seleção 15° (com Shift, 1°), como no PowerPoint; AltGr nunca gira (só digita) */
+    if (e.altKey && !e.ctrlKey && !e.metaKey && !altgr && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && list.length && zone === 'canvas') { e.preventDefault(); turnSel((e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 15)); return; }
     if (e.key.indexOf('Arrow') === 0 && list.length && zone === 'canvas') {
       e.preventDefault(); var d = e.shiftKey ? 10 : 1;
       nudge(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0); return;
@@ -2187,6 +2344,12 @@
     var list = sels(), n = list.length, many = n > 1;
     return [{ hd: many ? 'Alinhar entre si' : 'Alinhar no slide' }].concat(ALIGNS.map(function (a) { return { t: a[1].replace('Alinhar ', '').replace(/^à /, '').replace(/^ao /, '').replace(/^./, function (c) { return c.toUpperCase(); }), ic: a[0], dis: !n, fn: function () { act(a[0]); } }; }));
   }
+  /* Girar e inverter ▸ (menu de contexto do elemento e Organizar): as mesmas ações da barra do quadro e do painel */
+  function rotItems() {
+    var list = sels(), why = flipWhy(list), lineOnly = list.length && list.every(function (e) { return e.type === 'line'; });
+    return FR.map(function (f) { return { t: f[1], ic: f[0], dis: !list.length || (f[0].indexOf('flip') === 0 && !!why), fn: function () { act(f[0]); } }; })
+      .concat(lineOnly ? [] : [{ sep: 1 }, { t: 'Zerar rotação', ic: 'rot-0', dis: !hasRot(list), fn: function () { act('rot-0'); } }]);
+  }
   function distItems() { var n = sels().length; return [{ t: 'Horizontalmente', ic: 'dist-h', dis: n < 3, fn: function () { act('dist-h'); } }, { t: 'Verticalmente', ic: 'dist-v', dis: n < 3, fn: function () { act('dist-v'); } }]; }
   var MENUS = {
     file: function () {
@@ -2238,7 +2401,7 @@
       var any = hasSel();
       return [{ t: 'Trazer para frente', ic: 'front', dis: !any, fn: function () { act('front'); } }, { t: 'Enviar para trás', ic: 'back', dis: !any, fn: function () { act('back'); } },
         { t: 'Trazer ao topo', ic: 'top', dis: !any, fn: function () { act('top'); } }, { t: 'Enviar ao fundo', ic: 'bottom', dis: !any, fn: function () { act('bottom'); } }, { sep: 1 },
-        { t: 'Alinhar', ic: 'al-c', dis: !any, sub: alignItems }, { t: 'Distribuir', ic: 'dist-h', dis: sels().length < 3, sub: distItems }];
+        { t: 'Alinhar', ic: 'al-c', dis: !any, sub: alignItems }, { t: 'Distribuir', ic: 'dist-h', dis: sels().length < 3, sub: distItems }, { t: 'Girar e inverter', ic: 'rot-r', dis: !any, sub: rotItems }];
     },
     present: function () { return [{ t: 'Do início', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { t: 'Do slide atual', ic: 'playcur', k: KEY.sf5, fn: function () { present(cur); } }]; },
     help: function () { return [{ t: 'Atalhos de teclado', ic: 'keys', k: KEY.f1, fn: showHelp }, { t: 'Manual da obra', ic: 'help', fn: howTo }]; }
@@ -2252,7 +2415,7 @@
       { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null); } }, { t: 'Duplicar', ic: 'dup', k: KEY.dup, fn: dupSel },
       { t: 'Apagar', ic: 'del', k: KEY.del, fn: delSel }, { sep: 1 },
       { t: 'Trazer para frente', ic: 'front', fn: function () { act('front'); } }, { t: 'Enviar para trás', ic: 'back', fn: function () { act('back'); } }, { sep: 1 },
-      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null];
+      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null, { t: 'Girar e inverter', ic: 'rot-r', sub: rotItems }];
   }
   function ctxCanvasItems(p) {
     return [{ hd: 'Slide ' + (cur + 1) }, { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(p); } },
@@ -2274,7 +2437,7 @@
     if (!inCv) return;
     if (editingId) { var en = stage.querySelector('.am-el[data-id="' + editingId + '"]'); if (en && en.contains(e.target)) return; endEdit(); }
     e.preventDefault(); setZone('canvas');
-    var n = stageNode(e.target), onSel = e.target.closest('#sel .hdl,#fxArrow');
+    var n = stageNode(e.target), onSel = e.target.closest('#sel .hdl,#fxArrow,#sel .rhdl,#frBar');
     if (n && selIds.indexOf(n.dataset.id) < 0) select(n.dataset.id);
     if (n || (onSel && selIds.length)) { openX(ctxElItems, { x: e.clientX + 2, y: e.clientY + 2, ctx: 1 }); return; }
     var p = toLogical(e); p = { x: Math.max(0, Math.min(W - 20, p.x)), y: Math.max(0, Math.min(H - 20, p.y)) };
@@ -2319,7 +2482,7 @@
   var HK = [
     ['Editar', [['Copiar / recortar / colar', [['Ctrl', 'C'], ['Ctrl', 'X'], ['Ctrl', 'V']], 'Elementos ou, com a miniatura em foco, slides', '/'], ['Duplicar', [['Ctrl', 'D']]], ['Selecionar tudo no slide', [['Ctrl', 'A']]], ['Apagar seleção', [['Delete'], ['Backspace']], 'Ou o slide, com a miniatura em foco']]],
     ['Histórico e arquivo', [['Desfazer', [['Ctrl', 'Z']]], ['Refazer', [['Ctrl', 'Shift', 'Z'], ['Ctrl', 'Y']]], ['Abrir apresentação', [['Ctrl', 'O']]], ['Salvar apresentação', [['Ctrl', 'S']], 'Gera um novo arquivo HTML']]],
-    ['Mover e selecionar', [['Mover 1 px / 10 px', [['Setas'], ['Shift', 'Setas']], '', '/'], ['Somar à seleção', [['Shift', '~clique']]], ['Seleção por área', [['~arrastar no vazio']]], ['Editar texto', [['~duplo clique'], ['Enter']], 'No vazio, cria uma caixa de texto'], ['Menu de opções', [['~clique direito'], ['Shift', 'F10']]], ['Sair da edição / limpar seleção', [['Esc']]]]],
+    ['Mover e selecionar', [['Mover 1 px / 10 px', [['Setas'], ['Shift', 'Setas']], 'Alt+← / Alt+→ giram 15° · com Shift, 1°', '/'], ['Somar à seleção', [['Shift', '~clique']]], ['Seleção por área', [['~arrastar no vazio']]], ['Editar texto', [['~duplo clique'], ['Enter']], 'No vazio, cria uma caixa de texto'], ['Menu de opções', [['~clique direito'], ['Shift', 'F10']]], ['Sair da edição / limpar seleção', [['Esc']]]]],
     ['Apresentar e ajuda', [['Apresentar do início', [['F5']], 'F tela cheia · Z amplia o gráfico · G índice de slides · I sobre este slide'], ['Apresentar do slide atual', [['Shift', 'F5']]], ['Atalhos de teclado', [['F1'], ['?']]]]]
   ];
   /* "Ctrl+C / Ctrl+X / Ctrl+V" vira "Ctrl + C / X / V" quando todas as combinações têm o mesmo modificador */

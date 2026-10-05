@@ -278,6 +278,23 @@ span.pf{margin-bottom:6px}
 .fxarrow:hover{background:#0B3A63}
 .fxarrow b{color:var(--orange);font-weight:700}
 .fxarrow svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:2.5}
+.rhdl{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#fff;border:1.5px solid var(--orange);box-shadow:0 2px 6px rgba(0,30,50,.25);pointer-events:auto;cursor:grab;display:grid;place-items:center;z-index:1}
+.rhdl::before{content:'';position:absolute;inset:-7px;border-radius:50%}
+.rhdl:hover{background:#FFF4E8}
+.rhdl svg{width:11px;height:11px;fill:none;stroke:var(--orange);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.rstem{position:absolute;width:1.5px;height:26px;background:var(--orange);transform-origin:50% 100%;pointer-events:none}
+body.am-rotating,body.am-rotating *{cursor:grabbing!important}
+.rottip{position:absolute;transform:translate(14px,-140%);padding:3px 8px;border-radius:6px;background:var(--navy);color:#fff;font:600 11.5px/1.3 'JetBrains Mono',monospace;white-space:nowrap;pointer-events:none;box-shadow:0 4px 12px rgba(0,30,50,.25);z-index:3}
+.frbar{position:absolute;display:inline-flex;align-items:center;gap:1px;height:28px;padding:0 3px;border-radius:8px;background:var(--navy);box-shadow:0 6px 16px rgba(0,30,50,.25);pointer-events:auto;z-index:2}
+.frbar button{width:26px;height:22px;display:grid;place-items:center;border:0;border-radius:5px;background:transparent;color:#fff;cursor:pointer;padding:0}
+.frbar button:hover{background:#0B3A63}
+.frbar button:focus-visible{outline:2px solid var(--orange);outline-offset:-2px}
+.frbar button svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.frbar button.off{opacity:.38;cursor:not-allowed}
+.frbar button.off:hover{background:transparent}
+.seg button.off{opacity:.38;cursor:not-allowed}
+.frlbl{margin-top:2px}
+.frseg{margin-bottom:10px}
 .vmenu{width:340px;padding:8px}
 .vmenu .vh{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:6px}
 .vmenu .vh b{font-size:12.5px}
@@ -463,6 +480,11 @@ span.pf{margin-bottom:6px}
 #marq.on{display:block}
 #cv{user-select:none}
 #wrap .am-edit .am-el:hover{outline:1px solid rgba(126,161,195,.75)}
+/* S17: elemento girado — o clique e o contorno de passar o mouse seguem o desenho girado (.am-rot), não a caixa sem giro (.am-el) */
+#wrap .am-edit .am-el:not(.am-t-line){pointer-events:none}
+#wrap .am-edit .am-el:not(.am-t-line)>.am-rot{pointer-events:auto}
+#wrap .am-edit .am-el:not(.am-t-line):hover{outline:none}
+#wrap .am-edit .am-el:not(.am-t-line):not(.editing)>.am-rot:hover{outline:1px solid rgba(126,161,195,.75)}
 /* linhas e setas: só o traço (e uma faixa invisível em volta dele) recebe o clique, não a caixa inteira */
 .am-edit .am-t-line{pointer-events:none}
 .am-edit .am-t-line svg path{pointer-events:visiblePainted}

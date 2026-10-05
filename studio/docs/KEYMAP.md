@@ -90,6 +90,7 @@ Invariant pinned by test-core: with nothing open, **Esc exits present mode**. No
 | Ctrl+Z · Ctrl+Shift+Z / Ctrl+Y | Desfazer · Refazer |
 | Ctrl+O · Ctrl+S | Abrir apresentação · Salvar apresentação |
 | Arrows / Shift+arrows | Move the selection 1 px / 10 px; with nothing selected ↑ ↓ PageUp PageDown change slide (← → too with the thumbnail focused) |
+| Alt+← / Alt+→ (Alt+Shift: 1°) | Girar a seleção 15° anti-horário / horário (**S17**). Canvas zone with a selection, never while typing; AltGr (`getModifierState('AltGraph')`) never rotates. Lines turn their endpoints around the midpoint. One undo step per press; `preventDefault` also stops the browser's Alt+← “back”. |
 | Enter · typing a character | Edit the selected text/shape (typing starts the edit with that character; AltGr counts) |
 | Shift+F10 · ContextMenu key | Menu de opções (context menu) |
 | Esc | Leave text editing; close menus and the Biblioteca; clear the selection |
