@@ -49,6 +49,8 @@ Status: **today** = shipped; **F0** = shipped in step S0 (Fundação); **Fn** = 
 
 Editor present mode only: **F5** (start from the beginning) and **Shift+F5** (from the current slide) are handled by the editor before the player sees them (editor.js keydown). The player never binds F-keys other than F.
 
+Hidden slides (S21, `slide.hidden`): F5, Shift+F5, ←/→, Home/End, the índice (G), the rail and the exported file all skip them (the player only receives the visible slides). Shift+F5 on a hidden slide starts at the next visible one (else the previous); if every slide is hidden, all are shown. No key was added for “Ocultar slide” / “Redefinir slide” (menus and the slide panel only).
+
 ---
 
 ## 3. Esc priority (topmost first)
@@ -77,6 +79,9 @@ Invariant pinned by test-core: with nothing open, **Esc exits present mode**. No
 | Edit mode in the exported file (F11) | Arrows / Shift+arrows · Ctrl/⌘+S · Ctrl/⌘+Z · Ctrl/⌘+Shift+Z · Esc | Arrows nudge the selected element 1 px / 10 px (navigate when nothing is selected); Salvar cópia; Desfazer; Refazer; leave edit mode. Double-click edits text (rule 1 then applies). |
 | Shortcuts overlay (F8) | Esc · ? | Close. |
 | Editor “Mais cores…” popover (S19, `ed-colors.js`) | ← → ↑ ↓ · Home End · Enter/Space · Tab/Shift+Tab · Esc · Enter in the hex field | Arrows move between colour swatches (↑/↓ go to the nearest swatch in the row above/below, across sections); Enter/Space applies the focused colour; Tab cycles inside the popover; Esc closes and returns focus to the “Mais cores…” button; Enter in “Personalizada” applies a valid #RRGGBB (invalid = red outline, nothing applied). Every other key pressed inside the popover stops there (arrows never nudge the element, Delete never deletes). Exceptions: F5 / F1 / Ctrl+S / Ctrl+O close the popover (preview cancelled) and do what they do in the editor (present, help, save, open), never reaching the browser; Ctrl+P / Ctrl+D / Ctrl+A (A outside the hex field) are swallowed. Esc after a native-picker preview reverts it (no undo step). |
+| Editor “Salvar como…” menu (S22, ▾ `#bSaveMore` next to Salvar) | Enter/Space or ↓ on ▾ · ↑ ↓ · Home End · Enter · Esc · Tab | Opens the app-style menu (`openX`, same keyboard as Arquivo) with the first item highlighted; Enter runs the item; Esc/Tab close and return focus to ▾. A plain click on **Salvar** (and Ctrl+S) still downloads the .html. |
+| Editor export dialog “Salvar como PDF” / “PDF pelo navegador” (S22, `ed-40-export.js`, own dialog, not `#modal`) | Tab/Shift+Tab · Space · ↑ ↓ (radio groups) · Enter · Esc | Tab cycles inside the dialog (focus trap); Enter in a field or on **Exportar PDF** starts the export; **Esc** closes when idle (focus back to the opener: ▾, or where it was for Arquivo › Salvar como PDF…) and **cancels** while a PDF is being generated (the dialog stays open). Every other key stops at the dialog (Delete, arrows, Ctrl+Z never reach the slide); F1 / F5 / Ctrl+S/O/D/P (outside fields) are swallowed. |
+| Editor export dialog “Salvar como PowerPoint” (S23, `ed-41-pptx.js`, `#xkDlg`, own dialog, not `#modal`) | Tab/Shift+Tab · Space · ↑ ↓ (radio groups) · Enter · Esc | Same keyboard as the PDF dialog: focus trap; Enter on **Exportar PowerPoint** (or in a field) starts; **Esc** closes when idle (focus back to ▾ or the previous element) and **cancels** while the .pptx is being generated (the dialog stays open). Other keys stop at the dialog. No new shortcuts. |
 
 ---
 
