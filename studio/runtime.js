@@ -650,7 +650,7 @@ window.AMRT = (function () {
     var zs = [], zoomOpen = false, zi = 0, zClean = null, zReturn = null, hoverId = null, zbT = null;
     function hideZb(ms) { clearTimeout(zbT); zbT = setTimeout(function () { zb.classList.remove('on'); }, ms || 0); }
     function showZb(n) {
-      clearTimeout(zbT); var r = n.getBoundingClientRect(), a = wrap.getBoundingClientRect();
+      clearTimeout(zbT); var r = (n.querySelector(':scope>.am-rot') || n).getBoundingClientRect(), a = wrap.getBoundingClientRect(); /* girado: canto do desenho, não da caixa sem giro */
       zb.style.left = Math.max(0, r.right - 40 - a.left) + 'px'; zb.style.top = Math.max(0, r.top + 8 - a.top) + 'px'; zb.classList.add('on');
     }
     function zoomableNode(t) { var n = t && t.closest && t.closest('.am-el'); return n && zs.some(function (e) { return e.id === n.dataset.id; }) ? n : null; }
@@ -660,11 +660,14 @@ window.AMRT = (function () {
       zi = ((n % zs.length) + zs.length) % zs.length; var el = zs[zi];
       if (!zoomOpen) zReturn = document.activeElement;
       if (zClean) { zClean(); zClean = null; }
-      var maxW = Math.min(innerWidth * .94, 1700) - 52, maxH = innerHeight * .92 - 90, k = Math.max(.1, Math.min(maxW / el.w, maxH / el.h, 4));
+      /* elemento girado: a janela tem o tamanho da caixa que contém o desenho girado (|w cos|+|h sin| × |w sin|+|h cos|), com o elemento
+         no meio — nada é cortado e a foto continua na orientação escolhida */
+      var t = el.type === 'line' ? 0 : (+el.rot || 0) * Math.PI / 180, cs = Math.abs(Math.cos(t)), sn = Math.abs(Math.sin(t)), bw = el.w * cs + el.h * sn, bh = el.w * sn + el.h * cs;
+      var maxW = Math.min(innerWidth * .94, 1700) - 52, maxH = innerHeight * .92 - 90, k = Math.max(.1, Math.min(maxW / bw, maxH / bh, 4));
       var st = renderSlide({ bg: s.bg || '#FFFFFF', els: [el] }, { play: true });
       st.classList.remove('am-pre'); /* estado final, pronto para ler: contadores e ciclos ainda rodam (runFx) */
-      st.style.cssText += ';position:absolute;left:' + (-el.x * k) + 'px;top:' + (-el.y * k) + 'px;width:' + (W * k) + 'px;height:' + (H * k) + 'px;aspect-ratio:auto';
-      zvp.style.width = (el.w * k) + 'px'; zvp.style.height = (el.h * k) + 'px'; zvp.style.background = s.bg || '#FFFFFF'; zbox.style.width = (el.w * k + 52) + 'px';
+      st.style.cssText += ';position:absolute;left:' + (-(el.x - (bw - el.w) / 2) * k) + 'px;top:' + (-(el.y - (bh - el.h) / 2) * k) + 'px;width:' + (W * k) + 'px;height:' + (H * k) + 'px;aspect-ratio:auto' + (t ? ';overflow:visible' : '');
+      zvp.style.width = (bw * k) + 'px'; zvp.style.height = (bh * k) + 'px'; zvp.style.background = s.bg || '#FFFFFF'; zbox.style.width = (bw * k + 52) + 'px';
       zvp.innerHTML = ''; zvp.appendChild(st); zClean = runFx(st);
       zbox.classList.toggle('dark', isDark(s.bg));
       zm.querySelector('.t').textContent = slideTitle(s, cur); zm.querySelector('.n').textContent = zs.length > 1 ? (zi + 1) + ' / ' + zs.length : '';
