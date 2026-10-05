@@ -223,6 +223,81 @@ async function open(ctx, url, tag){ const p=await ctx.newPage(); await fonts(p);
   const rec2=(await popInfo()).rec; await p.keyboard.press('Escape'); await sleep(100);
   check('S19-24: Recentes continuam lá depois de recarregar a página (localStorage amStudio.recentColors)', JSON.stringify(rec2)===JSON.stringify(rec1), rec2);
 
+
+  /* ---------- 17. revisão do seletor: atalhos dentro do popover, prévia cancelada, posição, código colado, título, funil claro ---------- */
+  await p.evaluate(()=>AMStudio.loadDeck({title:'Revisão',slides:[{id:'s1',bg:'#FFFFFF',els:[]},{id:'s2',bg:'#FFFFFF',els:[]}]},null,true,true)); await sleep(300);
+  await p.evaluate(()=>AMStudio.select(null)); await sleep(150);
+  /* F5 com o foco no popover (aberto pelo mouse): fecha o seletor e apresenta; o navegador não recebe a tecla */
+  const keyTrap=()=>p.evaluate(()=>{ window.__kp=[]; window.__kh=e=>window.__kp.push(e.key+':'+e.defaultPrevented); addEventListener('keydown',window.__kh); });
+  const keyLog=()=>p.evaluate(()=>{ removeEventListener('keydown',window.__kh); return window.__kp; });
+  await (await moreBtn('Fundo')).click(); await sleep(250);
+  const inPop=await p.evaluate(()=>!!(document.activeElement&&document.activeElement.closest('.cpop')));
+  await keyTrap(); await p.keyboard.press('F5'); await sleep(700);
+  const k5=await keyLog(), pres5=await p.evaluate(()=>({pres:document.querySelector('#presenter').classList.contains('open'), pop:!!document.querySelector('.cpop')}));
+  await p.keyboard.press('Escape'); await sleep(600);
+  await p.evaluate(()=>AMStudio.select(null)); await sleep(150);
+  await (await moreBtn('Fundo')).click(); await sleep(250);
+  await keyTrap(); await p.keyboard.press('F1'); await sleep(400);
+  const kF1=await keyLog(), help=await p.evaluate(()=>({modal:document.querySelector('#modal').classList.contains('open'), pop:!!document.querySelector('.cpop')}));
+  await p.keyboard.press('Escape'); await sleep(300);
+  await (await moreBtn('Fundo')).click(); await sleep(250);
+  await keyTrap(); const dl=p.waitForEvent('download',{timeout:5000}).catch(()=>null); await p.keyboard.press('Control+s'); const dlo=await dl; await sleep(300);
+  const ks=await keyLog(), popS=await p.evaluate(()=>!!document.querySelector('.cpop'));
+  await (await moreBtn('Fundo')).click(); await sleep(250);
+  await keyTrap(); await p.keyboard.press('Control+o'); await sleep(400);
+  const ko=await keyLog(), openM=await p.evaluate(()=>({modal:document.querySelector('#modal').classList.contains('open'), txt:(document.querySelector('#modal h3')||{}).textContent}));
+  await p.keyboard.press('Escape'); await sleep(300);
+  check('S19-25: com o foco dentro do popover, F5 / F1 / Ctrl+S / Ctrl+O fecham o seletor e fazem o que fazem no editor (apresentar, ajuda, salvar o .html, abrir) — o navegador nunca recebe a tecla (defaultPrevented)', inPop&&k5[0]==='F5:true'&&pres5.pres&&!pres5.pop&&kF1[0]==="F1:true"&&help.modal&&!help.pop&&ks.some(x=>/^s:true$/i.test(x))&&!!dlo&&/\.html$/.test(dlo&&dlo.suggestedFilename()||'')&&!popS&&ko.some(x=>/^o:true$/i.test(x))&&openM.modal&&/Abrir/i.test(openM.txt||''), {inPop,k5,pres5,kF1,help,ks,dl:dlo&&dlo.suggestedFilename(),popS,ko,openM});
+
+  /* prévia do seletor do sistema + Esc (ou clique fora) = nada muda, nenhum passo de desfazer */
+  await p.evaluate(()=>AMStudio.select(null)); await sleep(150);
+  const bg0=await p.evaluate(()=>({bg:AMStudio.deck.slides[AMStudio.cur].bg, undo:document.querySelector('#bUndo').disabled, json:JSON.stringify(AMStudio.deck)}));
+  await (await moreBtn('Fundo')).click(); await sleep(200);
+  await p.evaluate(()=>{ const n=document.querySelector('.cpop .cp-nat'); for(let i=0;i<40;i++){ n.value='#'+(0x958e00+i).toString(16); n.dispatchEvent(new Event('input',{bubbles:true})); } });
+  const bgLive=await p.evaluate(()=>getComputedStyle(document.querySelector('#wrap > .am-stage')).backgroundColor);
+  await p.keyboard.press('Escape'); await sleep(250);
+  const bgEsc=await p.evaluate(()=>({bg:AMStudio.deck.slides[AMStudio.cur].bg, st:getComputedStyle(document.querySelector('#wrap > .am-stage')).backgroundColor, undo:document.querySelector('#bUndo').disabled, json:JSON.stringify(AMStudio.deck), focus:document.activeElement&&document.activeElement.dataset.cpick}));
+  await (await moreBtn('Fundo')).click(); await sleep(200);
+  await p.evaluate(()=>{ const n=document.querySelector('.cpop .cp-nat'); n.value='#123456'; n.dispatchEvent(new Event('input',{bubbles:true})); });
+  await p.mouse.click(600,690); await sleep(250);
+  const bgOut=await p.evaluate(()=>({bg:AMStudio.deck.slides[AMStudio.cur].bg, undo:document.querySelector('#bUndo').disabled, json:JSON.stringify(AMStudio.deck), pop:!!document.querySelector('.cpop')}));
+  check('S19-26: arrastar no seletor do sistema mostra a prévia; Esc ou clique fora desfaz a prévia sem gravar (fundo e deck como antes, nenhum passo de desfazer; Esc devolve o foco ao botão)', bgLive==='rgb(149, 142, 39)'&&bgEsc.json===bg0.json&&bgEsc.st==='rgb(255, 255, 255)'&&bgEsc.undo===bg0.undo&&bgEsc.focus==='s.bg'&&bgOut.json===bg0.json&&!bgOut.pop&&bgOut.undo===bg0.undo, {bg0:{bg:bg0.bg,undo:bg0.undo},bgLive,bgEsc:{bg:bgEsc.bg,st:bgEsc.st,undo:bgEsc.undo,focus:bgEsc.focus,same:bgEsc.json===bg0.json},bgOut:{bg:bgOut.bg,undo:bgOut.undo,same:bgOut.json===bg0.json}});
+
+  /* sem espaço acima nem abaixo do botão (série 2 de colunas no meio do painel): o popover abre ao lado, sem cobrir o botão nem a linha */
+  await p.evaluate(()=>AMStudio.insertFx('columns')); await sleep(350);
+  const ser2=await p.evaluateHandle(()=>document.querySelectorAll('#props .cser [data-cpick]')[1]);
+  await p.evaluate(b=>{ const pr=document.querySelector('#props'); const sc=[pr,...pr.querySelectorAll('*')].find(x=>x.scrollHeight>x.clientHeight+4&&/(auto|scroll)/.test(getComputedStyle(x).overflowY))||pr; const r=b.getBoundingClientRect(); sc.scrollTop+=r.top-370; }, ser2); await sleep(200);
+  const aR=await p.evaluate(b=>{ const r=b.getBoundingClientRect(); const row=b.closest('.cser').getBoundingClientRect(); return {l:r.left,t:r.top,r:r.right,b:r.bottom,rowL:row.left,rowT:row.top,rowB:row.bottom}; }, ser2);
+  await ser2.asElement().click(); await sleep(250);
+  const pp=await popInfo();
+  const hit=(a,b)=>!(a.r<=b.l||b.r<=a.l||a.b<=b.t||b.b<=a.t);
+  await p.screenshot({path:path.join(SHOTS,'s19-25-popover-ao-lado.png')});
+  await p.keyboard.press('Escape'); await sleep(150);
+  check('S19-27: botão no meio do painel (sem espaço acima nem abaixo): o popover abre ao lado (data-side=left), dentro da janela, sem cobrir o botão nem a linha da série', aR.t>280&&aR.t<440&&pp.open&&pp.side==='left'&&!hit(pp.r,aR)&&pp.r.r<=aR.rowL+1&&pp.r.t>=0&&pp.r.b<=720&&pp.r.l>=0, {aR,pp:pp.r,side:pp.side});
+
+  /* código colado com espaços / rgb(): aceito; título do seletor das cores do componente sem cortar no meio */
+  await p.evaluate(()=>AMStudio.insertFx('swot')); await sleep(350);
+  await p.evaluate(()=>document.querySelector('#palSec').scrollIntoView({block:'center'})); await sleep(100);
+  await p.click('#palSec [data-cpick="pal.p"]'); await sleep(200);
+  const ttl=await p.evaluate(()=>{ const s=document.querySelector('.cpop .cp-hd span'); return {t:s.textContent, cut:s.scrollWidth>s.clientWidth+1}; });
+  await p.focus('.cpop .cp-hex'); await p.keyboard.press('Control+a'); await p.keyboard.insertText(' #1f66a8 ');
+  const hx1=await p.evaluate(()=>({v:document.querySelector('.cpop .cp-hex').value, bad:document.querySelector('.cpop .cp-hex').classList.contains('bad')}));
+  await p.keyboard.press('Enter'); await sleep(300); const pa=(await selEl()).pal;
+  await p.click('#palSec [data-cpick="pal.a"]'); await sleep(200);
+  await p.focus('.cpop .cp-hex'); await p.keyboard.press('Control+a'); await p.keyboard.insertText('rgb(52, 160, 94)'); await p.keyboard.press('Enter'); await sleep(300); const pb=(await selEl()).pal;
+  check('S19-28: título do seletor = nome do campo (“Cor principal”, sem a dica cortada); código colado com espaços (“ #1f66a8 ”) e em rgb() é aceito e aplicado', ttl.t==='Cor principal'&&!ttl.cut&&hx1.v===' #1f66a8 '&&!hx1.bad&&pa&&pa.p==='#1F66A8'&&pb&&pb.a==='#34A05E', {ttl,hx1,pa,pb});
+
+  /* funil com cor clara: tons escurecendo (visíveis no slide branco); cor escura continua clareando como antes */
+  await p.evaluate(()=>AMStudio.insertFx('funnel')); await sleep(350);
+  await p.evaluate(()=>document.querySelector('#props .cser').scrollIntoView({block:'center'})); await sleep(100);
+  await p.click('#props .cser [data-cpick]'); await sleep(200); await p.click('.cpop .cp-s[data-c="#FFF6DB"]'); await sleep(300);
+  let fu=await selEl();
+  const fnL=await p.evaluate((sel)=>[...document.querySelectorAll(sel+' .fn-s')].map(x=>{ const m=getComputedStyle(x).fill.match(/\d+/g).map(Number), f=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }; return +(.2126*f(m[0])+.7152*f(m[1])+.0722*f(m[2])).toFixed(3); }), stageEl(fu.id));
+  await p.click('#props .cser [data-cpick]'); await sleep(200); await p.click('.cpop .cp-s[data-c="#1F66A8"]'); await sleep(300);
+  const fnD=await p.evaluate((sel)=>[...document.querySelectorAll(sel+' .fn-s')].map(x=>x.getAttribute('fill')), stageEl(fu.id));
+  const mixW=(c,t)=>'#'+[1,3,5].map(i=>{ const v=parseInt(c.substr(i,2),16); return Math.round(v+(255-v)*t).toString(16).padStart(2,'0'); }).join('').toUpperCase();
+  check('S19-29: funil com a 1ª cor clara (#FFF6DB): as etapas escurecem passo a passo e a última fica bem visível no branco (contraste ≥ 1,5); com #1F66A8 os tons continuam clareando como antes', JSON.stringify(fu.data.colors)==='["#FFF6DB"]'&&fnL.every((l,i)=>!i||l<fnL[i-1])&&(1.05/(fnL[fnL.length-1]+.05))>=1.5&&fnD[0]==='#1F66A8'&&fnD[1]===mixW('#1F66A8',.16), {fnL,fnD});
+
   check('Zero erros de console', errs.length===0, errs);
   console.log(results.join('\n'));
   console.log(failed?('FALHAS: '+failed):'TUDO OK', JSON.stringify({errs}));
