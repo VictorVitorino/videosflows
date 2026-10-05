@@ -123,7 +123,8 @@ const OK=m=>m&&m.match>=97&&m.mean<4;
   const menu=await p.evaluate(()=>{ const m=document.querySelector('.xmenu.xsave'); if(!m) return null; const r=m.getBoundingClientRect(); return {items:[...m.querySelectorAll('.xi')].map(b=>({t:b.querySelector('.xl').textContent,dis:b.classList.contains('dis'),tip:b.title})),inView:r.left>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,exp:document.getElementById('bSaveMore').getAttribute('aria-expanded'),trunc:[...m.querySelectorAll('.xl')].some(x=>x.scrollWidth>x.clientWidth+1)}; });
   await p.screenshot({path:SH('menu-1280')});
   const want=['HTML interativo (.html) — com efeitos','PDF (.pdf) — imagem em alta resolução, idêntico','PDF pelo navegador — texto selecionável','PowerPoint (.pptx)…'];
-  check('S22-11: ▾ abre “Salvar como”: HTML, PDF, PDF pelo navegador, PowerPoint (desativado até a S23, com dica) — sem cortar rótulos', aria.t==='Salvar como… PDF, PowerPoint ou HTML'&&aria.h==='menu'&&aria.e==='false'&&menu&&menu.exp==='true'&&JSON.stringify(menu.items.map(i=>i.t))===JSON.stringify(want)&&menu.items[3].dis&&menu.items[3].tip==='Disponível na próxima etapa'&&!menu.items[1].dis&&menu.inView&&!menu.trunc, {aria,menu});
+  /* S23 entregou AMExport.pptx (ed-41-pptx.js): o item PowerPoint vem ativo; sem o gancho ele volta a ficar desativado com a dica (S22-33) */
+  check('S22-11: ▾ abre “Salvar como”: HTML, PDF, PDF pelo navegador, PowerPoint (ativo desde a S23, com dica) — sem cortar rótulos', aria.t==='Salvar como… PDF, PowerPoint ou HTML'&&aria.h==='menu'&&aria.e==='false'&&menu&&menu.exp==='true'&&JSON.stringify(menu.items.map(i=>i.t))===JSON.stringify(want)&&!menu.items[3].dis&&menu.items[3].tip==='Gera um arquivo do PowerPoint com todos os slides'&&!menu.items[1].dis&&menu.inView&&!menu.trunc, {aria,menu});
   await p.keyboard.press('Escape'); await sleep(200);
   const closed=await p.evaluate(()=>!document.querySelector('.xmenu')&&document.getElementById('bSaveMore').getAttribute('aria-expanded')==='false');
   await p.click('#mbar [data-m=file]'); await sleep(250);
@@ -131,7 +132,7 @@ const OK=m=>m&&m.match>=97&&m.mean<4;
   await p.screenshot({path:SH('arquivo-1280')});
   await p.keyboard.press('Escape'); await sleep(150);
   const ab=fm.filter(i=>/abrir…/i.test(i.t)).length, pdfI=fm.find(i=>i.t==='Salvar como PDF…'), pptI=fm.find(i=>i.t==='Salvar como PowerPoint…');
-  check('S22-12: Arquivo — 1º item Início (capa), um só “abrir…”, + Salvar como PDF… e Salvar como PowerPoint… (desativado com dica)', closed&&fm[0].t==='Início (capa)'&&ab===1&&pdfI&&!pdfI.dis&&pptI&&pptI.dis&&pptI.tip==='Disponível na próxima etapa', fm.map(i=>i.t));
+  check('S22-12: Arquivo — 1º item Início (capa), um só “abrir…”, + Salvar como PDF… e Salvar como PowerPoint… (ativo desde a S23)', closed&&fm[0].t==='Início (capa)'&&ab===1&&pdfI&&!pdfI.dis&&pptI&&!pptI.dis, fm.map(i=>i.t));
 
   /* ---------- 4. PDF pela interface real: ▾ → PDF → caixa → Exportar → download ---------- */
   await p.evaluate(()=>{ window.__lt=[]; try{ new PerformanceObserver(l=>l.getEntries().forEach(e=>window.__lt.push(Math.round(e.duration)))).observe({entryTypes:['longtask']}); }catch(e){} });
@@ -255,12 +256,17 @@ const OK=m=>m&&m.match>=97&&m.mean<4;
   check('S22-32: depois da impressão o editor volta ao normal (sem contêiner de impressão)', gone);
 
   /* ---------- 11. PowerPoint: o item chama AMExport.pptx quando a S23 existir ---------- */
+  /* sem o gancho: desativado com a dica “Disponível na próxima etapa” */
+  await p.evaluate(()=>{ window.__pptxReal=AMExport.pptx; delete AMExport.pptx; });
+  await p.click('#bSaveMore'); await sleep(250);
+  const pd=await p.evaluate(()=>{ const b=[...document.querySelectorAll('.xmenu.xsave .xi')].find(x=>/PowerPoint/.test(x.textContent)); return {dis:b.classList.contains('dis'),tip:b.title}; });
+  await p.keyboard.press('Escape'); await sleep(150);
   await p.evaluate(()=>{ window.__pptx=null; AMExport.pptx=(d,o)=>{ window.__pptx={n:d.slides.length,op:o&&o.opener&&o.opener.id}; }; });
   await p.click('#bSaveMore'); await sleep(250);
   const pe=await p.evaluate(()=>{ const b=[...document.querySelectorAll('.xmenu.xsave .xi')].find(x=>/PowerPoint/.test(x.textContent)); return {dis:b.classList.contains('dis'),tip:b.title}; });
   await p.click('.xmenu.xsave .xi:has-text("PowerPoint")'); await sleep(200);
-  const pc=await p.evaluate(()=>{ const r=window.__pptx; delete AMExport.pptx; return r; });
-  check('S22-33: PowerPoint (.pptx)… ativa e chama AMExport.pptx(deck) quando a S23 o define', !pe.dis&&pc&&pc.n===5&&pc.op==='bSaveMore', {pe,pc});
+  const pc=await p.evaluate(()=>{ const r=window.__pptx; AMExport.pptx=window.__pptxReal; delete window.__pptxReal; return r; });
+  check('S22-33: PowerPoint (.pptx)… desativado sem AMExport.pptx; ativo e chama AMExport.pptx(deck, {opener}) com ele', pd.dis&&pd.tip==='Disponível na próxima etapa'&&!pe.dis&&pc&&pc.n===5&&pc.op==='bSaveMore', {pd,pe,pc});
 
   /* ---------- 12. #bSave continua baixando o .html; o arquivo exportado não carrega o motor de PDF ---------- */
   const hP=p.waitForEvent('download',{timeout:15000}); await p.click('#bSave'); const hd=await hP; const hf=path.join(TMP,'salvo.html'); await hd.saveAs(hf);
