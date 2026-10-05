@@ -17,7 +17,7 @@
 :root{--navy:#002A46;--navy2:#001E32;--steel:#7EA1C3;--steel2:#43698F;--orange:#F78C16;--ice:#EBEEF1;--line:#DCE3EC;--ink:#0B2545;--mut:#566579;--bg:#E6EBF1;--e:cubic-bezier(.22,.61,.36,1);--r-ctl:8px;--r-pop:12px;--r-dlg:16px}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{display:grid;grid-template-rows:54px 50px minmax(0,1fr);grid-template-columns:196px minmax(0,1fr) 304px;grid-template-areas:"top top top" "rib rib rib" "side cv props";font-family:Inter,Arial,sans-serif;font-size:13px;color:var(--ink);background:var(--bg);overflow:hidden}
+body{--side-w:196px;display:grid;grid-template-rows:54px 50px minmax(0,1fr);grid-template-columns:var(--side-w) minmax(0,1fr) 304px;grid-template-areas:"top top top" "rib rib rib" "side cv props";font-family:Inter,Arial,sans-serif;font-size:13px;color:var(--ink);background:var(--bg);overflow:hidden}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 input,select,textarea{font:inherit;color:var(--ink)}
 /* topo */
@@ -166,8 +166,30 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .icf-none{grid-column:1/-1;margin:8px 4px;font-size:11.5px;color:var(--mut);text-align:center}
 .icf .btnw{margin-top:8px}
 /* lateral de slides */
-#side{grid-area:side;background:#F4F6F9;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side{grid-area:side;position:relative;z-index:6;background:#F4F6F9;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0}
+/* painel de slides redimensionável (S18): cabeçalho com «, divisória arrastável na borda direita, faixa recolhida de 40 px */
+#sideHd{display:flex;align-items:center;justify-content:space-between;gap:6px;height:32px;flex:none;padding:0 6px 0 14px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);white-space:nowrap;overflow:hidden}
+#sideHd b{font-weight:600;color:#8695A8;letter-spacing:0;text-transform:none;margin-left:5px}
+.sdb{display:grid;place-items:center;width:26px;height:26px;flex:none;border-radius:7px;color:var(--steel2)}
+.sdb:hover,.sdb:focus-visible{background:#E2E8F0;color:var(--navy)}
+.sdb:focus-visible{outline:2px solid var(--orange);outline-offset:1px}
+.sdb svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#sideSplit{position:absolute;top:0;bottom:0;right:-4px;width:7px;z-index:8;cursor:col-resize;touch-action:none;outline:none}
+#sideSplit::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:1px;background:transparent;transition:background .12s,width .12s,left .12s}
+#sideSplit:hover::after,#sideSplit.drag::after,#sideSplit:focus-visible::after{left:2px;width:3px;background:var(--orange)}
+#sideSplit:focus-visible{box-shadow:inset 0 0 0 1px rgba(247,140,22,.35)}
+body.side-drag,body.side-drag *{cursor:col-resize!important;user-select:none!important}
+#sideMini{display:none;flex-direction:column;align-items:center;gap:8px;padding:8px 0}
+#sidePos{font-size:11px;font-weight:600;color:var(--mut);line-height:1.2;text-align:center;font-variant-numeric:tabular-nums}
+#sidePos b{display:block;font-size:13px;font-weight:700;color:var(--navy)}
+#sideAdd{border:1.5px dashed #B8C6D8;width:28px;height:28px}
+#sideAdd:hover{border-color:var(--orange);background:#fff}
+body.side-off #sideHd,body.side-off #thumbs,body.side-off #addSlide,body.side-off #sideSplit{display:none}
+body.side-off #sideMini{display:flex}
 #thumbs{flex:1;overflow:auto;padding:12px 12px 4px}
+#side.cols2 #thumbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;align-content:start;padding-left:8px}
+#side.cols2 .th{margin-bottom:0;min-width:0}
+#side.cols2 .th.drop-before .box{box-shadow:-4px 0 0 var(--orange)}
 .th{position:relative;display:grid;grid-template-columns:18px 1fr;gap:6px;margin-bottom:10px;cursor:pointer}
 .th .n{font-size:11px;font-weight:600;color:var(--mut);padding-top:2px;text-align:right}
 .th .box{position:relative;border-radius:6px;overflow:hidden;outline:2px solid transparent;outline-offset:1px;box-shadow:0 1px 3px rgba(0,30,50,.15);transition:outline-color .15s}
@@ -199,7 +221,7 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .guide{position:absolute;background:#F78C16;opacity:.85}
 .guide.v{width:1px;top:0;bottom:0}.guide.h{height:1px;left:0;right:0}
 .hover-box{position:absolute;outline:1px solid rgba(126,161,195,.9)}
-#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);font-size:11.5px;color:var(--mut);white-space:nowrap;pointer-events:none}
+#hint{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;font-size:11.5px;color:var(--mut);white-space:nowrap;pointer-events:none} /* S18: com o painel de slides largo a dica encurta (…) em vez de passar por baixo dele */
 #hint b{color:var(--navy)}
 #drophint{position:absolute;inset:0;border:2px dashed var(--orange);border-radius:6px;background:rgba(247,140,22,.06);display:none;pointer-events:none;z-index:31}
 #wrap.dragover #drophint{display:block}
@@ -440,7 +462,8 @@ body.am-rotating,body.am-rotating *{cursor:grabbing!important}
 .am-edit [data-cyc]{cursor:pointer}
 .am-el.editing [data-e][contenteditable]{outline:2px solid var(--orange);outline-offset:2px;background:rgba(255,255,255,.85);color:#002A46;cursor:text;user-select:text}
 /* banner / toast */
-#banner{position:fixed;left:50%;top:116px;transform:translateX(-50%);z-index:45;display:none;align-items:center;gap:12px;padding:10px 12px 10px 16px;border-radius:12px;background:var(--navy);color:#fff;box-shadow:0 16px 40px rgba(0,30,50,.3);font-weight:500}
+#banner{position:fixed;left:calc(var(--side-w) + (100vw - var(--side-w) - 304px) / 2);max-width:calc(100vw - var(--side-w) - 304px - 24px);top:116px;transform:translateX(-50%);z-index:45;display:none;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 12px;text-align:center;padding:10px 12px 10px 16px;border-radius:12px;background:var(--navy);color:#fff;box-shadow:0 16px 40px rgba(0,30,50,.3);font-weight:500}
+/* S18: o aviso de rascunho fica centrado sobre a área do slide (nunca cobre o « do painel) */
 #banner.open{display:flex;animation:pop .2s var(--e)}
 #banner button{height:30px;padding:0 12px;border-radius:7px;border:1px solid rgba(255,255,255,.25);font-weight:600}
 #banner button.pri{background:var(--orange);border-color:var(--orange);color:var(--navy)}
@@ -644,8 +667,11 @@ kbd.k.m{background:#fff;border:1px dashed #A3B8D6;color:var(--steel2);font-weigh
 <div class="menu vmenu" id="mVar"></div>
 
 <aside id="side" aria-label="Slides">
+  <div id="sideHd"><span>Slides<b id="sideCount"></b></span><button class="sdb" id="sideCollapse" type="button" title="Recolher painel de slides" aria-label="Recolher painel de slides" aria-controls="side" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M12 6l-6 6 6 6M18 6l-6 6 6 6"/></svg></button></div>
+  <div id="sideMini"><button class="sdb" id="sideExpand" type="button" title="Mostrar painel de slides" aria-label="Mostrar painel de slides" aria-controls="side" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M6 6l6 6-6 6M12 6l6 6-6 6"/></svg></button><div id="sidePos" aria-live="polite"></div><button class="sdb" id="sideAdd" type="button" title="Novo slide" aria-label="Novo slide"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></div>
   <div id="thumbs"></div>
   <button id="addSlide" type="button">+ Novo slide</button>
+  <div id="sideSplit" role="separator" aria-orientation="vertical" aria-label="Largura do painel de slides" aria-controls="side" aria-valuemin="132" aria-valuemax="440" aria-valuenow="196" tabindex="0" title="Arraste para mudar a largura do painel · duplo clique volta ao padrão · Ctrl + rolar também ajusta"></div>
 </aside>
 
 <main id="cv">

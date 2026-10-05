@@ -388,12 +388,13 @@
       t.querySelector('.box').appendChild(RT.renderSlide(s, { play: false }));
       box.appendChild(t);
     });
+    sidePos();
   }
   function renderThumb(i) {
     var t = $('#thumbs .th[data-i="' + i + '"] .box'); if (!t || !deck.slides[i]) return;
     var old = t.querySelector('.am-stage'); if (old) old.remove(); t.appendChild(RT.renderSlide(deck.slides[i], { play: false }));
   }
-  function goSlide(i) { if (editingId) endEdit(); flush(); cur = Math.max(0, Math.min(deck.slides.length - 1, i)); pick([]); $$('#thumbs .th').forEach(function (t, k) { t.classList.toggle('on', k === cur); }); renderStage(); renderProps(); var on = $('#thumbs .th.on'); if (on) on.scrollIntoView({ block: 'nearest' }); }
+  function goSlide(i) { if (editingId) endEdit(); flush(); cur = Math.max(0, Math.min(deck.slides.length - 1, i)); pick([]); $$('#thumbs .th').forEach(function (t, k) { t.classList.toggle('on', k === cur); }); renderStage(); renderProps(); sidePos(); var on = $('#thumbs .th.on'); if (on) on.scrollIntoView({ block: 'nearest' }); }
 
   /* ---------------- propriedades ---------------- */
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
@@ -482,6 +483,7 @@
     'flip-h': '<path d="M12 3v18" stroke-dasharray="2 2.4"/><path d="M9 6.5L3 17.5h6z"/><path class="fl" d="M15 6.5l6 11h-6z"/>',
     'flip-v': '<path d="M3 12h18" stroke-dasharray="2 2.4"/><path d="M6.5 9L17.5 3v6z"/><path class="fl" d="M6.5 15l11 6v-6z"/>',
     'rot-0': '<path d="M3 20h18"/><rect x="6" y="9" width="12" height="8" rx="1.5"/><path d="M12 3v3"/>',
+    side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>'
   };
   function svgI(k, cls) { return '<svg viewBox="0 0 24 24"' + (cls ? ' class="' + cls + '"' : '') + '>' + (IC[k] || '') + '</svg>'; }
@@ -1001,7 +1003,7 @@
   });
   function closeOld() { if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
   function closeMenus() { closeOld(); if (typeof closeAllX === 'function') closeAllX(); }
-  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar')) closeAllX(); });
+  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#sideAdd,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar')) closeAllX(); });
   /* galeria “Formas ▾”: grupos (Retângulos e cards, Básicas, Setas, Fluxo, Chaves) em grade de 6; os cards prontos vêm com o retângulo */
   (function () {
     function grp(g, gi, cols) {
@@ -1249,6 +1251,79 @@
   thumbs.addEventListener('dragover', function (e) { if (dragFrom == null) return; e.preventDefault(); $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); var t = e.target.closest('.th'); if (t) t.classList.add('drop-before'); });
   thumbs.addEventListener('drop', function (e) { if (dragFrom == null) return; e.preventDefault(); var t = e.target.closest('.th'), to = t ? +t.dataset.i : deck.slides.length; var s = deck.slides.splice(dragFrom, 1)[0]; if (to > dragFrom) to--; deck.slides.splice(to, 0, s); cur = to; dragFrom = null; pick([]); renderAll(); commit(); });
   thumbs.addEventListener('dragend', function () { dragFrom = null; $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); });
+
+  /* ---------------- painel de slides: largura ajustável e recolher (S18) ----------------
+     --side-w no <body> alimenta a grade; a divisória (#sideSplit) arrasta, aceita ← → Home End e duplo clique (padrão);
+     recolhido vira uma faixa de 40 px (», posição "3/14", +). Largura e estado ficam no localStorage (amStudio.sideW / amStudio.sideOff). */
+  var SIDE_MIN = 132, SIDE_DEF = 196, SIDE_MAX = 440, SIDE_OFF_W = 40, SIDE_COLS2 = 340;
+  var sideW = SIDE_DEF, sideOff = false, sideRaf = 0;
+  try {
+    var sw0 = parseInt(localStorage.getItem('amStudio.sideW'), 10); if (isFinite(sw0)) sideW = sw0;
+    sideOff = localStorage.getItem('amStudio.sideOff') === '1';
+  } catch (e) { }
+  function sideMax() { return Math.max(SIDE_MIN, Math.min(SIDE_MAX, innerWidth - 304 - 520)); }
+  function sideClamp(w) { w = Math.round(+w); if (!isFinite(w)) w = SIDE_DEF; return Math.max(SIDE_MIN, Math.min(sideMax(), w)); }
+  function sideSave() { try { localStorage.setItem('amStudio.sideW', String(sideW)); localStorage.setItem('amStudio.sideOff', sideOff ? '1' : '0'); } catch (e) { } }
+  function sidePos() {
+    var n = deck.slides.length, c = $('#sideCount'), ps = $('#sidePos');
+    if (c) c.textContent = n;
+    if (ps) { ps.innerHTML = '<b></b><span></span>'; ps.firstChild.textContent = cur + 1; ps.lastChild.textContent = '/' + n; ps.title = 'Slide ' + (cur + 1) + ' de ' + n; }
+  }
+  /* aplica a largura (sem salvar); a mesma largura vale para o recolhido voltar */
+  function applySide() {
+    var w = sideClamp(sideW), sp = $('#sideSplit'), cols = !sideOff && w >= SIDE_COLS2;
+    document.body.style.setProperty('--side-w', (sideOff ? SIDE_OFF_W : w) + 'px');
+    document.body.classList.toggle('side-off', sideOff);
+    $('#side').classList.toggle('cols2', cols);
+    if (sp) { sp.setAttribute('aria-valuenow', w); sp.setAttribute('aria-valuemax', sideMax()); sp.setAttribute('aria-valuemin', SIDE_MIN); sp.setAttribute('aria-valuetext', w + ' pixels'); }
+    fit(); drawSel();
+  }
+  function setSideW(w, save) { sideW = sideClamp(w); if (sideRaf) { cancelAnimationFrame(sideRaf); sideRaf = 0; } applySide(); if (save) sideSave(); }
+  function sideLater(w) { sideW = sideClamp(w); if (!sideRaf) sideRaf = requestAnimationFrame(function () { sideRaf = 0; applySide(); }); }
+  function toggleSide(off) {
+    off = off == null ? !sideOff : !!off; if (off === sideOff) return;
+    var hadFocus = document.activeElement && $('#side').contains(document.activeElement);
+    sideOff = off; applySide(); sideSave();
+    var on = $('#thumbs .th.on'); if (!off && on) on.scrollIntoView({ block: 'nearest' });
+    if (hadFocus) { var f = $(off ? '#sideExpand' : '#sideCollapse'); if (f) f.focus(); }
+  }
+  var split = $('#sideSplit'), sDrag = null;
+  split.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0) return; e.preventDefault(); closeMenus();
+    sDrag = { x: e.clientX, w: sideClamp(sideW), id: e.pointerId };
+    try { split.setPointerCapture(e.pointerId); } catch (er) { }
+    split.classList.add('drag'); document.body.classList.add('side-drag');
+  });
+  split.addEventListener('pointermove', function (e) { if (sDrag && e.pointerId === sDrag.id) sideLater(sDrag.w + e.clientX - sDrag.x); });
+  function endSideDrag(e) {
+    if (!sDrag || (e && e.pointerId !== sDrag.id)) return;
+    if (e && e.type === 'pointerup') sideW = sideClamp(sDrag.w + e.clientX - sDrag.x);
+    sDrag = null; split.classList.remove('drag'); document.body.classList.remove('side-drag'); setSideW(sideW, true);
+  }
+  split.addEventListener('pointerup', endSideDrag);
+  split.addEventListener('pointercancel', endSideDrag);
+  split.addEventListener('lostpointercapture', endSideDrag);
+  split.addEventListener('dblclick', function () { setSideW(SIDE_DEF, true); toast('Painel de slides na largura padrão'); });
+  split.addEventListener('keydown', function (e) {
+    var w = sideClamp(sideW), st = e.shiftKey ? 64 : 16, n = null;
+    if (e.key === 'ArrowLeft') n = w - st; else if (e.key === 'ArrowRight') n = w + st;
+    else if (e.key === 'Home') n = SIDE_MIN; else if (e.key === 'End') n = sideMax();
+    else if (e.key === 'Enter' || e.key === ' ') n = SIDE_DEF;
+    if (n == null || e.ctrlKey || e.metaKey || e.altKey) return;
+    e.preventDefault(); e.stopPropagation(); setSideW(n, true);
+  });
+  /* Ctrl/⌘ + rolar sobre as miniaturas muda a largura (no lugar do zoom da página) */
+  $('#side').addEventListener('wheel', function (e) {
+    if (!(e.ctrlKey || e.metaKey) || sideOff || !e.deltaY) return;
+    e.preventDefault(); setSideW(sideClamp(sideW) + (e.deltaY < 0 ? 16 : -16), true);
+  }, { passive: false });
+  $('#sideCollapse').addEventListener('click', function () { toggleSide(true); });
+  $('#sideExpand').addEventListener('click', function () { toggleSide(false); });
+  $('#sideAdd').addEventListener('click', function (e) {
+    var m = $('#mSlide'), open = m.classList.contains('open'); closeMenus(); if (open) return;
+    var r = e.currentTarget.getBoundingClientRect(); m.classList.add('open');
+    m.style.left = (r.right + 8) + 'px'; m.style.top = Math.max(60, Math.min(r.top, innerHeight - m.offsetHeight - 8)) + 'px';
+  });
 
   /* ---------------- canvas: selecionar, mover, redimensionar, editar ---------------- */
   function toLogical(e) { var r = wrap.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; }
@@ -1754,6 +1829,8 @@
       e.preventDefault(); var d = e.shiftKey ? 10 : 1;
       nudge(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0); return;
     }
+    /* miniaturas em 2 colunas (painel largo): ↑ ↓ andam uma linha (2 slides) */
+    if (!list.length && zone === 'thumbs' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && $('#side').classList.contains('cols2')) { e.preventDefault(); goSlide(cur + (e.key === 'ArrowDown' ? 2 : -2)); return; }
     if (!list.length && (e.key === 'PageDown' || e.key === 'ArrowDown' || (zone === 'thumbs' && e.key === 'ArrowRight'))) { e.preventDefault(); goSlide(cur + 1); }
     if (!list.length && (e.key === 'PageUp' || e.key === 'ArrowUp' || (zone === 'thumbs' && e.key === 'ArrowLeft'))) { e.preventDefault(); goSlide(cur - 1); }
   });
@@ -2395,7 +2472,8 @@
       return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }, { sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
-        { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }];
+        { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
+        { t: sideOff ? 'Mostrar painel de slides' : 'Ocultar painel de slides', ic: 'side', fn: function () { toggleSide(); } }];
     },
     arrange: function () {
       var any = hasSel();
@@ -2582,11 +2660,11 @@
   $('#title').addEventListener('input', function () { deck.title = this.value; });
   $('#title').addEventListener('change', commit);
   $('#fBg').addEventListener('change', function () { });
-  addEventListener('resize', function () { fit(); drawSel(); });
+  addEventListener('resize', function () { applySide(); }); /* re-limita a largura do painel de slides e reencaixa o palco */
   addEventListener('beforeunload', function (e) { if (hist.length) { e.preventDefault(); e.returnValue = ''; } });
 
   /* ---------------- início ---------------- */
-  buildModels(); buildDrawer(); renderAll(); updUndo();
+  buildModels(); buildDrawer(); applySide(); renderAll(); updUndo();
   try {
     var dr = localStorage.getItem('amStudio.draft'), dd = dr && JSON.parse(dr);
     if (dd && dd.slides && dd.slides.some(function (s) { return s.els && s.els.length; })) {

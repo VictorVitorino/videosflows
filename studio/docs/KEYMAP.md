@@ -131,6 +131,18 @@ The player gives icons no new keys: “Ao clicar” icons and the click-toggle t
 
 **Formas e linhas (F4, shipped in S4; not in `HK`).** Ribbon “Formas ▾” (`#mShape.gmenu`, 6-column gallery): ↓ from the opener focuses the first tile, then ↓ ↑ go to the row below/above (nearest column, across group headings), ← → previous/next tile, Enter/Space insert, Esc closes. Inserir › “Forma ▸” is a two-column menu (`.xmenu.xcols`): ↓ ↑ stay in the column, → ← move to the neighbouring column (← in the left column closes the submenu, as before), Enter inserts. Elbow lines: the bend is also reachable from the keyboard through the “Dobra do cotovelo” slider in the panel (arrow keys, native range).
 
+**Painel de slides — largura e recolher (S18; no new global shortcut, so not in `HK`).** The divider on the right edge of the thumbnails panel (`#sideSplit`, `role="separator"`, “Largura do painel de slides”) is a Tab stop; with focus on it:
+
+| Keys | Action |
+|---|---|
+| ← / → | Narrower / wider by 16 px |
+| Shift + ← / → | Narrower / wider by 64 px |
+| Home / End | Minimum (132 px) / maximum (min(440, window − 824) px) |
+| Enter · Space | Back to the default width (196 px) — same as a double-click on the divider |
+| Ctrl/⌘ + mouse wheel over the panel | Wider (wheel up) / narrower (wheel down) by 16 px, instead of the browser zoom |
+
+The divider's keydown calls `stopPropagation`, so these keys never reach the slide (it also matches `onControl`). The collapse/expand buttons « (`#sideCollapse`, “Recolher painel de slides”) and » (`#sideExpand`, “Mostrar painel de slides”) are plain buttons (Enter/Space); toggling from the keyboard moves focus to the other button. Menu **Slide › Ocultar / Mostrar painel de slides** does the same. With the panel wide enough for **2 columns** (≥ 340 px) and the thumbnails focused, ↑ ↓ move one row (2 slides); ← → stay previous / next.
+
 Editor rules that new features must respect: the modal (`#modal`) captures the whole keyboard (Enter = confirm, so **no forms in `#modal`**, ARCH §0.15); focused controls keep Enter/Space/arrows/Delete (`onControl`); fields in the props panel and `#title` are "typing" targets.
 New editor panels with text fields (F9 "Capítulo", F10 "Resumo do slide") are covered by the existing typing guard. Add any new editor shortcut to `HK`.
 

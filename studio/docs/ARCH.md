@@ -277,10 +277,10 @@ Known bug (DTS-CONTROLS §4.1, measured there): loop and hover both set `transfo
 Screenshot `SHOTS/a03-props-model-selected.png`: model selected, props panel, `#fxArrow` pill. Other views: `SHOTS/a02-editor-template-slide2.png`, `SHOTS/a12-props-slide.png` (no selection), `SHOTS/a05-props-animation-section.png`.
 
 ### 7.1 Layout (editor.html 20)
-`body` grid: rows `54px 50px 1fr`, columns `196px 1fr 304px`, areas `top / rib / side cv props`.
+`body` grid: rows `54px 50px 1fr`, columns `var(--side-w) 1fr 304px` (`--side-w` default 196px, adjustable since S18), areas `top / rib / side cv props`.
 - `#top` (313–328): brand, `#mbar` (7 menus), `#bHome`, `#title`, `#bUndo` `#bRedo`, spacer, `#bNew` `#bOpen` `#bPlay` `#bSave`, hidden file inputs `#fOpen` `#fImg` `#fBg` (unused).
 - `#rib` (330–353): 4 groups (§7.5).
-- `#side` (386–389): `#thumbs` + `#addSlide`.
+- `#side` (386–389): `#sideHd` (« recolher) + `#sideMini` (faixa recolhida) + `#thumbs` + `#addSlide` + `#sideSplit` (divisória; S18).
 - `#cv` (391–394): `#wrap` (`#drophint`, `#sel`, `#marq`; stage inserted first) + `#hint`. `fit()` (180) sizes `#wrap` to `(cv − 56) × (cv − 72)` at 16:9.
 - `#props` (396).
 - `#drawer` (398–404).
@@ -819,6 +819,16 @@ Risks:
 ### F10 status: shipped in step S15 (with F9, see above)
 - `AMRT.autoNotes(s, i, deck)` per TMG-FEATURES §9 (title · "Neste capítulo" on dividers · Visual · Pontos principais · Números-chave · closing hint; ≤ 700 chars). The player panel `.amp-note` (key **I**, bar button "Sobre este slide") shows the override (only while its source hash matches) > `slide.notes` > auto text; "Restaurar original" (not "Restaurar automático") because the original may be the editor's text. Overrides: `localStorage['amPlayer.notes:' + (deck.id || deck.title)]`, parsed defensively. While editing, the tag hides and the footer reads "Ctrl+Enter ou clique fora salva · Esc cancela".
 - Editor: textarea `data-p="s.notes"` + "Gerar resumo automático" (`act('autonotes')`) + "Ver na apresentação" (`present(cur)` then `player.nav.notes(true)`). No `#modal` involved (§0.15).
+
+### S18 status: resizable / collapsible slide panel (shipped)
+- **Layout**: `editor.html` body grid uses `grid-template-columns: var(--side-w) minmax(0,1fr) 304px`; `--side-w` (default 196px) is set on `<body>` by `applySide()` (editor.js, block “painel de slides: largura ajustável e recolher (S18)” right after the thumbnail drag handlers). `#side` is `position:relative; z-index:6` and now starts with `#sideHd` (“SLIDES n” + « `#sideCollapse`), then `#sideMini` (collapsed strip: » `#sideExpand`, `#sidePos` “3/14”, + `#sideAdd`), `#thumbs`, `#addSlide`, and the divider `#sideSplit` (7 px hit area at `right:-4px`, `col-resize`, 1 px line → 3 px orange on hover/drag/focus; `role=separator`, `aria-orientation=vertical`, `aria-valuemin/max/now/text`, `tabindex=0`).
+- **Range**: 132 … `min(440, innerWidth − 304 − 520)` (the canvas column keeps ≥ 520 px); `sideClamp()` re-clamps on window `resize` (the old `resize → fit(); drawSel()` handler now calls `applySide()`, which ends with `fit(); drawSel()`). Drag = pointer capture on the divider + `requestAnimationFrame` (`sideLater`), so the stage (`#wrap`, 16:9) grows/shrinks live; `toLogical()` already reads `#wrap`'s rect, so selection, handles, drag and resize stay exact (test S18-16/17).
+- **2 columns** at ≥ 340 px (`#side.cols2` → `#thumbs` grid); slide number, hover Duplicar/Apagar, HTML5 drag reorder (drop indicator becomes a left bar) and the thumbs keyboard zone work; ↑ ↓ move by one row in that mode.
+- **Collapse**: `body.side-off` → `--side-w: 40px`, hides header/thumbs/“+ Novo slide”/divider and shows `#sideMini`; expanding restores the stored width. `#sideAdd` opens the same layout menu `#mSlide` to its right (added to the `closeOld` exception list). Menu **Slide** gained a last item (after a separator) “Ocultar painel de slides” / “Mostrar painel de slides” (`IC.side`). No new global shortcut (Ctrl+Alt+B etc. avoided).
+- **Persistence (UI preference, not deck data)**: `localStorage['amStudio.sideW']` (integer px, re-clamped on load) and `['amStudio.sideOff']` (`'1'`/`'0'`), read/written in try/catch. No deck/slide/element field was added, so `safeDeck/safeSlide/safeEl`, undo, save/reopen and the exported file are unchanged (the runtime does not know about the panel).
+- **Side effects fixed**: `#banner` (draft notice) is now centred over the canvas column (`left: calc(var(--side-w) + (100vw − var(--side-w) − 304px)/2)`, `max-width` = canvas − 24 px, wraps) so it never covers «; `#hint` gets `max-width: calc(100% − 24px)` + ellipsis so it does not slide under a wide panel. `sidePos()` (called from `renderThumbs` and `goSlide`) keeps “SLIDES n” and the strip position current.
+- **Tests**: `test-s18-lateral.js` (29 checks, real mouse/keyboard: splitter drag 320/400/limits, ←/→/Shift/Home/End/Enter, double-click, Ctrl+wheel, « » and menu Slide, “+” in the strip + Ctrl+Z, reload persistence, element drag/resize mapping after width changes, 2-column drag-reorder/hover buttons/keys, save→reopen, export, 1100/1280/1440 widths without overflow, banner/hint placement, zero console errors). Screenshots `shots/s18-*.png`.
+- **Caveats**: the width is per browser (file:// origin shares localStorage across decks, by design); the divider is hidden while collapsed (expand first); touch drag works via pointer events but was only tested with a mouse.
 
 ### F11 — Editable exported HTML (move cards, edit texts, save copy) + comments panel
 **Architecture**:
