@@ -121,16 +121,18 @@ function deckSpec(img){ return {v:1,title:'S17',slides:[{id:'s1',bg:'#FFFFFF',tr
 
   /* ---------- 6. texto e gráfico: inverter desativado; ícone espelha ---------- */
   await clickEl('txt');
-  const tb=await p.$eval('#frBar [data-fr=flip-h]',x=>({d:x.getAttribute('aria-disabled'),t:x.title})), tr0=await p.$eval('#frBar [data-fr=rot-r]',x=>x.getAttribute('aria-disabled'));
-  await p.click('#frBar [data-fr=flip-h]',{force:true}); await sleep(200); /* aria-disabled: o clique real chega e explica o motivo */
+  /* revisão: texto não ganha a barra do quadro (só a alça de girar); no painel, Inverter aparece desativado com o motivo */
+  const tBar=!!await p.$('#frBar'), tRh=!!await p.$('#sel .rhdl');
+  const tb=await p.$eval('#props [data-act=flip-h]',x=>({d:x.getAttribute('aria-disabled'),t:x.title})), tr0=await p.$eval('#props [data-act=rot-r]',x=>x.getAttribute('aria-disabled'));
+  await p.click('#props [data-act=flip-h]',{force:true}); await sleep(200); /* aria-disabled: o clique real chega e explica o motivo */
   const toastT=await p.$eval('#toast',t=>t.classList.contains('show')?t.textContent:'');
-  check('S17-13: texto: Inverter aparece desativado com o motivo no title; o clique não espelha e avisa; Girar continua ativo', tb.d==='true'&&/Textos não se espelham/.test(tb.t)&&!(await EL('txt')).flipH&&/Textos não se espelham/.test(toastT)&&tr0===null, {tb,toastT,tr0});
+  check('S17-13: texto: sem barra do quadro no palco (só a alça de girar); no painel, Inverter aparece desativado com o motivo no title; o clique não espelha e avisa; Girar continua ativo', !tBar&&tRh&&tb.d==='true'&&/Textos não se espelham/.test(tb.t)&&!(await EL('txt')).flipH&&/Textos não se espelham/.test(toastT)&&tr0===null, {tBar,tRh,tb,toastT,tr0});
   await p.screenshot({path:SH('06-texto-inverter-desativado')});
   await clickEl('bar');
-  const bb=await p.$eval('#frBar [data-fr=flip-v]',x=>({d:x.getAttribute('aria-disabled'),t:x.title})), pb=await p.$eval('#props [data-act=flip-h]',x=>x.getAttribute('aria-disabled'));
+  const bb={bar:!!await p.$('#frBar'),...await p.$eval('#props [data-act=flip-v]',x=>({d:x.getAttribute('aria-disabled'),t:x.title}))}, pb=await p.$eval('#props [data-act=flip-h]',x=>x.getAttribute('aria-disabled'));
   await clickEl('ico'); await p.click('#frBar [data-fr=flip-h]'); await sleep(150);
   const ic=await p.evaluate(()=>{ const n=document.querySelector('#wrap .am-stage .am-el[data-id=ico]'), sv=n.querySelector('svg.ic'), l=n.querySelector('.ic-l'); return {sc:getComputedStyle(sv).scale, l:l&&getComputedStyle(l).scale, lt:l&&l.textContent}; });
-  check('S17-14: gráfico com texto: Inverter desativado (barra e painel); ícone: só o desenho espelha, a legenda não', bb.d==='true'&&/não se espelham/.test(bb.t)&&pb==='true'&&(await EL('ico')).flipH===true&&ic.sc==='-1 1'&&ic.l==='none'&&ic.lt==='Meta', {bb,pb,ic});
+  check('S17-14: gráfico com texto: sem barra do quadro, Inverter desativado no painel; ícone: só o desenho espelha, a legenda não', !bb.bar&&bb.d==='true'&&/não se espelham/.test(bb.t)&&pb==='true'&&(await EL('ico')).flipH===true&&ic.sc==='-1 1'&&ic.l==='none'&&ic.lt==='Meta', {bb,pb,ic});
 
   /* ---------- 7. linhas: girar e espelhar as pontas (painel da linha) ---------- */
   const lc=await p.evaluate(()=>{ const e=AMStudio.deck.slides[0].els.find(x=>x.id==='ln'); return {x:(e.x1+e.x2)/2,y:(e.y1+e.y2)/2}; });
@@ -221,16 +223,140 @@ function deckSpec(img){ return {v:1,title:'S17',slides:[{id:'s1',bg:'#FFFFFF',tr
       await p.evaluate(e=>{ AMStudio.loadDeck({v:1,title:'v',slides:[{id:'a',bg:'#FFFFFF',els:[Object.assign({anim:{in:'none'},fill:'#002A46',strokeW:0,color:'#002A46'},e)]}]},''); AMStudio.select('z'); }, cs2[1]); await sleep(120);
       const m=await p.evaluate(()=>{ const R=s=>{const n=document.querySelector(s); if(!n) return null; const r=n.getBoundingClientRect(); return {l:r.left,t:r.top,r:r.right,b:r.bottom};}; return {bar:R('#frBar'),fa:R('#fxArrow'),rh:R('#sel .rhdl'),wr:R('#wrap')}; });
       const ov=(a,b)=>a&&b&&Math.min(a.r,b.r)-Math.max(a.l,b.l)>0&&Math.min(a.b,b.b)-Math.max(a.t,b.t)>0;
-      const inside=m.bar&&m.bar.l>=m.wr.l-.5&&m.bar.r<=m.wr.r+.5&&m.bar.t>=m.wr.t-.5&&m.bar.b<=m.wr.b+.5;
-      if(!m.bar||ov(m.bar,m.fa)||ov(m.bar,m.rh)||ov(m.fa,m.rh)||!inside) bad.push({vp,c:cs2[0],m});
+      const inside=!m.bar||m.bar.l>=m.wr.l-.5&&m.bar.r<=m.wr.r+.5&&m.bar.t>=m.wr.t-.5&&m.bar.b<=m.wr.b+.5;
+      const noBar=cs2[1].type==='text'; /* texto: sem barra do quadro (revisão) */
+      if((noBar?!!m.bar:!m.bar)||ov(m.bar,m.fa)||ov(m.bar,m.rh)||ov(m.fa,m.rh)||!inside) bad.push({vp,c:cs2[0],m});
       if((cs2[0]==='no topo'||cs2[0]==='estreita'||cs2[0]==='girada 135° no topo')&&shot<6){ shot++; await p.screenshot({path:SH('11-'+vp[0]+'-'+cs2[0].replace(/\W+/g,'-'))}); }
     }
   }
-  check('S17-25: a barra do quadro não cobre o “Animação” nem a alça de girar, e fica dentro do palco (9 casos × 1280×720 e 1440×900)', bad.length===0, bad.slice(0,3));
+  check('S17-25: a barra do quadro não cobre o “Animação” nem a alça de girar, e fica dentro do palco; texto sem barra (9 casos × 1280×720 e 1440×900)', bad.length===0, bad.slice(0,3));
   /* barra superior não transborda em 1280 (nada foi acrescentado à faixa) */
   await p.setViewportSize({width:1280,height:720}); await sleep(200);
   const of=await p.evaluate(()=>{ const r=document.querySelector('#rib'), t=document.querySelector('#top'); return {rib:r.scrollWidth-r.clientWidth, top:t.scrollWidth-t.clientWidth}; });
   check('S17-26: faixa de ferramentas e barra do topo sem transbordar em 1280×720', of.rib<=0&&of.top<=0, of);
+
+  /* ---------- 15. revisão S17: barra presa, alinhar/distribuir/grupo/laço/guias pelo desenho girado, texto girado crescendo, Ampliar girado,
+     alça × “Efeito” em palco estreito, linha com rot, giro sem refazer o elemento, barra só com botões que valem ---------- */
+  const LD=async els=>{ await p.evaluate(e=>AMStudio.loadDeck({v:1,title:'r',slides:[{id:'a',bg:'#FFFFFF',els:e.map(x=>Object.assign({anim:{in:'none'},fill:'#002A46',strokeW:0,color:'#002A46'},x))}]},''), els); await sleep(150); wb=await (await p.$('#wrap')).boundingBox(); };
+  /* caixa do desenho (.am-rot girado) em coordenadas do slide */
+  const VIS=id=>p.evaluate(id=>{ const w=document.querySelector('#wrap').getBoundingClientRect(), n=document.querySelector('#wrap .am-stage .am-el[data-id="'+id+'"]>.am-rot'), r=n.getBoundingClientRect(), k=1280/w.width; return {l:Math.round((r.left-w.left)*k), t:Math.round((r.top-w.top)*k), r:Math.round((r.right-w.left)*k), b:Math.round((r.bottom-w.top)*k)}; }, id);
+  const near=(a,b,t)=>Math.abs(a-b)<=(t||2);
+  /* R1: clicar duas (quatro) vezes no mesmo ponto de qualquer botão da barra: a barra não sai de baixo do ponteiro e a seleção fica */
+  const pinBad=[];
+  for(const vp of [[1280,720],[1440,900]]){
+    await p.setViewportSize({width:vp[0],height:vp[1]}); await sleep(200);
+    for(const z of [{type:'image',src:IMG,x:440,y:230,w:400,h:260},{type:'shape',shape:'rect',x:340,y:300,w:600,h:120},{type:'shape',shape:'rect',x:590,y:160,w:100,h:400}]){
+      for(const k of ['rot-r','rot-l','flip-h','flip-v']){
+        await LD([Object.assign({id:'z'},z)]); await p.evaluate(()=>AMStudio.select('z')); await sleep(100);
+        const bt=mid(await rect('#frBar [data-fr='+k+']')), n=k.indexOf('rot')===0?4:2;
+        for(let i=0;i<n;i++){ await p.mouse.move(bt.x,bt.y); await p.mouse.click(bt.x,bt.y); await sleep(90); }
+        const under=await p.evaluate(([x,y])=>{ const b=document.elementFromPoint(x,y).closest('#frBar button'); return b?b.dataset.fr:''; }, [bt.x,bt.y]), e1=await EL('z'), sl=await p.evaluate(()=>AMStudio.selected());
+        if(under!==k||sl[0]!=='z'||e1.rot||e1.flipH||e1.flipV) pinBad.push({vp,t:z.type,w:z.w,k,under,sl,rot:e1.rot,fh:e1.flipH,fv:e1.flipV});
+      }
+    }
+  }
+  /* depois de girar 90° pela barra, tirar o ponteiro dela recoloca a barra longe da alça e do “Animação” */
+  await LD([{id:'z',type:'shape',shape:'rect',x:340,y:300,w:600,h:120}]); await p.evaluate(()=>AMStudio.select('z')); await sleep(100);
+  let bt=mid(await rect('#frBar [data-fr=rot-r]')); await p.mouse.click(bt.x,bt.y); await sleep(120);
+  const pinned=mid(await rect('#frBar [data-fr=rot-r]')); await p.mouse.move(wb.x+20,wb.y+wb.height-20,{steps:3}); await sleep(150);
+  const away=await p.evaluate(()=>{ const R=s=>{const n=document.querySelector(s); if(!n) return null; const r=n.getBoundingClientRect(); return {l:r.left,t:r.top,r:r.right,b:r.bottom};}; return {bar:R('#frBar'),fa:R('#fxArrow'),rh:R('#sel .rhdl')}; });
+  const ovr=(a,b)=>a&&b&&Math.min(a.r,b.r)-Math.max(a.l,b.l)>0&&Math.min(a.b,b.b)-Math.max(a.t,b.t)>0;
+  check('S17-27: barra do quadro presa sob o ponteiro: 2–4 cliques no mesmo ponto de Girar à esquerda/direita e Inverter H/V (foto 400×260, forma 600×120 e 100×400, em 1280×720 e 1440×900) chegam a 360° / voltam ao original sem perder a seleção; ao sair, a barra volta a fugir da alça e do “Animação”',
+    pinBad.length===0&&Math.hypot(pinned.x-bt.x,pinned.y-bt.y)<1&&away.bar&&!ovr(away.bar,away.rh)&&!ovr(away.bar,away.fa), {pinBad:pinBad.slice(0,4),bt,pinned,away});
+  await p.setViewportSize({width:1280,height:720}); await sleep(200);
+
+  /* R2: alinhar no slide / entre si e distribuir pelo desenho girado */
+  await LD([{id:'a',type:'shape',shape:'rect',x:440,y:330,w:400,h:60,rot:90},{id:'g',type:'image',src:IMG,x:800,y:400,w:400,h:200,rot:45}]);
+  await clickEl('a'); await p.click('#props button[data-act="al-t"]'); await sleep(120); await p.click('#props button[data-act="al-l"]'); await sleep(120); const va=await VIS('a');
+  await clickEl('g'); await p.click('#props button[data-act="al-b"]'); await sleep(120); await p.click('#props button[data-act="al-r"]'); await sleep(120); const vg=await VIS('g');
+  await undo(); const vgU=await VIS('g');
+  await LD([{id:'a',type:'shape',shape:'rect',x:440,y:330,w:400,h:60,rot:90},{id:'e',type:'shape',shape:'ellipse',x:900,y:500,w:160,h:100},{id:'c',type:'shape',shape:'rect',x:60,y:420,w:120,h:120}]);
+  await p.evaluate(()=>AMStudio.selectMany(['a','e','c'])); await sleep(120);
+  const gb2=await p.evaluate(()=>{ const w=document.querySelector('#wrap').getBoundingClientRect(), r=document.querySelector('#sel .gbox').getBoundingClientRect(), k=1280/w.width; return {l:Math.round((r.left-w.left)*k),t:Math.round((r.top-w.top)*k),r:Math.round((r.right-w.left)*k),b:Math.round((r.bottom-w.top)*k)}; });
+  const vs0=[await VIS('a'),await VIS('e'),await VIS('c')];
+  await p.click('#props button[data-act="al-t"]'); await sleep(150); const vt=[await VIS('a'),await VIS('e'),await VIS('c')];
+  await p.click('#props button[data-act="dist-h"]'); await sleep(150); const vd=[await VIS('c'),await VIS('a'),await VIS('e')];
+  const gaps=[vd[1].l-vd[0].r, vd[2].l-vd[1].r];
+  check('S17-28: alinhar/distribuir usam o desenho girado: barra 400×60 a 90° “Alinhar ao topo/à esquerda” encosta o desenho em 0,0; foto a 45° “à base/à direita” encosta em 1280,720 (Ctrl+Z um passo); entre si, os topos visíveis se alinham; Distribuir deixa vãos iguais entre os desenhos; o quadro do grupo contém os desenhos girados',
+    near(va.t,0)&&near(va.l,0)&&near(vg.b,720)&&near(vg.r,1280)&&near(vgU.b,720)&&vgU.r<1270&&vt.every(v=>near(v.t,vt[0].t))&&near(vt[0].t,Math.min(...vs0.map(v=>v.t)))&&near(gaps[0],gaps[1],2)&&vs0.every(v=>v.l>=gb2.l-1&&v.t>=gb2.t-1&&v.r<=gb2.r+1&&v.b<=gb2.b+1)&&near(gb2.t,Math.min(...vs0.map(v=>v.t)))&&near(gb2.b,Math.max(...vs0.map(v=>v.b))),
+    {va,vg,vgU,vs0,vt,vd,gaps,gb2});
+  await p.screenshot({path:SH('12-revisao-alinhar-distribuir')});
+
+  /* R3: laço de seleção pelo desenho girado; guias de arraste pelas bordas visíveis */
+  await LD([{id:'a',type:'shape',shape:'rect',x:440,y:330,w:400,h:60,rot:90},{id:'o',type:'shape',shape:'rect',x:1000,y:100,w:160,h:80}]);
+  await p.mouse.click(L(1240,700).x,L(1240,700).y); await sleep(100);
+  const drag=async(a,b2)=>{ await p.mouse.move(L(a[0],a[1]).x,L(a[0],a[1]).y); await p.mouse.down(); await p.mouse.move(L(b2[0],b2[1]).x,L(b2[0],b2[1]).y,{steps:6}); await p.mouse.up(); await sleep(150); return p.evaluate(()=>AMStudio.selected()); };
+  const m1=await drag([580,150],[700,260]); await p.mouse.click(L(1240,700).x,L(1240,700).y); await sleep(100);
+  const m2=await drag([445,335],[500,385]);
+  /* arrasta a barra girada para o topo visível ficar a 2 px do topo do outro (100): encaixa em 100 */
+  await clickEl('a'); const c0=await ctr('a'); await p.mouse.move(c0.x,c0.y); await p.mouse.down(); await p.mouse.move(c0.x,c0.y-L(0,58).y+L(0,0).y,{steps:8});
+  const guides=await p.$$eval('#sel .guide.h',g=>g.length); await p.mouse.up(); await sleep(150); const vsn=await VIS('a');
+  check('S17-29: laço e guias seguem o desenho girado: laço sobre a ponta visível da barra a 90° seleciona; laço no canto vazio da caixa sem giro não seleciona; arrastar o topo visível para 2 px do topo de outro elemento encaixa (guia horizontal)',
+    JSON.stringify(m1)==='["a"]'&&JSON.stringify(m2)==='[]'&&vsn.t===100&&guides>=1, {m1,m2,vsn,guides});
+
+  /* R4: texto girado crescendo ao digitar: a primeira linha (borda de cima local) fica parada; um passo de desfazer */
+  await LD([{id:'t',type:'text',x:900,y:300,w:260,h:40,html:'Linha 1',size:22,rot:90}]);
+  const t0=await EL('t'), vt0=await VIS('t'); await clickEl('t'); await p.keyboard.press('Enter'); await sleep(150);
+  await p.keyboard.press('End'); for(const w of ['Linha 2','Linha 3','Linha 4']){ await p.keyboard.press('Enter'); await p.keyboard.type(w); } await sleep(150);
+  const vt1=await VIS('t'), live=await EL('t'); await p.keyboard.press('Escape'); await sleep(150); await p.mouse.click(L(100,700).x,L(100,700).y); await sleep(150);
+  const t1=await EL('t'), vt2=await VIS('t'); await undo(); const tu=await EL('t');
+  check('S17-30: texto girado 90° crescendo ao digitar: a borda da primeira linha (direita, a 90°) e o topo/base visíveis ficam parados (±2 px), a caixa cresce para o outro lado; Ctrl+Z desfaz a edição num passo',
+    t1.h>t0.h+40&&live.h<=t1.h&&near(vt1.r,vt0.r)&&near(vt2.r,vt0.r)&&near(vt2.t,vt0.t)&&near(vt2.b,vt0.b)&&near(vt1.t,vt0.t)&&near(vt1.b,vt0.b)&&vt1.l<vt0.l-30&&tu.h===t0.h&&tu.x===t0.x&&tu.y===t0.y&&tu.html===t0.html, {t0:[t0.x,t0.y,t0.h,t0.html],t1:[t1.x,t1.y,t1.h],live:live.h,vt0,vt1,vt2,tu:[tu.x,tu.y,tu.h,tu.html]});
+
+  /* R5: Ampliar (Z) de foto a 90° e gráfico a 15°: a janela contém o desenho girado inteiro, centrado; sem giro, igual a antes; ⤢ no canto do desenho */
+  await LD([{id:'im',type:'image',src:IMG,x:400,y:210,w:480,h:300,rot:90},{id:'ch',type:'fx',kind:'bars',x:40,y:40,w:420,h:240,rot:15,data:{}},{id:'c0',type:'fx',kind:'bars',x:840,y:440,w:420,h:240,data:{}}]);
+  await p.evaluate(()=>AMStudio.present(0)); await sleep(900);
+  const zm=[];
+  for(const id of ['im','ch','c0']){
+    await p.evaluate(id=>{ const n=document.querySelector('.amp-slide.on .am-el[data-id="'+id+'"]'); n.dispatchEvent(new MouseEvent('dblclick',{bubbles:true})); }, id); await sleep(500);
+    zm.push(await p.evaluate(()=>{ const vp=document.querySelector('.amp-zm-vp').getBoundingClientRect(), r=document.querySelector('.amp-zm-vp .am-rot').getBoundingClientRect(); return {vp:[vp.left,vp.top,vp.right,vp.bottom].map(Math.round), rot:[r.left,r.top,r.right,r.bottom].map(Math.round), ar:vp.width/vp.height}; }));
+    if(id==='im') await p.screenshot({path:SH('13-revisao-ampliar-girado')});
+    await p.keyboard.press('Escape'); await sleep(250);
+  }
+  const zIn=z=>z.rot[0]>=z.vp[0]-1&&z.rot[1]>=z.vp[1]-1&&z.rot[2]<=z.vp[2]+1&&z.rot[3]<=z.vp[3]+1&&near((z.rot[0]+z.rot[2])/2,(z.vp[0]+z.vp[2])/2)&&near((z.rot[1]+z.rot[3])/2,(z.vp[1]+z.vp[3])/2);
+  const imR=await p.evaluate(()=>{ const n=document.querySelector('.amp-slide.on .am-el[data-id="im"]>.am-rot'), r=n.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,r:r.right,t:r.top}; });
+  await p.mouse.move(imR.x,imR.y); await p.mouse.move(imR.x+2,imR.y+2); await sleep(300);
+  const zb=await p.evaluate(()=>{ const b=document.querySelector('.amp-zb'); const r=b.getBoundingClientRect(); return {on:b.classList.contains('on'),r:r.right,t:r.top}; });
+  check('S17-31: Ampliar com giro: foto a 90° e gráfico a 15° cabem inteiros na janela, centrados (a janela tem o tamanho do desenho girado); gráfico sem giro igual a antes (janela 420×240); ⤢ no canto do desenho girado',
+    zIn(zm[0])&&zIn(zm[1])&&zIn(zm[2])&&near(zm[0].ar,300/480,.02)&&near(zm[2].ar,420/240,.02)&&zb.on&&zb.r<=imR.r+1&&zb.r>=imR.r-50&&zb.t>=imR.t-1&&zb.t<=imR.t+20, {zm,imR,zb});
+  await p.keyboard.press('Escape'); await sleep(300);
+
+  /* R6: linha com “rot” (arquivo antigo / editado à mão): ao abrir, o giro vira pontas giradas e some */
+  await LD([{id:'l',type:'line',x1:300,y1:360,x2:900,y2:360,rot:45,stroke:'#002A46',strokeW:3}]);
+  const lr=await EL('l'), lrT=await p.$eval('#wrap .am-stage .am-el[data-id=l]>.am-rot',n=>n.style.transform);
+  check('S17-32: linha com rot: 45° vira as pontas giradas em torno do meio (387,87/147,87 → 812,13/572,13), sem campo rot e sem transform no desenho', lr.rot===undefined&&lr.x1===387.87&&lr.y1===147.87&&lr.x2===812.13&&lr.y2===572.13&&lrT==='', {lr,lrT});
+
+  /* R7: arrastar a alça de girar não refaz o elemento (o <img> é o mesmo nó do começo ao fim) e grava um passo só */
+  await LD([{id:'im',type:'image',src:IMG,x:400,y:200,w:480,h:320}]); await clickEl('im');
+  await p.evaluate(()=>{ window.__img=document.querySelector('#wrap .am-stage .am-el[data-id=im] img'); });
+  const rv=await rotateTo('im',30); const r7=await p.evaluate(()=>({same:!!window.__img&&window.__img.isConnected&&window.__img===document.querySelector('#wrap .am-stage .am-el[data-id=im] img'), tr:document.querySelector('#wrap .am-stage .am-el[data-id=im]>.am-rot').style.transform, th:(document.querySelector('#thumbs .th.on .am-el[data-id=im]>.am-rot')||{style:{}}).style.transform}));
+  const e7=await EL('im'); await undo(); const e7u=await EL('im');
+  check('S17-33: girar pela alça só muda o transform do .am-rot (a foto não é refeita a cada movimento); miniatura atualizada; Ctrl+Z num passo', r7.same&&e7.rot>=29&&e7.rot<=31&&r7.tr==='rotate('+e7.rot+'deg)'&&r7.th===r7.tr&&/^\d+°$/.test(rv.tip||'')&&!e7u.rot, {r7,rot:e7.rot,rv,u:e7u.rot});
+
+  /* R8: a barra só tem botões que valem: foto/forma 4 ativos; texto/gráfico sem barra; grupo de textos só girar; grupo com foto, 4 */
+  await LD([{id:'i',type:'image',src:IMG,x:100,y:300,w:300,h:200},{id:'t1',type:'text',x:500,y:100,w:300,h:50,html:'Título de teste',size:28},{id:'t2',type:'text',x:500,y:400,w:300,h:50,html:'Outro texto',size:22},{id:'k',type:'fx',kind:'bars',x:880,y:300,w:360,h:220,data:{}}]);
+  const BB=async()=>p.evaluate(()=>{ const b=document.querySelector('#frBar'); return b?[...b.querySelectorAll('button')].map(x=>x.dataset.fr+(x.classList.contains('off')||x.getAttribute('aria-disabled')?'!':'')).join(','):'-'; });
+  await clickEl('i'); const b1=await BB(); await clickEl('t1'); const b2=await BB(), rh2=!!await p.$('#sel .rhdl'); await p.screenshot({path:SH('14-revisao-texto-sem-barra')});
+  await clickEl('k'); const b3=await BB();
+  await p.evaluate(()=>AMStudio.selectMany(['t1','t2'])); await sleep(120); const b4=await BB();
+  await p.evaluate(()=>AMStudio.selectMany(['t1','i'])); await sleep(120); const b5=await BB();
+  check('S17-34: barra do quadro só com o que vale: foto 4 botões ativos; texto e gráfico sem barra (girar pela alça, Alt+setas, painel e menu); grupo de textos só os 2 de girar; grupo com foto os 4, todos ativos',
+    b1==='rot-l,rot-r,flip-h,flip-v'&&b2==='-'&&rh2&&b3==='-'&&b4==='rot-l,rot-r'&&b5==='rot-l,rot-r,flip-h,flip-v', {b1,b2,rh2,b3,b4,b5});
+
+  /* R9: palco estreito (painel de slides 440 px em 1280×720; janela 1024×700): o “Efeito” do SWOT não cobre a alça de girar e ela gira */
+  const rhBad=[];
+  for(const cfg of [{vp:[1280,720],sw:'440'},{vp:[1024,700],sw:null}]){
+    const c2=await b.newContext({viewport:{width:cfg.vp[0],height:cfg.vp[1]}}); await c2.addInitScript(sw=>{ try{ localStorage.removeItem('amStudio.draft'); if(sw){ localStorage.setItem('amStudio.sideW',sw); localStorage.setItem('amStudio.sideOff','0'); } }catch(e){} }, cfg.sw);
+    const q2=await open(c2, FILE+'?nocover', 'sw'+cfg.vp[0]);
+    await q2.evaluate(()=>{ AMStudio.loadDeck({v:1,title:'w',slides:[{id:'a',bg:'#FFFFFF',els:[]}]},''); AMStudio.insertFx('swot'); const e=AMStudio.deck.slides[0].els[0]; e.x=380; e.y=200; e.w=520; AMStudio.renderAll(); AMStudio.select(e.id); }); await sleep(250);
+    const m=await q2.evaluate(()=>{ const R=s=>{const n=document.querySelector(s); const r=n.getBoundingClientRect(); return {l:r.left,t:r.top,r:r.right,b:r.bottom,x:r.left+r.width/2,y:r.top+r.height/2};}; const rh=R('#sel .rhdl'), fa=R('#fxArrow'), hit=document.elementFromPoint(rh.x,rh.y); return {rh,fa,hit:!!(hit&&hit.closest('.rhdl')),txt:document.querySelector('#fxArrow').textContent}; });
+    await q2.screenshot({path:SH('15-revisao-palco-estreito-'+cfg.vp[0])});
+    await q2.mouse.move(m.rh.x,m.rh.y); await q2.mouse.down(); await q2.mouse.move(m.rh.x+60,m.rh.y+30,{steps:6}); await q2.mouse.up(); await sleep(150);
+    const rr=await q2.evaluate(()=>AMStudio.deck.slides[0].els[0].rot||0);
+    if(!m.hit||ovr(m.rh,m.fa)||!rr) rhBad.push({cfg,m,rr});
+    await c2.close();
+  }
+  check('S17-35: palco estreito (painel 440 px em 1280×720 e janela 1024×700): o “Efeito: …” do SWOT sai de cima da alça de girar, que recebe o clique e gira', rhBad.length===0, rhBad);
 
   check('Zero erros de console', errs.length===0, errs);
   console.log(results.join('\n'));
