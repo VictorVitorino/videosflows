@@ -70,7 +70,8 @@
     ['dim', 'Cota / medida', { headS: 'bar', headE: 'bar', headStart: true, headEnd: true }, '', { y2: 380 }, 1]].filter(function (p) { return !p[5] || RT.LINE_ROUTES; });
   function mkLinePreset(k, dark) { var p = LINE_PRESETS.find(function (x) { return x[0] === k; }) || LINE_PRESETS[0]; return Object.assign(mkLine(false, dark), clone(p[2]), p[4] || {}); }
   function mkImage(src, nw, nh, over) {
-    var k = Math.min(520 / nw, 360 / nh, 1.5), w = Math.round(nw * k), h = Math.round(nh * k);
+    if (!(nw > 0) || !(nh > 0)) { nw = 520; nh = 360; }
+    var k = Math.min(520 / nw, 360 / nh, 1.5), w = Math.max(8, Math.round(nw * k)), h = Math.max(8, Math.round(nh * k));
     return Object.assign({ id: uid(), type: 'image', src: src, x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h, fit: 'cover', radius: 0, anim: { in: 'none' } }, over || {});
   }
   function mkBrand(key, over) { var s = BRAND_SIZE[key], h = key.indexOf('perf') === 0 ? 52 : 22; return mkImage(BRAND[key], s[0], s[1], Object.assign({ w: Math.round(s[0] / s[1] * h), h: h, fit: 'contain', x: 54, y: 40 }, over || {})); }
@@ -181,6 +182,7 @@
     var o = clone(e), F = e.type === 'fx' ? RT.FX[e.kind] : null;
     o.id = typeof o.id === 'string' && /^[\w-]{1,40}$/.test(o.id) ? o.id : uid();
     if (o.type === 'line') { ['x1', 'y1', 'x2', 'y2'].forEach(function (k, i) { o[k] = numOr(o[k], [440, 380, 840, 300][i]); }); }
+    else if (o.type === 'image' && !(e.w > 0 && e.h > 0)) { o.w = 520; o.h = 360; o.x = (W - 520) / 2; o.y = (H - 360) / 2; } /* imagem gravada sem medidas (inserção antiga com NaN → null): volta visível, no centro */
     else { o.x = numOr(o.x, 0); o.y = numOr(o.y, 0); o.w = Math.max(8, numOr(o.w, F ? F.w : 300)); o.h = Math.max(8, numOr(o.h, F ? F.h : 140)); }
     ['fill', 'stroke', 'color', 'bg'].forEach(function (k) { if (o[k] != null && !(typeof o[k] === 'string' && COLOR_RE.test(o[k]))) delete o[k]; });
     ['align', 'valign', 'fit', 'shape', 'font'].forEach(function (k) { if (o[k] != null && !(typeof o[k] === 'string' && TOKEN_RE.test(o[k]))) delete o[k]; });
@@ -800,7 +802,7 @@
     if (a.indexOf('look-') === 0 && el && el.type === 'shape') { applyLook(el, a.slice(5)); rerenderEl(el); renderProps(); commit(); return; }
   }
   function pickImage(cb) {
-    var f = $('#fImg'); f.value = ''; f.onchange = function () { if (f.files[0]) readImage(f.files[0], function (src) { cb(src); }); }; f.click();
+    var f = $('#fImg'); f.value = ''; f.onchange = function () { if (f.files[0]) readImage(f.files[0], cb); }; f.click(); /* cb(src, largura, altura): sem as medidas a imagem entrava com x/y/w/h NaN, invisível e sem poder mover */
   }
   function readImage(file, cb) {
     var r = new FileReader();
@@ -1231,7 +1233,9 @@
         if (h.indexOf('w') >= 0) x0 = Math.min(x1 - 8, o.x + dx); if (h.indexOf('e') >= 0) x1 = Math.max(x0 + 8, o.x + o.w + dx);
         if (h.indexOf('n') >= 0) y0 = Math.min(y1 - 8, o.y + dy); if (h.indexOf('s') >= 0) y1 = Math.max(y0 + 8, o.y + o.h + dy);
         var nw = x1 - x0, nh = y1 - y0;
-        if ((keep !== ev.shiftKey) && h.length === 2) { var r = o.w / o.h; if (nw / nh > r) nw = nh * r; else nh = nw / r; if (h.indexOf('w') >= 0) x0 = x1 - nw; if (h.indexOf('n') >= 0) y0 = y1 - nh; }
+        if ((keep !== ev.shiftKey) && h.length === 2) { /* proporção travada: a escala segue o eixo mais arrastado (como no PowerPoint), para aumentar e diminuir com naturalidade */
+          var sx = nw / o.w, sy = nh / o.h, sc = Math.max(8 / Math.min(o.w, o.h), Math.abs(sx - 1) >= Math.abs(sy - 1) ? sx : sy); nw = o.w * sc; nh = o.h * sc;
+          if (h.indexOf('w') >= 0) x0 = x1 - nw; else x1 = x0 + nw; if (h.indexOf('n') >= 0) y0 = y1 - nh; else y1 = y0 + nh; }
         el.x = Math.round(x0); el.y = Math.round(y0); el.w = Math.round(nw); el.h = Math.round(nh);
       }
       rerenderEl(el);
