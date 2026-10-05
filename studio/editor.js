@@ -537,7 +537,12 @@
     'rot-0': '<path d="M3 20h18"/><rect x="6" y="9" width="12" height="8" rx="1.5"/><path d="M12 3v3"/>',
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
-    smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>'
+    smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>',
+    /* S22: Salvar como… (HTML, PDF, PDF pelo navegador, PowerPoint) */
+    html: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M10 12l-2 2.5 2 2.5M14 12l2 2.5-2 2.5"/>',
+    pdf: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h2.2a1.3 1.3 0 0 1 0 2.6H8V13zm0 2.6V18M13.4 13v5h1a2.5 2.5 0 0 0 0-5h-1z"/>',
+    print: '<path d="M7 9V3h10v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
+    ppt: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/><path d="M9.5 13V7.5h2.3a1.8 1.8 0 0 1 0 3.6H9.5"/>'
   };
   function svgI(k, cls) { return '<svg viewBox="0 0 24 24"' + (cls ? ' class="' + cls + '"' : '') + '>' + (IC[k] || '') + '</svg>'; }
   var ALIGNS = [['al-l', 'Alinhar à esquerda'], ['al-c', 'Centralizar na horizontal'], ['al-r', 'Alinhar à direita'], ['al-t', 'Alinhar ao topo'], ['al-m', 'Centralizar na vertical'], ['al-b', 'Alinhar à base']];
@@ -1156,7 +1161,7 @@
   var menuFrom = null; /* { m: menu antigo, b: botão } quando o menu foi aberto pelo teclado: Esc devolve o foco ao botão */
   function closeOld() { menuFrom = null; if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
   function closeMenus() { closeOld(); if (typeof closeAllX === 'function') closeAllX(); }
-  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#sideAdd,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar')) closeAllX(); });
+  document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#sideAdd,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar,#bSaveMore')) closeAllX(); });
   /* galeria “Formas ▾”: grupos (Retângulos e cards, Básicas, Setas, Fluxo, Chaves) em grade de 6; os cards prontos vêm com o retângulo */
   (function () {
     function grp(g, gi, cols) {
@@ -1980,7 +1985,7 @@
   /* botão clicado com o mouse não guarda o foco: o teclado volta ao slide (setas, Delete, digitar), como no PowerPoint */
   document.addEventListener('click', function (e) {
     var b = e.detail && e.target.closest && e.target.closest('button'); if (!b || b !== document.activeElement) return;
-    if (b.closest('#modal,#cover,.xmenu,.menu,#mbar,#presenter,.cpop')) return;
+    if (b.closest('#modal,#cover,.xmenu,.menu,#mbar,#presenter,.cpop,.xp,#bSaveMore')) return;
     b.blur();
   });
   var MODS = ['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock', 'Fn', 'OS'];
@@ -2548,7 +2553,7 @@
       if (it.sep) { if (m.lastChild && !m.lastChild.classList.contains('xsep')) m.insertAdjacentHTML('beforeend', '<div class="xsep" role="separator"></div>'); return; }
       if (it.hd) { m.insertAdjacentHTML('beforeend', '<div class="xhd">' + esc(it.hd) + '</div>'); return; }
       var b = document.createElement('button'); b.type = 'button'; b.className = 'xi' + (it.dis ? ' dis' : ''); b.setAttribute('role', 'menuitem'); b.tabIndex = -1; b.id = 'xi' + (++XM.n);
-      if (it.dis) b.setAttribute('aria-disabled', 'true'); if (it.sub) b.setAttribute('aria-haspopup', 'true'); if (it.id) b.dataset.x = it.id;
+      if (it.dis) b.setAttribute('aria-disabled', 'true'); if (it.sub) b.setAttribute('aria-haspopup', 'true'); if (it.id) b.dataset.x = it.id; if (it.tip) b.title = it.tip;
       b.innerHTML = '<span class="xic">' + (it.raw || (it.ic ? svgI(it.ic) : '')) + '</span><span class="xl">' + esc(it.t) + '</span>' + (it.k ? '<kbd>' + esc(it.k) + '</kbd>' : '<span></span>') + (it.sub ? '<svg class="xar" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>' : '<span></span>');
       b._it = it; m.appendChild(b);
     });
@@ -2599,7 +2604,7 @@
     while (XM.stack.length > level) { var s = XM.stack.pop(); if (s) { if (s.el.contains(ae)) had = true; s.el.remove(); if (s.owner) s.owner.classList.remove('subopen', 'open'); } }
     if (had) { var top = XM.stack[level - 1], h = top && top.el.querySelector('.xi.subopen,.xi.hot'); if (h) h.focus({ preventScroll: true }); else if (XM.prev && document.contains(XM.prev)) XM.prev.focus({ preventScroll: true }); else if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur(); }
   }
-  function closeAllX() { clearTimeout(XM.timer); closeXFrom(0); XM.bar = null; $$('#mbar button.open').forEach(function (b) { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }); }
+  function closeAllX() { clearTimeout(XM.timer); closeXFrom(0); XM.bar = null; $$('#mbar button.open,#bSaveMore[aria-expanded=true]').forEach(function (b) { b.classList.remove('open'); b.setAttribute('aria-expanded', 'false'); }); }
   /* teclado dentro dos menus: setas, Enter, Esc */
   function menuKey(e) {
     var lv = XM.stack.length - 1, top = XM.stack[lv], m = top.el, its = $$('.xi:not(.dis)', m), hot = m.querySelector('.xi.hot'), i = its.indexOf(hot);
@@ -2670,7 +2675,8 @@
   var MENUS = {
     file: function () {
       return [{ t: 'Início (capa)', ic: 'home', fn: goHome }, { sep: 1 },
-        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save }, { sep: 1 },
+        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
+        { t: 'Salvar como PDF…', ic: 'pdf', fn: function () { exportAs('pdf'); } }, { t: 'Salvar como PowerPoint…', ic: 'ppt', dis: !pptxOk(), tip: pptxOk() ? '' : PPTX_SOON, fn: function () { exportAs('pptx'); } }, { sep: 1 },
         { t: 'Apresentar', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { sep: 1 },
         { t: 'Recomeçar apresentação…', ic: 'reset', fn: askReset }];
     },
@@ -2841,6 +2847,40 @@
     confirmBox({ eyebrow: 'Recomeçar', icon: 'reset', title: 'Recomeçar a apresentação?', msg: 'Todos os slides serão substituídos por <b>um slide em branco</b>. O título é mantido e você pode desfazer com <b>Ctrl+Z</b>.', ok: 'Recomeçar' }, resetDeck);
   }
 
+  /* ---------------- Salvar como… (S22): ▾ ao lado de Salvar e Arquivo › Salvar como PDF / PowerPoint ----------------
+     o clique simples em #bSave continua baixando o .html; PDF e PowerPoint moram em ed-40-export.js (window.AMExport) */
+  var PPTX_SOON = 'Disponível na próxima etapa';
+  function pptxOk() { return !!(window.AMExport && typeof window.AMExport.pptx === 'function'); }
+  function exportAs(k, opener) {
+    if (editingId) endEdit(); flush(); closeMenus();
+    var X = window.AMExport;
+    if (k === 'html') { save(); return; }
+    if (k === 'pptx') { if (pptxOk()) X.pptx(deck, { opener: opener }); else toast('PowerPoint: ' + PPTX_SOON.toLowerCase()); return; }
+    if (!X || typeof X.openDialog !== 'function') { toast('Exportação indisponível'); return; }
+    X.openDialog(k === 'print' ? 'print' : 'pdf', opener || null); /* sem opener: o foco volta para onde estava (Arquivo › Salvar como PDF…) */
+  }
+  function saveAsItems() {
+    return [{ hd: 'Salvar como' },
+      { t: 'HTML interativo (.html) — com efeitos', ic: 'html', k: KEY.save, id: 'save-html', fn: function () { exportAs('html'); } },
+      { t: 'PDF (.pdf) — imagem em alta resolução, idêntico', ic: 'pdf', id: 'save-pdf', fn: function () { exportAs('pdf', $('#bSaveMore')); } },
+      { t: 'PDF pelo navegador — texto selecionável', ic: 'print', id: 'save-print', fn: function () { exportAs('print', $('#bSaveMore')); } },
+      { t: 'PowerPoint (.pptx)…', ic: 'ppt', id: 'save-pptx', dis: !pptxOk(), tip: pptxOk() ? 'Gera um arquivo do PowerPoint com todos os slides' : PPTX_SOON, fn: function () { exportAs('pptx', $('#bSaveMore')); } }];
+  }
+  function openSaveAs(kb) {
+    var b = $('#bSaveMore'); if (!b) return;
+    if (b.getAttribute('aria-expanded') === 'true') { closeAllX(); return; }
+    if (editingId) endEdit(); closeAllX();
+    var r = b.getBoundingClientRect(), it = saveAsItems(); it.cls = 'xsave';
+    var m = openX(it, { x: r.right - 404, y: r.bottom + 6, owner: b }); placeX(m, { x: r.right - m.offsetWidth, y: r.bottom + 6 });
+    b.classList.add('open'); b.setAttribute('aria-expanded', 'true');
+    if (kb) { var f = m.querySelector('.xi:not(.dis)'); if (f) hotX(m, f, true); }
+  }
+  if ($('#bSaveMore')) {
+    $('#bSaveMore').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('#bSaveMore').addEventListener('click', function (e) { openSaveAs(!e.detail); });
+    $('#bSaveMore').addEventListener('keydown', function (e) { if (e.key === 'ArrowDown' && !XM.stack.length) { e.preventDefault(); e.stopPropagation(); openSaveAs(true); } });
+  }
+
   /* ---------------- apresentar, salvar, abrir ---------------- */
   var player = null;
   function present(start) {
@@ -2935,7 +2975,7 @@
     copy: function () { return doCopy(false); }, cut: function () { return doCopy(true); }, paste: function (at) { return pasteFromSystem(at || null); },
     clearSlide: clearSlide,
     resetDeck: function (opts) { if (opts && opts.confirm) askReset(); else resetDeck(); },
-    showHelp: showHelp, closeMenus: closeMenus,
+    showHelp: showHelp, closeMenus: closeMenus, flush: flush, exportAs: exportAs, saveAsItems: saveAsItems,
     /* vitrine de efeitos: abrir (filtro: all|in|loop|hover|tr|cmp|model, busca), provar um efeito pelo id, usar, descartar, listar */
     gallery: { open: openGallery, tryFx: function (id) { if (drawerTab !== 'fx' || !$('#drawer').classList.contains('open')) openDrawer(true, 'fx'); gxOpen(id); }, use: function () { gxUse(); }, discard: function () { gxClose(); }, current: function () { return gx.prov ? gx.prov.id : null; },
       items: function () { return gx.items.map(function (it) { return { id: it.id, fam: it.fam, name: it.name, cat: it.cat }; }); } },
