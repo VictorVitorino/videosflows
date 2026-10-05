@@ -7,12 +7,15 @@
    saturação ≥ 0,5) -> cor de destaque, com os tons claros/escuros na mesma posição relativa. Branco, preto, cinzas (#3E4C5E…)
    e cores de status ficam como estão. Alfa preservado.
    1) markup: só os atributos de cor (style, fill, stroke, stop-color, flood-color, color) do HTML que FX[kind].html devolveu;
-      textos (nós de texto) nunca são tocados.
+      textos (nós de texto) nunca são tocados. Cores escritas como #RRGGBBAA (8 dígitos) ficam como estão: é assim que os gráficos
+      escrevem as cores de série que o usuário escolheu (data.colors, U.ukeep), que valem exatamente como foram escolhidas.
    2) folhas de estilo: na primeira vez, um índice das regras do CSS do runtime (#am-runtime-css; no arquivo exportado, o <style>
       do runtime) que mexem em propriedades que levam cores da marca (inclusive dentro de @media/@supports e os @keyframes com
-      cores). Para cada paleta distinta, UM <style id="am-pal-<chave>"> logo depois do CSS do runtime, com as mesmas regras (mesma
-      especificidade, graças ao :where) restritas a [data-pal="<chave>"] e às cores trocadas; vence a original pela ordem no
-      documento. Keyframes com cores ganham uma cópia renomeada (<nome>--<chave>) usada só pelas regras restritas. */
+      cores). Para cada paleta distinta, UM <style id="am-pal-<chave>"> logo depois do CSS do runtime, só com as regras das
+      classes presentes nos elementos dessa paleta (mesma especificidade, graças ao :where), restritas a [data-pal="<chave>"] e
+      às cores trocadas; vence a original pela ordem no documento. Keyframes com cores usados por essas regras ganham uma cópia
+      renomeada (<nome>--<chave>). Sobre o fundo de destaque, o texto vira branco ou a principal escura quando o destaque
+      escolhido deixaria o par ilegível (ink). Folhas que nenhum elemento usa mais saem sozinhas (palSweep). */
 (function (R) {
   'use strict';
   if (!R) return;
@@ -95,7 +98,10 @@
   }
 
   /* ---------- 2) folhas de estilo ---------- */
-  var IDX = null, KF = [], STY = {}, ORDER = [];
+  /* IDX.items = regras do CSS do runtime (achatadas, na ordem do documento) que mexem em grupos com cor da marca; cada uma guarda
+     as classes do composto final (o "sujeito") de cada seletor, sem as classes de estado que o player liga depois (DYN) */
+  var IDX = null, KF = [], STY = {}, sweepT = 0, sigs = {};
+  var DYN = { on: 1, 'cy-on': 1, 'cy-active': 1, tilting: 1, 'ic-go': 1, 'ic-on': 1, dark: 1, 'am-in': 1, 'am-pre': 1, 'am-play': 1, 'am-edit': 1, previewing: 1 };
   function runtimeSheet() {
     var n = document.getElementById('am-runtime-css');
     if (!n) { var ss = document.querySelectorAll('style'); for (var i = 0; i < ss.length; i++) if (/\.am-stage\b/.test(ss[i].textContent) && /\.am-el\b/.test(ss[i].textContent)) { n = ss[i]; break; } }
@@ -130,86 +136,153 @@
     if (/^(outline|text-decoration|text-emphasis|column-rule|animation)/.test(p)) return p.split('-')[0] + (/^text|^column/.test(p) ? '-' + p.split('-')[1] : '');
     return p;
   }
+  /* início do composto final de um seletor simples (depois do último combinador no nível 0) */
+  function lastCompound(s) {
+    var d = 0, q = '', st = 0;
+    for (var i = 0; i < s.length; i++) {
+      var c = s[i];
+      if (q) { if (c === '\\') i++; else if (c === q) q = ''; continue; }
+      if (c === '"' || c === "'") q = c; else if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
+      else if (!d && (c === ' ' || c === '>' || c === '+' || c === '~')) st = i + 1;
+    }
+    return st;
+  }
+  /* classes que identificam o componente de cada seletor da lista: as do composto mais à direita que tem alguma classe (o sujeito;
+     “.gt-grid i” → gt-grid), fora de :not()/:is() e das classes de estado (DYN). Classes de contexto do runtime (am-stage, am-el,
+     amp-slide…, menos am-k-… e am-t-…) valem para todos: [] = regra genérica, entra sempre */
+  function subj(sel) {
+    return split(sel, ',').map(function (s) {
+      s = s.trim();
+      for (var end = s.length; end > 0;) {
+        var st = lastCompound(s.slice(0, end)), t = s.slice(st, end), d = 0, out = [], ctx = false, m;
+        for (var i = 0; i < t.length; i++) {
+          var c = t[i];
+          if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
+          else if (c === '.' && !d && (m = /^[\w-]+/.exec(t.slice(i + 1)))) { if (DYN[m[0]]) { } else if (/^amp?-/.test(m[0]) && !/^am-[kt]-/.test(m[0])) ctx = true; else out.push(m[0]); i += m[0].length; }
+        }
+        if (out.length || ctx) return out;
+        end = st; while (end > 0 && /[\s>+~]/.test(s[end - 1])) end--;
+      }
+      return [];
+    });
+  }
   function build() {
-    var node = runtimeSheet(); IDX = { node: node, items: [], groups: {} }; KF = [];
+    var node = runtimeSheet(); IDX = { node: node, items: [], groups: {}, kre: null }; KF = []; sigs = {};
     if (!node) return IDX;
     var raw = [], kf = {};
-    function walk(rules, into) {
+    function walk(rules, med) {
       for (var i = 0; i < rules.length; i++) {
         var r = rules[i];
-        if (r.type === 1 && r.selectorText) { var ds = decls(r.style.cssText); if (ds.length) into.push({ s: r.selectorText, d: ds }); }
-        else if (r.type === 4 || r.type === 12) { var sub = []; walk(r.cssRules, sub); if (sub.length) into.push({ m: (r.type === 4 ? '@media ' + r.conditionText : '@supports ' + r.conditionText), l: sub }); }
-        else if (r.type === 7 && hasFam(r.cssText)) { kf[r.name] = 1; KF.push(r.cssText); }
+        if (r.type === 1 && r.selectorText) { var ds = decls(r.style.cssText); if (ds.length) raw.push({ s: r.selectorText, d: ds, m: med }); }
+        else if (r.type === 4 || r.type === 12) walk(r.cssRules, med.concat([r.type === 4 ? '@media ' + r.conditionText : '@supports ' + r.conditionText]));
+        else if (r.type === 7 && hasFam(r.cssText)) { kf[r.name] = 1; KF.push({ n: r.name, t: r.cssText }); }
       }
     }
-    try { walk(node.sheet.cssRules, raw); } catch (er) { return IDX; }
+    try { walk(node.sheet.cssRules, []); } catch (er) { return IDX; }
     var names = Object.keys(kf);
     IDX.kre = names.length ? new RegExp('(^|[\\s,])(' + names.map(function (x) { return x.replace(/[^\w-]/g, '\\$&'); }).join('|') + ')(?=$|[\\s,;!])', 'g') : null;
     /* grupos de propriedades que levam cor da marca (background, border, color, fill, stroke, box, filter, --var…) */
-    (function mark(list) { list.forEach(function (it) { if (it.l) return mark(it.l); it.d.forEach(function (d) { if (hasFam(d[1])) IDX.groups[group(d[0])] = 1; }); }); })(raw);
+    raw.forEach(function (it) { it.d.forEach(function (d) { if (hasFam(d[1])) IDX.groups[group(d[0])] = 1; }); });
     if (IDX.kre) IDX.groups.animation = 1;
     /* fica só o que toca esses grupos (todas as declarações desses grupos, mesmo sem cor da marca: a ordem da cascata se mantém) */
-    (function keep(list, into) {
-      list.forEach(function (it) {
-        if (it.l) { var sub = []; keep(it.l, sub); if (sub.length) into.push({ m: it.m, l: sub }); return; }
-        var ds = it.d.filter(function (d) { return IDX.groups[group(d[0])]; }); if (ds.length) into.push({ s: it.s, d: ds });
-      });
-    })(raw, IDX.items);
+    raw.forEach(function (it) {
+      var ds = it.d.filter(function (d) { return IDX.groups[group(d[0])]; });
+      if (ds.length) IDX.items.push({ s: it.s, d: ds, m: it.m.join('\u0001'), mq: it.m, sj: subj(it.s) });
+    });
     return IDX;
+  }
+  /* regras que valem para um elemento: alguma classe exigida pelo sujeito existe no elemento (ou o sujeito não exige classe) */
+  function needed(node) {
+    var cls = {}, list = [node].concat(Array.prototype.slice.call(node.querySelectorAll('[class]')));
+    list.forEach(function (e) { String(e.getAttribute('class') || '').split(/\s+/).forEach(function (c) { if (c) cls[c] = 1; }); });
+    var sig = Object.keys(cls).sort().join(' ');
+    if (sigs[sig]) return sigs[sig];
+    var out = [];
+    IDX.items.forEach(function (it, i) { if (it.sj.some(function (l) { return !l.length || l.some(function (c) { return cls[c]; }); })) out.push(i); });
+    return (sigs[sig] = out);
   }
   /* :where(escopo) no composto final de cada seletor, antes de um pseudo-elemento */
   function scope(sel, sc) {
     return split(sel, ',').map(function (s) {
-      s = s.trim(); var d = 0, q = '', st = 0;
-      for (var i = 0; i < s.length; i++) {
-        var c = s[i];
-        if (q) { if (c === '\\') i++; else if (c === q) q = ''; continue; }
-        if (c === '"' || c === "'") q = c; else if (c === '(' || c === '[') d++; else if (c === ')' || c === ']') d--;
-        else if (!d && (c === ' ' || c === '>' || c === '+' || c === '~')) st = i + 1;
-      }
+      s = s.trim(); var st = lastCompound(s);
       var tail = s.slice(st), pm = /::|:(before|after|first-line|first-letter)\b/i.exec(tail), at = pm ? st + pm.index : s.length;
       return s.slice(0, at) + ':where(' + sc + ')' + s.slice(at);
     }).join(',');
   }
-  function css(k, M) {
-    var ix = IDX, sc = '[data-pal="' + k + '"],[data-pal="' + k + '"] *', out = '';
-    function val(p, v) { v = recolor(v, M); if (ix.kre && group(p) === 'animation') v = v.replace(ix.kre, function (m, a, nm) { return a + nm + '--' + k; }); return v; }
-    function emit(list) {
-      var s = '';
-      list.forEach(function (it) {
-        if (it.l) { s += it.m + '{' + emit(it.l) + '}'; return; }
-        s += scope(it.s, sc) + '{' + it.d.map(function (d) { return d[0] + ':' + val(d[0], d[1]); }).join(';') + '}\n';
-      });
-      return s;
+  /* cor sólida de um valor CSS (o CSSOM serializa as cores como rgb()/rgba()); null = gradiente, var(), translúcida… */
+  function solid(v) {
+    v = String(v).replace(/\s*!important\s*$/i, '').trim();
+    var m = /^#([0-9a-f]{6}|[0-9a-f]{3})$/i.exec(v);
+    if (m) { var hx = m[1]; if (hx.length === 3) hx = hx[0] + hx[0] + hx[1] + hx[1] + hx[2] + hx[2]; return hexRGB('#' + hx); }
+    m = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*([\d.]+)\s*)?\)$/i.exec(v);
+    if (m && (m[4] == null || +m[4] >= .95)) return [+m[1], +m[2], +m[3]];
+    if (/^white$/i.test(v)) return [255, 255, 255];
+    return null;
+  }
+  function con(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+  var WHITE = [255, 255, 255], NAVYC = [0, 42, 70];
+  /* tinta legível sobre a cor de destaque: numa regra cujo fundo é o laranja A&M (agora a cor de destaque), se o texto (o declarado
+     ali ou — sem declaração — o branco/navy que a A&M usa sobre o laranja) cair abaixo de 3:1 E abaixo do contraste original, o texto
+     vira o melhor entre o branco e a principal escura. Um destaque tão escuro quanto o laranja A&M não muda nada */
+  function ink(it, M) {
+    var bg = null; it.d.forEach(function (d) { if (group(d[0]) === 'background') { var c = solid(d[1]); bg = c && family(c) === 'a' ? c : null; } });
+    if (!bg) return null;
+    var bn = M.fn(bg); if (!bn) return null;
+    var nv = M.fn(NAVYC) || NAVYC, best = con(WHITE, bn) >= con(nv, bn) ? WHITE : nv, fg = null;
+    it.d.forEach(function (d) { if (d[0] === 'color') fg = solid(d[1]); });
+    if (fg) { var fn = M.fn(fg) || fg, cn = con(fn, bn); return cn < Math.min(3, con(fg, bg)) - .05 && con(best, bn) > cn ? 'rgb(' + best.join(',') + ')' : null; }
+    return con(WHITE, bn) < Math.min(3, con(WHITE, bg)) - .05 || con(nv, bn) < Math.min(3, con(NAVYC, bg)) - .05 ? 'rgb(' + best.join(',') + ')' : null;
+  }
+  function closeMq(m) { return m ? new Array(m.split('\u0001').length + 1).join('}') + '\n' : ''; }
+  function css(k, M, inc) {
+    var ix = IDX, sc = '[data-pal="' + k + '"],[data-pal="' + k + '"] *', out = '', used = {}, body = '', open = '';
+    function val(p, v) {
+      v = recolor(v, M);
+      if (ix.kre && group(p) === 'animation') v = v.replace(ix.kre, function (m, a, nm) { used[nm] = 1; return a + nm + '--' + k; });
+      return v;
     }
-    KF.forEach(function (t) { out += recolor(t, M).replace(/^@(-webkit-)?keyframes\s+("?)([\w-]+)\2/, function (m, w, q, nm) { return '@keyframes ' + nm + '--' + k; }) + '\n'; });
+    Object.keys(inc).map(Number).sort(function (a, b) { return a - b; }).forEach(function (i) {
+      var it = ix.items[i];
+      if (it.m !== open) { body += closeMq(open); open = it.m; if (open) body += it.mq.join('{') + '{'; }
+      var tx = ink(it, M), ds = it.d.map(function (d) { return d[0] + ':' + (tx && d[0] === 'color' ? tx : val(d[0], d[1])); });
+      if (tx && !it.d.some(function (d) { return d[0] === 'color'; })) ds.push('color:' + tx);
+      body += scope(it.s, sc) + '{' + ds.join(';') + '}\n';
+    });
+    body += closeMq(open);
+    /* só os keyframes que as regras incluídas usam */
+    KF.forEach(function (f) { if (used[f.n]) out += recolor(f.t, M).replace(/^@(-webkit-)?keyframes\s+("?)([\w-]+)\2/, function (m, w, q, nm) { return '@keyframes ' + nm + '--' + k; }) + '\n'; });
     /* a cor herdada do palco (.am-stage{color:#002A46}) entra pelo próprio .am-el */
     out += ':where([data-pal="' + k + '"]){color:' + recolor('#002A46', M) + '}\n';
-    return out + emit(ix.items);
+    return out + body;
   }
-  function ensure(k, n) {
-    if (STY[k] && STY[k].isConnected) { touch(k); return; }
-    if (!IDX || !IDX.node || !IDX.node.isConnected) build();
+  /* UMA folha por paleta com a união (sem repetição) das regras de que os elementos dessa paleta precisam — só as das classes
+     presentes em cada elemento, ou seja, do tipo dele; cresce quando entra um tipo novo na mesma paleta (o texto é refeito na
+     ordem original, então a cascata se mantém) */
+  function ensure(k, n, node) {
+    if (!IDX || !IDX.node || !IDX.node.isConnected) { build(); Object.keys(STY).forEach(function (x) { if (STY[x].st) STY[x].st.remove(); }); STY = {}; }
     if (!IDX.node) return;
-    var st = document.createElement('style'); st.id = 'am-pal-' + k; st.setAttribute('data-am-pal', k);
-    st.textContent = css(k, mapOf(n, k));
-    IDX.node.parentNode.insertBefore(st, IDX.node.nextSibling); STY[k] = st; touch(k); gc();
+    var S = STY[k] || (STY[k] = { st: null, inc: {} }), add = false;
+    needed(node).forEach(function (i) { if (!S.inc[i]) { S.inc[i] = 1; add = true; } });
+    if (S.st && S.st.isConnected && !add) return;
+    if (!S.st || !S.st.isConnected) { S.st = document.createElement('style'); S.st.id = 'am-pal-' + k; S.st.setAttribute('data-am-pal', k); IDX.node.parentNode.insertBefore(S.st, IDX.node.nextSibling); }
+    S.st.textContent = css(k, mapOf(n, k), S.inc);
   }
-  function touch(k) { var i = ORDER.indexOf(k); if (i >= 0) ORDER.splice(i, 1); ORDER.push(k); }
-  /* o seletor de cor do sistema gera uma paleta por movimento: guarda as 12 mais recentes e as que ainda estão na página */
-  function gc() {
-    if (ORDER.length <= 12) return;
-    ORDER.slice(0, ORDER.length - 12).forEach(function (k) {
+  /* limpeza: as folhas de paletas que nenhum elemento da página usa mais (outra cor escolhida, slide trocado, desfazer, seletor do
+     sistema arrastando = uma paleta por passo) saem pouco depois do último desenho (runtime.js chama palSweep a cada renderEl) */
+  function sweep() {
+    sweepT = 0;
+    Object.keys(STY).forEach(function (k) {
       if (document.querySelector('[data-pal="' + k + '"]')) return;
-      if (STY[k]) STY[k].remove(); delete STY[k]; delete MAPS[k]; ORDER.splice(ORDER.indexOf(k), 1);
+      if (STY[k].st) STY[k].st.remove(); delete STY[k]; delete MAPS[k];
     });
   }
+  function palSweep() { if (!sweepT && Object.keys(STY).length) sweepT = setTimeout(sweep, 1200); }
   function palTag(node, el) {
     var n = norm(el && el.pal); if (!n || !node) return;
     var k = keyOf(n); node.setAttribute('data-pal', k);
-    try { ensure(k, n); } catch (er) { if (window.console && console.warn) console.warn('AMRT: cores do componente', er); }
+    try { ensure(k, n, node); } catch (er) { if (window.console && console.warn) console.warn('AMRT: cores do componente', er); }
   }
-  R.palHTML = palHTML; R.palTag = palTag;
-  R.pal = { norm: norm, key: keyOf, family: function (hex) { return HEX.test(hex) ? family(hexRGB(hex)) : ''; }, map: function (hex, pal) { var n = norm(pal); if (!n || !HEX.test(hex)) return hex; var o = mapOf(n, keyOf(n)).fn(hexRGB(hex)); return o ? '#' + h2(o[0]) + h2(o[1]) + h2(o[2]) : hex.toUpperCase(); }, recolor: function (s, pal) { var n = norm(pal); return n ? recolor(String(s), mapOf(n, keyOf(n))) : s; }, index: function () { return IDX || build(); },
+  R.palHTML = palHTML; R.palTag = palTag; R.palSweep = palSweep;
+  R.pal = { norm: norm, key: keyOf, family: function (hex) { return HEX.test(hex) ? family(hexRGB(hex)) : ''; }, map: function (hex, pal) { var n = norm(pal); if (!n || !HEX.test(hex)) return hex; var o = mapOf(n, keyOf(n)).fn(hexRGB(hex)); return o ? '#' + h2(o[0]) + h2(o[1]) + h2(o[2]) : hex.toUpperCase(); }, recolor: function (s, pal) { var n = norm(pal); return n ? recolor(String(s), mapOf(n, keyOf(n))) : s; }, index: function () { return IDX || build(); }, sweep: sweep,
     contrast: function (x, y) { if (!HEX.test(x) || !HEX.test(y)) return 0; var a = lum(hexRGB(x)), b = lum(hexRGB(y)); return (Math.max(a, b) + .05) / (Math.min(a, b) + .05); } };
 })(window.AMRT);

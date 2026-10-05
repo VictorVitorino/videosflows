@@ -9,23 +9,26 @@
    no campo 'colors:N' (rótulos) e em cols(d) (cores efetivas, usadas pelo painel do editor); legendas usam as mesmas cores. */
 (function (R) {
   'use strict';
-  var U = R.util, ucols = U.ucols, mixHex = U.mixHex, esc = U.esc, num = U.num, fmt = U.fmt, fmtN = U.fmtN, CQ = U.CQ, E = U.E, arr = U.arr, VV = U.VV, nid = U.nid;
+  var U = R.util, ucols = U.ucols, ukeep = U.ukeep, kcols = U.kcols, mixHex = U.mixHex, lumHex = U.lumHex, esc = U.esc, num = U.num, fmt = U.fmt, fmtN = U.fmtN, CQ = U.CQ, E = U.E, arr = U.arr, VV = U.VV, nid = U.nid;
   /* paletas: séries categóricas, rampa ordinal (funil), texto, grade e eixo; k = 'light' | 'dark' */
   var TH = {
     light: { dk: false, pal: ['#002A46', '#4A6FA5', '#A3B8D6', '#F78C16'], ramp: ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#A3B8D6', '#C9D6E8'], txt: '#3E4C5E', val: '#002A46', mut: '#43698F', grid: '#E2E7EF', axis: '#CBD4E1', neg: '#C9D6E8', hatch: '#fff', band: ['#EEF2F7', '#DCE5F0', '#C9D6E8'], ice: '#EEF2F7' },
     dark: { dk: true, pal: ['#FFFFFF', '#7EA1C3', '#C9D6E8', '#F78C16'], ramp: ['#FFFFFF', '#DCE5F0', '#C9D6E8', '#A3B8D6', '#7EA1C3', '#43698F'], txt: '#C9D6E8', val: '#FFFFFF', mut: '#A3B8D6', grid: 'rgba(255,255,255,.16)', axis: 'rgba(255,255,255,.35)', neg: '#7EA1C3', hatch: '#002A46', band: ['rgba(255,255,255,.08)', 'rgba(255,255,255,.14)', 'rgba(255,255,255,.22)'], ice: 'rgba(255,255,255,.12)' }
   };
   function base(d) { return TH[d && d.style === 'dark' ? 'dark' : 'light']; }
-  function theme(d) {
-    var b = base(d), c = ucols(d); if (!c.some(Boolean)) return b;
+  /* el: com “Cores do componente” (el.pal) as cores escolhidas saem marcadas (U.ukeep: #RRGGBBFF) e o recolorir não as troca.
+     Rampa do funil: tons de colors[0] em direção ao branco; com uma cor clara num gráfico para fundo claro, em direção ao preto
+     (senão as últimas etapas somem no slide branco) */
+  function theme(d, el) {
+    var b = base(d), c = ucols(d), K = ukeep(el); if (!c.some(Boolean)) return b;
     var t = {}; Object.keys(b).forEach(function (k) { t[k] = b[k]; });
-    t.pal = b.pal.map(function (x, k) { return c[k] || x; });
-    if (c[0]) t.ramp = [0, .16, .32, .48, .62, .74].map(function (f) { return f ? mixHex(c[0], f) : c[0].toUpperCase(); });
+    t.pal = b.pal.map(function (x, k) { return c[k] ? K(c[k]) : x; });
+    if (c[0]) { var dn = !b.dk && lumHex(c[0]) > .7; t.ramp = [0, .16, .32, .48, .62, .74].map(function (f) { return K(f ? mixHex(c[0], dn ? -f * .8 : f) : c[0].toUpperCase()); }); }
     return t;
   }
   /* cores efetivas de cada posição de data.colors (painel do editor): idx = posições da paleta base usadas por padrão */
   function colsOf(d, idx, extra) { var c = ucols(d), b = base(d); return idx.map(function (k, i) { return c[i] || (typeof k === 'number' ? b.pal[k] : k) || extra; }); }
-  function lum(c) { var m = /^#?([0-9a-f]{6})$/i.exec(c || ''); if (!m) return 1; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
+  function lum(c) { var m = /^#?([0-9a-f]{6})(?:ff)?$/i.exec(c || ''); if (!m) return 1; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
   function inkOn(c) { return lum(c) < .55 ? '#FFFFFF' : '#002A46'; }
   var STYLE = ['style', 'Paleta', 'sel:light=Para fundo claro|dark=Para fundo escuro'];
   /* texto SVG: o = {fs, a (âncora), w (peso), c (condensada), f (cor), cls, st (style)} */
@@ -47,7 +50,7 @@
     cols: function (d) { return colsOf(d, [0, 1, 2, 3]); },
     tip: 'Duplo clique no nome de uma série (legenda) para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'columns'), th = theme(d), cats = arr(d.cats), S = rowsOf(d.series).slice(0, 4), n = Math.max(1, cats.length), m = Math.max(1, S.length), mode = ['cluster', 'stack', 'pct'].indexOf(d.mode) >= 0 ? d.mode : 'cluster', u = String(d.unit || '');
+      var v = VV(el, 'columns'), th = theme(d, el), cats = arr(d.cats), S = rowsOf(d.series).slice(0, 4), n = Math.max(1, cats.length), m = Math.max(1, S.length), mode = ['cluster', 'stack', 'pct'].indexOf(d.mode) >= 0 ? d.mode : 'cluster', u = String(d.unit || '');
       var top = d.title ? h * .15 : h * .06, bot = h * .16, L = w * .02, Rr = w * .98, ch = h - top - bot, gw = (Rr - L) / n, fs = Math.max(10, Math.min(h * .042, gw * .14)), o = '';
       var val = function (s, i) { return Math.max(0, num(((S[s] || {}).v || [])[i])); }, tot = cats.map(function (c, i) { var t = 0; for (var s = 0; s < m; s++) t += val(s, i); return t; });
       var mx = mode === 'cluster' ? Math.max.apply(null, S.map(function (s, k) { return Math.max.apply(null, cats.map(function (c, i) { return val(k, i); }).concat([0])); }).concat([1])) : mode === 'pct' ? 100 : Math.max.apply(null, tot.concat([1]));
@@ -81,10 +84,10 @@
     cols: function (d) { return colsOf(d, [0, '#F78C16']); },
     tip: 'Duplo clique num nome ou no título para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'hbars'), th = theme(d), it = rowsOf(d.items).map(function (o, k) { return { t: o.t, v: num(o.v), k: k }; }), hl = hlList(d.hl), u = String(d.unit || '');
+      var v = VV(el, 'hbars'), th = theme(d, el), it = rowsOf(d.items).map(function (o, k) { return { t: o.t, v: num(o.v), k: k }; }), hl = hlList(d.hl), u = String(d.unit || '');
       if (d.sort !== 'none') it.sort(function (a, b) { return b.v - a.v; });
       var mx = Math.max.apply(null, it.map(function (o) { return Math.abs(o.v); }).concat([1])), n = Math.max(1, it.length), fs = Math.max(10, Math.min(h / (n + 1.5) * .34, w * .026));
-      return '<div class="fx fxch fxhb fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + (ucols(d)[1] ? ';--chh:' + ucols(d)[1] : '') + '">' + (d.title ? E('title', d.title, 'ch-tt') : '') + '<div class="hb-rows">' + it.map(function (o, r) {
+      return '<div class="fx fxch fxhb fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + (ucols(d)[1] ? ';--chh:' + ukeep(el)(ucols(d)[1]) : '') + '">' + (d.title ? E('title', d.title, 'ch-tt') : '') + '<div class="hb-rows">' + it.map(function (o, r) {
         var on = hl.indexOf(r + 1) >= 0;
         return '<div class="hb-r' + (on ? ' hl' : '') + '" data-g="' + r + '" style="--r:' + r + '"><span class="hb-l">' + E('items.' + o.k + '.t', o.t) + '</span><span class="hb-t"><i class="hb-b" style="width:' + (Math.abs(o.v) / mx * 86).toFixed(2) + '%"></i><b class="hb-v"' + (v === 'race' ? ' data-count="' + o.v + '" data-dec="' + (Math.abs(o.v % 1) > .001 ? 1 : 0) + '" data-suf="' + esc(u) + '"' : '') + '>' + esc(fmtN(o.v) + u) + '</b></span></div>';
       }).join('') + '</div></div>';
@@ -101,7 +104,7 @@
     cols: function (d) { return colsOf(d, [0, 1, 'neg']).map(function (x, k) { return k === 2 && x === 'neg' ? base(d).neg : x; }); },
     tip: 'Marque as barras de total com “t” na terceira coluna. Valores negativos saem hachurados em azul-claro.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'waterfall'), th = theme(d), cu = ucols(d), negC = cu[2] || th.neg, negS = cu[2] ? mixHex(cu[2], -.25) : th.pal[2], con = base(d).pal[2], it = rowsOf(d.items), n = Math.max(1, it.length), run = 0, bars = [], u = String(d.unit || '');
+      var v = VV(el, 'waterfall'), th = theme(d, el), cu = ucols(d), negC = cu[2] ? ukeep(el)(cu[2]) : th.neg, negS = cu[2] ? ukeep(el)(mixHex(cu[2], -.25)) : th.pal[2], con = base(d).pal[2], it = rowsOf(d.items), n = Math.max(1, it.length), run = 0, bars = [], u = String(d.unit || '');
       it.forEach(function (o, i) {
         var isT = String(o.k || '').trim().toLowerCase().charAt(0) === 't';
         if (isT) { var tv = i === 0 || num(o.v) ? num(o.v) : run; run = tv; bars.push({ t: o.t, a: 0, b: tv, tot: 1, val: tv }); } /* total: usa o valor digitado; com 0, a soma corrente */
@@ -135,9 +138,9 @@
     cols: function (d) { return colsOf(d, [0, '#F78C16']); },
     tip: 'A marca laranja é a meta; a barra navy, o realizado. Duplo clique no nome para editar no slide.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'bullet'), th = theme(d), rs = rowsOf(d.rows), n = Math.max(1, rs.length), fs = Math.max(10, Math.min(h / n * .26, w * .024)), bd = String(d.bands || '').split(',').map(num).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });
+      var v = VV(el, 'bullet'), th = theme(d, el), rs = rowsOf(d.rows), n = Math.max(1, rs.length), fs = Math.max(10, Math.min(h / n * .26, w * .024)), bd = String(d.bands || '').split(',').map(num).filter(function (x) { return x > 0 && x < 100; }).sort(function (a, b) { return a - b; });
       var bands = '<i class="bu-z" style="left:0;width:100%;background:' + th.band[0] + '"></i>' + bd.map(function (p, k) { return '<i class="bu-z" style="left:' + p + '%;width:' + (100 - p) + '%;background:' + th.band[1 + k % 2] + '"></i>'; }).join('');
-      return '<div class="fx fxch fxbu fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + ';--chm:' + th.mut + (ucols(d)[1] ? ';--cht:' + ucols(d)[1] : '') + '">' + rs.map(function (r, k) {
+      return '<div class="fx fxch fxbu fxv-' + v + '"' + (v === 'focus' ? ' data-cycle="g"' : '') + ' style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chb:' + th.pal[0] + ';--chm:' + th.mut + (ucols(d)[1] ? ';--cht:' + ukeep(el)(ucols(d)[1]) : '') + '">' + rs.map(function (r, k) {
         var mx = num(r.mx) || 100, val = num(r.v), tg = num(r.tg), pv = Math.max(0, Math.min(100, val / mx * 100)), pt = Math.max(0, Math.min(100, tg / mx * 100));
         return '<div class="bu-r" data-g="' + k + '" style="--r:' + k + '"><span class="bu-l">' + E('rows.' + k + '.t', r.t) + '</span><span class="bu-t">' + bands + '<i class="bu-b" style="width:' + pv.toFixed(2) + '%"></i><i class="bu-tg" style="left:' + pt.toFixed(2) + '%"></i></span><b class="bu-v"><span data-count="' + val + '" data-dec="' + (Math.abs(val % 1) > .001 ? 1 : 0) + '">' + esc(fmtN(val)) + '</span><small> / ' + esc(fmtN(tg)) + '</small></b></div>';
       }).join('') + '</div>';
@@ -154,7 +157,7 @@
     cols: function (d) { return colsOf(d, [0]); },
     tip: 'Clique numa bola para trocar a nota (0 → 4). Duplo clique num nome para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'harvey'), th = theme(d), cols = arr(d.cols), rows = rowsOf(d.rows), m = Math.max(1, cols.length), n = Math.max(1, rows.length), best = Math.round(num(d.best)) - 1, fs = Math.max(9, Math.min(h / (n + 1.3) * .3, w / (m + 2.4) * .13)), ink = th.pal[0];
+      var v = VV(el, 'harvey'), th = theme(d, el), cols = arr(d.cols), rows = rowsOf(d.rows), m = Math.max(1, cols.length), n = Math.max(1, rows.length), best = Math.round(num(d.best)) - 1, fs = Math.max(9, Math.min(h / (n + 1.3) * .3, w / (m + 2.4) * .13)), ink = th.pal[0];
       var g = '<div class="fx fxch fxhv fxv-' + v + '" style="font-size:' + CQ(fs) + ';color:' + th.txt + ';--chv:' + th.val + ';--chg:' + th.grid + ';grid-template-columns:2.4fr repeat(' + m + ',1fr);grid-template-rows:1.1fr repeat(' + n + ',1fr)"><div></div>';
       cols.forEach(function (c, k) { g += '<div class="hv-h' + (k === best ? ' best' : '') + '" style="--c:' + k + '">' + E('cols.' + k, c) + '</div>'; });
       rows.forEach(function (r, i) {
@@ -178,7 +181,7 @@
     cols: function (d) { return colsOf(d, [base(d).ramp[0]]); },
     tip: 'A largura de cada etapa segue a raiz do valor (como na leitura de área). Duplo clique num nome para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'funnel'), th = theme(d), it = rowsOf(d.items), n = Math.max(1, it.length), v0 = Math.max(1, num((it[0] || {}).v)), fw = w * .58, cx = fw / 2, sh = h / n, fs = Math.max(10, Math.min(sh * .26, w * .028)), o = '', conv = '', worst = -1, wr = 2, u = String(d.unit || '');
+      var v = VV(el, 'funnel'), th = theme(d, el), it = rowsOf(d.items), n = Math.max(1, it.length), v0 = Math.max(1, num((it[0] || {}).v)), fw = w * .58, cx = fw / 2, sh = h / n, fs = Math.max(10, Math.min(sh * .26, w * .028)), o = '', conv = '', worst = -1, wr = 2, u = String(d.unit || '');
       var Wd = function (k) { return Math.max(.12, Math.sqrt(Math.max(0, num((it[k] || {}).v)) / v0)) * fw; }, C = th.ramp;
       it.forEach(function (s, k) { if (k) { var r = num(s.v) / Math.max(1, num(it[k - 1].v)); if (r < wr) { wr = r; worst = k; } } });
       it.forEach(function (s, k) {
@@ -201,12 +204,12 @@
     cols: function (d) { return colsOf(d, [0, 3, 1]); },
     tip: 'A 2ª série sai tracejada em laranja (meta). Duplo clique no nome de uma série para editar.',
     html: function (d, w, h, el) {
-      var v = VV(el, 'radar'), th = theme(d), ax = arr(d.axes), m = Math.max(3, ax.length), S = rowsOf(d.series).slice(0, 3), mx = num(d.max) || 5, sz = Math.min(w * .78, h * .8), cx = w / 2, cy = h * .47, Rr = sz / 2 * .78, fs = Math.max(10, Math.min(h * .042, w * .03));
+      var v = VV(el, 'radar'), th = theme(d, el), ax = arr(d.axes), m = Math.max(3, ax.length), S = rowsOf(d.series).slice(0, 3), mx = num(d.max) || 5, sz = Math.min(w * .78, h * .8), cx = w / 2, cy = h * .47, Rr = sz / 2 * .78, fs = Math.max(10, Math.min(h * .042, w * .03));
       while (ax.length < m) ax.push('');
       var Pt = function (k, r) { var a = -Math.PI / 2 + k * 2 * Math.PI / m; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; }, o = '', lv = Math.max(1, Math.min(10, Math.round(mx)));
       for (var l = 1; l <= lv; l++) o += '<path d="M' + ax.map(function (x, k) { return Pt(k, Rr * l / lv).map(function (q) { return q.toFixed(1); }).join(' '); }).join('L') + 'Z" fill="none" stroke="' + th.grid + '" stroke-width="1"/>';
       ax.forEach(function (a, k) { var p = Pt(k, Rr), q = Pt(k, Rr + fs * 1.3), an = Math.abs(q[0] - cx) < 4 ? 'middle' : (q[0] > cx ? 'start' : 'end'); o += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p[0].toFixed(1) + '" y2="' + p[1].toFixed(1) + '" stroke="' + th.grid + '"/>' + T(q[0], q[1] + fs * .35, a, { fs: fs, a: an, w: 700, c: 1, f: th.txt }); });
-      var col = R.FX.radar.cols(d);
+      var col = kcols(d, el, R.FX.radar.cols(d));
       S.forEach(function (s, j) {
         var pts = ax.map(function (x, k) { return Pt(k, Rr * Math.max(0, Math.min(mx, num((s.v || [])[k]))) / mx); }), dd = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L') + 'Z';
         var per = pts.reduce(function (a, p, k) { var q = pts[(k + 1) % pts.length]; return a + Math.hypot(q[0] - p[0], q[1] - p[1]); }, 0) || 1; /* tracejado em unidades de pathLength=1 */

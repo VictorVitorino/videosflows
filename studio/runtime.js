@@ -13,6 +13,11 @@ window.AMRT = (function () {
   var COL_OK = /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d.,\s%]+\))$/i, HEX6 = /^#[0-9a-f]{6}$/i;
   function colOr(v, d) { return typeof v === 'string' && COL_OK.test(v) ? v : d; }
   function ucols(d) { var c = d && d.colors; return Array.isArray(c) ? c.slice(0, 6).map(function (x) { return typeof x === 'string' && HEX6.test(x) ? x : ''; }) : []; }
+  /* cor de série escolhida num elemento com “Cores do componente” (el.pal): sai como #RRGGBBFF (a mesma cor, opaca), que o recolorir
+     (rt-05-pal.js) não troca — a cor escolhida aparece exatamente como foi escolhida; sem el.pal, nada muda. kcols(d, el, cols) =
+     cols(d) com as posições escolhidas marcadas assim */
+  function ukeep(el) { return el && el.pal && API.pal && API.pal.norm(el.pal) ? function (c) { return HEX6.test(c) ? c + 'FF' : c; } : function (c) { return c; }; }
+  function kcols(d, el, cc) { var u = ucols(d), K = ukeep(el); return cc.map(function (c, k) { return u[k] ? K(c) : c; }); }
   function lumHex(c) { var m = /^#([0-9a-f]{6})$/i.exec(c || ''); if (!m) return null; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
   /* mistura c (#rrggbb) com branco (t > 0) ou preto (t < 0); t de -1 a 1 */
   function mixHex(c, t) {
@@ -104,7 +109,7 @@ window.AMRT = (function () {
       fields: [['title', 'Título'], ['labels', 'Categorias (separe por vírgula)'], ['values', 'Valores (separe por vírgula)'], ['unit', 'Unidade'], ['highlight', 'Destacar posições (ex.: 1, 3)'], ['style', 'Estilo', 'sel:clear=Transparente|light=Branco|ice=Gelo|dark=Navy'], ['colors', 'Cores', 'colors:2', ['Barras', 'Destaque']]],
       cols: function (d) { var c = ucols(d); return [c[0] || (d.style === 'dark' ? '#7EA1C3' : '#002A46'), c[1] || '#F78C16']; },
       html: function (d, w, h, el) {
-        var cc = FX.bars.cols(d), labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
+        var cc = kcols(d, el, FX.bars.cols(d)), labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
         var n = Math.max(1, Math.min(labs.length, vals.length)), mx = Math.max.apply(null, vals.slice(0, n).concat([1])), hl = String(d.highlight || '').split(',').map(function (s) { return parseInt(s, 10); });
         var dark = d.style === 'dark', top = d.title ? h * .17 : h * .06, bot = h * .13, ch = h - top - bot, gap = w / n, bw = gap * .58, fs = Math.max(10, Math.min(h * .05, gap * .2)), out = '';
         for (var k = 0; k < n; k++) {
@@ -328,7 +333,7 @@ window.AMRT = (function () {
     fields: [['title', 'Título'], ['labels', 'Rótulos do eixo (um por linha)', 'lines'], ['values', 'Valores (um por linha)', 'lines'], ['unit', 'Unidade'], ['target', 'Meta (0 oculta)', 'number'], ['colors', 'Cores', 'colors:2', ['Linha e pontos', 'Último ponto']]],
     cols: function (d) { var c = ucols(d); return [c[0] || '#002A46', c[1] || '#F78C16']; },
     html: function (d, w, h, el) {
-      var cu = ucols(d), cc = M.linechart.cols(d), lastT = lumHex(cc[1]) > .75 ? '#002A46' : cc[1], v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
+      var cu = ucols(d), c0 = M.linechart.cols(d), cc = kcols(d, el, c0), lastT = lumHex(c0[1]) > .75 ? '#002A46' : cc[1], v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
       var mx = Math.max.apply(null, vs.slice(0, n).concat([t, 1])) * 1.15, top = d.title ? h * .16 : h * .06, bot = h * .12, L = w * .04, R = w * .96, ch = h - top - bot, fs = Math.max(10, h * .045);
       function X(k) { return L + (R - L) * k / (n - 1); } function Y(val) { return top + ch - val / mx * ch; }
       var pts = vs.slice(0, n).map(function (val, k) { return [X(k), Y(val)]; }), dl = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L');
@@ -348,7 +353,7 @@ window.AMRT = (function () {
     fields: [['items', 'Fatias (nome | valor)', 'rows:t|v:n'], ['center', 'Texto no centro'], ['colors', 'Cores das fatias', 'colors:6', 'items']],
     cols: function (d) { var c = ucols(d); return DN_C.map(function (x, k) { return c[k] || x; }); },
     html: function (d, w, h, el) {
-      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = M.donut.cols(d), acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
+      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = kcols(d, el, M.donut.cols(d)), acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
       it.forEach(function (o, g) {
         var p = Math.max(0, num(o.v)) / tot * 100;
         segs += '<circle class="dn-seg" data-g="' + g + '" style="--g:' + g + '" cx="50" cy="50" r="38" fill="none" stroke="' + C[g % C.length] + '" stroke-width="16" pathLength="100" stroke-dasharray="' + Math.max(0, p - .6).toFixed(2) + ' ' + (100 - Math.max(0, p - .6)).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '"/>';
@@ -494,11 +499,12 @@ window.AMRT = (function () {
       var sr = Math.max(0, Math.min(+el.radius || 0, w / 2, h / 2)), rr = el.shape === 'ellipse' ? '50%' : el.shape === 'pill' ? CQ(Math.min(w, h) / 2) : el.shape === 'round' ? CQ(sr || Math.min(w, h) * .12) : sr && (!el.shape || el.shape === 'rect') ? CQ(sr) : '';
       if (rr) fx.style.borderRadius = rr; }
     fx.innerHTML = content(el, w, h);
-    if (el.pal && el.type === 'fx' && API.palTag) API.palTag(n, el); /* data-pal + folha de estilo restrita (rt-05-pal.js) */
     if (el.type === 'fx' && !(+el.radius)) { /* componente sem raio próprio: o invólucro segue o canto do cartão (anéis, brilho, contorno, varredura) */
       var c0 = fx.firstElementChild, cr = c0 && (c0.style.borderRadius || FX_RAD[(String(c0.className).match(/\bfx(?:h|g|cd|q|-panel)\b/) || [''])[0]]);
       if (cr) fx.style.borderRadius = cr; }
     rot.appendChild(fx); n.appendChild(rot);
+    if (el.pal && el.type === 'fx' && API.palTag) API.palTag(n, el); /* data-pal + folha de estilo restrita às classes do elemento (rt-05-pal.js) */
+    if (API.palSweep) API.palSweep(); /* folhas de paletas que ninguém usa mais saem depois (rt-05-pal.js) */
     return n;
   }
   var FX_RAD = { fxh: '4%/7%', fxg: '5%/9%', fxcd: '3%/6%', fxq: '1cqh', 'fx-panel': '1.2cqh' }; /* mesmos cantos do runtime.css (.fxh, .fxg, .fxcd, .fxq, .fx-panel) */
@@ -509,6 +515,7 @@ window.AMRT = (function () {
     st.style.background = slide.bg || '#FFFFFF';
     if (slide.bgImg) { var bi = document.createElement('div'); bi.className = 'am-bgimg'; bi.style.backgroundImage = 'url("' + slide.bgImg + '")'; bi.style.opacity = slide.bgImgOp == null ? 1 : slide.bgImgOp; st.appendChild(bi); }
     (slide.els || []).forEach(function (el, i) { st.appendChild(renderEl(el, i)); });
+    if (API.palSweep) API.palSweep();
     if (opts.play) st.querySelectorAll('.am-el[data-in=words] .am-tx').forEach(splitWords);
     return st;
   }
@@ -755,8 +762,8 @@ window.AMRT = (function () {
        shapeInset(el) devolve o recuo do texto de uma forma ('0 0 22% 0') ou null; shapeText(el, w, h, html) pode reescrever o texto da forma */
     hooks: { player: [], show: [], key: [] }, shapeInset: null, shapeText: null,
     /* cores do componente (rt-05-pal.js): palHTML(el, html) troca as cores do markup, palTag(node, el) marca o .am-el e injeta o CSS */
-    palHTML: null, palTag: null,
+    palHTML: null, palTag: null, palSweep: null,
     /* para arquivos de extensão rt-*.js (modelos, gráficos, ícones): os mesmos utilitários dos modelos internos */
-    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid, colOr: colOr, ucols: ucols, lumHex: lumHex, mixHex: mixHex } };
+    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid, colOr: colOr, ucols: ucols, lumHex: lumHex, mixHex: mixHex, ukeep: ukeep, kcols: kcols } };
   return API;
 })();

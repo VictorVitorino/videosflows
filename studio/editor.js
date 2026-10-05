@@ -198,7 +198,7 @@
     if (o.rot != null) { var rr = normRot(o.rot); if (rr) o.rot = rr; else delete o.rot; } /* giro em graus inteiros, (-180, 180] */
     ['flipH', 'flipV'].forEach(function (k) { if (o[k] !== true || !RT.flipOK || !RT.flipOK(o)) delete o[k]; }); /* espelho: só true, e só onde ele existe (foto, forma, ícone) */
     if (o.bend != null) { if (isFinite(+o.bend)) o.bend = Math.max(0.05, Math.min(0.95, +o.bend)); else delete o.bend; }
-    if (o.pal != null) { var pl = o.type === 'fx' ? safePal(o.pal) : null; if (pl) o.pal = pl; else delete o.pal; } /* cores do componente (S20): só #rrggbb; vazio sai */
+    if (o.pal != null) { var pl = palOk(o) ? safePal(o.pal) : null; if (pl) o.pal = pl; else delete o.pal; } /* cores do componente (S20): só #rrggbb; vazio sai; só onde o painel oferece a seção (não em ícones nem na Marca A&M) */
     if (o.zoom != null) { if (o.zoom === false || o.zoom === true) { } else delete o.zoom; } /* ampliar na apresentação: só booleano (false desliga num modelo/imagem; true liga num componente) */
     if (o.html != null) o.html = cleanHTML(String(o.html));
     if (o.type === 'image') { o.src = safeSrc(o.src); if (!o.src) return null; }
@@ -217,7 +217,7 @@
     if (a.depth != null) o.anim.depth = pickN(a.depth, [0, 1, 2], 0);
     if (F) {
       o.data = o.data && typeof o.data === 'object' && !Array.isArray(o.data) ? o.data : clone(F.data);
-      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (typeof v === 'string' && !TOKEN_RE.test(v) && !COLOR_RE.test(v)) delete o.data[k]; });
+      DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (v != null && !(typeof v === 'string' && (TOKEN_RE.test(v) || COLOR_RE.test(v)))) delete o.data[k]; }); /* só texto simples ou cor: número, lista ou objeto saem */
       if (o.data.colors != null) { /* cores das séries (gráficos): até 6 posições, só #rrggbb; posição inválida = '' (cor padrão) */
         var dc = Array.isArray(o.data.colors) ? o.data.colors.slice(0, 6).map(function (c) { return typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : ''; }) : [];
         while (dc.length && !dc[dc.length - 1]) dc.pop();
@@ -432,10 +432,12 @@
     var F = RT.FX[el.kind], d = el.data || {}, n = Math.max(1, Math.min(6, +f[2].split(':')[1] || 1)), eff = F.cols ? F.cols(d) : [], nm = f[3], names;
     if (Array.isArray(nm)) names = nm.slice(0, n);
     else { var rows = Array.isArray(d[nm]) ? d[nm] : []; names = rows.slice(0, n).map(function (r, k) { return (r && typeof r.t === 'string' && r.t.trim()) || 'Série ' + (k + 1); }); if (!names.length) names = ['Série 1']; }
-    var custom = Array.isArray(d.colors) && d.colors.some(function (c) { return HEXC.test(c || ''); });
+    var u = Array.isArray(d.colors) ? d.colors : [], custom = u.some(function (c) { return HEXC.test(c || ''); });
+    /* a cor que o gráfico desenha: a escolhida (exata, também com “Cores do componente”) ou a padrão — que, com el.pal, vira o tom da paleta */
+    var shown = eff.map(function (c, k) { return HEXC.test(u[k] || '') ? String(u[k]).toUpperCase() : el.pal && RT.pal && HEXC.test(c || '') ? RT.pal.map(c, el.pal) : c; });
     return '<div class="cser-w"><span class="pf"><span>' + esc(f[1]) + '</span></span>' + names.map(function (t, k) {
-      return '<div class="cser"><span class="cser-n"><i style="background:' + (HEXC.test(eff[k] || '') ? eff[k] : '#FFFFFF') + '"></i>' + esc(t) + '</span>' + swatches('data.colors.' + k, eff[k], false, QUICK) + '</div>';
-    }).join('') + '<div class="row r1"><button type="button" class="btnw" data-act="colors-reset"' + (custom ? '' : ' disabled') + ' title="Volta às cores padrão do gráfico (paleta A&amp;M)">Cores A&amp;M</button></div></div>';
+      return '<div class="cser"><span class="cser-n"><i style="background:' + (HEXC.test(shown[k] || '') ? shown[k] : '#FFFFFF') + '"></i>' + esc(t) + '</span>' + swatches('data.colors.' + k, shown[k], false, QUICK) + '</div>';
+    }).join('') + (el.pal ? '<p class="note cser-pal">Com “Cores do componente”, as séries sem cor própria seguem a cor principal; uma cor escolhida aqui fica exatamente como foi escolhida.</p>' : '') + '<div class="row r1"><button type="button" class="btnw" data-act="colors-reset"' + (custom ? '' : ' disabled') + ' title="Volta às cores padrão do gráfico (paleta A&amp;M)">Cores A&amp;M</button></div></div>';
   }
   function seg(p, v, opts) { return '<div class="seg">' + opts.map(function (o) { return '<button class="' + (String(o[0]) === String(v) ? 'on' : '') + '" data-set="' + p + '" data-v="' + o[0] + '" title="' + (o[2] || o[1]) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
   /* alinhamento vertical; no card “Cabeçalho” o título fica sempre na faixa do alto, então os botões aparecem desativados */
@@ -641,14 +643,50 @@
   /* “Cores do componente” (S20): el.pal = {p, a}; o runtime (rt-05-pal.js) troca o azul-marinho/azuis pela cor principal e o laranja
      pela de destaque, só neste elemento. Não vale para a Marca A&M nem para ícones (que já têm cores próprias) */
   function palOk(el) { var F = el && el.type === 'fx' && RT.FX[el.kind]; return !!(F && RT.palTag && F.cat !== 'Marca A&M' && !isIcon(el)); }
+  /* contraste dos textos DESTE componente com as cores escolhidas × com as cores A&M: desenha as duas versões fora da tela (sem
+     animação) e compara texto a texto; devolve o pior texto que ficou abaixo de 3:1 e pior que no A&M ({t, c}) ou null. Guardado por
+     tipo/dados/paleta: o painel redesenha muitas vezes */
+  var palProbeMemo = {}, palProbeN = 0;
+  function palProbe(el) {
+    var key = JSON.stringify([el.kind, el.variant, el.w, el.h, el.data, el.pal, slide().bg]);
+    if (palProbeMemo.hasOwnProperty(key)) return palProbeMemo[key];
+    if (++palProbeN > 40) { palProbeMemo = {}; palProbeN = 1; }
+    var host = document.createElement('div'), sbg = /^#[0-9a-f]{6}$/i.test(slide().bg || '') ? slide().bg : '#FFFFFF', res = null;
+    host.className = 'am-stage am-edit'; host.setAttribute('aria-hidden', 'true');
+    host.style.cssText = 'position:fixed;left:-40000px;top:0;width:' + W + 'px;opacity:0;pointer-events:none;background:' + sbg;
+    var mk = function (id, pal) { var o = clone(el); o.id = id; o.x = 0; o.y = 0; delete o.rot; delete o.opacity; o.anim = { in: 'none' }; if (pal) o.pal = pal; else delete o.pal; return RT.renderEl(o, 0); };
+    var na = mk('pal-probe-a', null), nb = mk('pal-probe-b', el.pal);
+    host.appendChild(na); host.appendChild(nb); document.body.appendChild(host);
+    try {
+      var rgb = function (s) { var m = /rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/.exec(s || ''); return m ? [+m[1], +m[2], +m[3], m[4] == null ? 1 : +m[4]] : null; };
+      var lin = function (c) { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); }, lum = function (c) { return .2126 * lin(c[0]) + .7152 * lin(c[1]) + .0722 * lin(c[2]); };
+      var bgOf = function (e) { for (var x = e; x && x !== host; x = x.parentElement) { var c = rgb(getComputedStyle(x).backgroundColor); if (c && c[3] > .6) return c; } return rgb(getComputedStyle(host).backgroundColor) || [255, 255, 255]; };
+      var pairs = function (root) {
+        var out = [], tw = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), t;
+        while ((t = tw.nextNode())) {
+          var e = t.parentElement, tx = t.nodeValue.trim(); if (!tx || !e) continue;
+          var cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || +cs.opacity === 0) continue;
+          var f = rgb(e.closest('svg') ? cs.fill : '') || rgb(cs.color), b = bgOf(e); if (!f) continue;
+          var x = lum(f), y = lum(b); out.push({ t: tx, c: (Math.max(x, y) + .05) / (Math.min(x, y) + .05) });
+        }
+        return out;
+      };
+      var A = pairs(na), B = pairs(nb);
+      B.forEach(function (o, i) { if (A[i] && o.c < 3 && o.c < A[i].c - .05 && (!res || o.c < res.c)) res = o; });
+    } catch (er) { res = null; }
+    host.remove();
+    return (palProbeMemo[key] = res);
+  }
   function palSec(el) {
-    var pl = el.pal || {};
+    var pl = el.pal || {}, bad = el.pal && RT.pal ? palProbe(el) : null;
+    /* sem cor própria, a amostra marcada é a cor A&M da linha (navy / laranja); clicá-la volta só aquela cor (applyProp apaga a chave) */
+    var row = function (def) { return SW.map(function (c) { return [c, c === def ? 'Cor A&M (sem troca)' : c]; }); };
     return '<div class="sec" id="palSec"><h3>Cores do componente</h3>' +
-      '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p) +
-      '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a) +
+      '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p || '#002A46', false, row('#002A46')) +
+      '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a || '#F78C16', false, row('#F78C16')) +
       (el.pal && RT.pal ? '<div class="pal-tones" title="Tons que o componente usa com estas cores">' + ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#C9D6E8', '#EEF2F7', '|', '#F78C16', '#FEF1E2'].map(function (c) { return c === '|' ? '<b></b>' : '<i style="background:' + RT.pal.map(c, el.pal) + '"></i>'; }).join('') + '</div>' : '') +
       '<p class="note">Cada azul do modelo vira um tom da cor principal com a mesma claridade (o azul-marinho vira a versão escura dela), então os textos continuam legíveis; o laranja vira a cor de destaque. Vale só para este elemento, também na apresentação e no arquivo salvo.</p>' +
-      (pl.a && RT.pal && RT.pal.contrast(pl.a, RT.pal.map('#002A46', el.pal)) < 3 ? '<p class="note pal-warn">Pouco contraste entre a cor de destaque e a principal escura: textos de destaque sobre ela podem ficar difíceis de ler. Experimente um destaque mais claro.</p>' : '') +
+      (bad ? '<p class="note pal-warn">Pouco contraste com estas cores: “' + esc(bad.t.length > 32 ? bad.t.slice(0, 31) + '…' : bad.t) + '” fica difícil de ler (' + String(Math.round(bad.c * 10) / 10).replace('.', ',') + ':1; o mínimo recomendado é 3:1). Experimente outra cor de destaque ou principal.</p>' : '') +
       '<div class="row r1"><button class="btnw ic" data-act="palreset"' + (el.pal ? '' : ' disabled') + '>' + svgI('reset') + 'Restaurar cores A&amp;M</button></div></div>';
   }
   function focusPal() {
@@ -744,6 +782,11 @@
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    if (/^pal\.[pa]$/.test(path)) { /* cores do componente: a cor A&M da linha (navy / laranja) ou nenhuma = sem troca, apaga só essa chave */
+      var pk = path.slice(4), pv = typeof val === 'string' ? val.toUpperCase() : '';
+      if (!/^#[0-9A-F]{6}$/.test(pv) || pv === (pk === 'p' ? '#002A46' : '#F78C16')) { if (el.pal) { delete el.pal[pk]; if (!el.pal.p && !el.pal.a) delete el.pal; } rerenderEl(el); if (!live) commit(); return; }
+      val = pv;
+    }
     var mc = /^data\.colors\.([0-5])$/.exec(path);
     if (mc) { /* cor de uma série: data.colors[k] (as posições antes dela ficam '' = cor padrão) */
       if (el.type !== 'fx' || !el.data) return;
@@ -820,13 +863,15 @@
      Cor do seletor nativo arrastando: prévia ao vivo (sem commit); a escolha final grava */
   function openColorPop(b, kb) {
     if (!window.AMColorPop) return;
-    var path = b.dataset.cpick, lab = b.closest('.cser') ? $('.cser-n', b.closest('.cser')).textContent : (function () { var q = b.parentNode.previousElementSibling; return q && (q.classList.contains('pf') || q.tagName === 'H3') ? q.textContent : ''; })();
+    /* título do seletor: o nome do campo sem a dica em <small> (“Cor principal”, não “Cor principal (no lugar do…”) */
+    var path = b.dataset.cpick, lab = b.closest('.cser') ? $('.cser-n', b.closest('.cser')).textContent : (function () { var q = b.parentNode.previousElementSibling; if (!q || !(q.classList.contains('pf') || q.tagName === 'H3')) return ''; var c = (q.firstElementChild && q.classList.contains('pf') ? q.firstElementChild : q).cloneNode(true); $$('small', c).forEach(function (x) { x.remove(); }); return c.textContent.trim(); })();
+    flush(); /* pendências viram um passo próprio antes: a prévia do seletor do sistema volta exatamente ao que estava (onCancel) */
     var refocus = function () { var nb = $$('#props [data-cpick]').filter(function (x) { return x.dataset.cpick === path; })[0]; if (nb) nb.focus(); };
     window.AMColorPop.open(b, {
-      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW,
+      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
       onLive: function (c) { applyProp(path, c, true); },
       onPick: function (c, viaKey) { applyProp(path, c); renderProps(); if (viaKey) refocus(); },
-      onCancel: function (live) { if (live) { flush(); renderProps(); } },
+      onCancel: function (live) { if (live) { if (JSON.stringify(deck) !== last) restore(last); renderProps(); } }, /* Esc / clique fora depois da prévia: desfaz a prévia, sem gravar */
       onClose: function (viaKey) { if (viaKey) refocus(); }
     });
   }

@@ -211,6 +211,90 @@ const TOOLS=()=>{
   const fit=await p.evaluate(()=>({rib:document.querySelector('#rib').scrollWidth<=document.querySelector('#rib').clientWidth+1, top:document.querySelector('#top').scrollWidth<=document.querySelector('#top').clientWidth+1}));
   check('S20-20: faixa de ferramentas e barra do topo sem transbordar em 1280×720 (nenhum botão novo)', fit.rib&&fit.top, fit);
 
+
+  /* ---------- 13. revisão das cores (S20 × S19): destaque claro, séries escolhidas, ícone/Marca A&M, tamanho do CSS, amostras ---------- */
+  const rv=await open(ctx, FILE+'?nocover', 'rv'); await rv.setViewportSize({width:1280,height:720}); await rv.evaluate(TOOLS);
+  const blank=()=>rv.evaluate(()=>AMStudio.loadDeck({title:'r',slides:[{id:'s1',bg:'#FFFFFF',els:[]}]},null,true,true));
+  const rvSel=()=>rv.evaluate(()=>{ const id=AMStudio.selected()[0]; return JSON.parse(JSON.stringify(AMStudio.deck.slides[AMStudio.cur].els.find(e=>e.id===id)||null)); });
+  const rvNode=(id)=>`#wrap > .am-stage .am-el[data-id="${id}"]`;
+  const palHex=async(k,hex)=>{ await rv.evaluate(()=>document.querySelector('#palSec').scrollIntoView({block:'center'})); await sleep(80); await rv.click('#palSec [data-cpick="pal.'+k+'"]'); await sleep(200); await rv.fill('.cpop .cp-hex',hex); await rv.press('.cpop .cp-hex','Enter'); await sleep(450); };
+  const ins=async(k)=>{ await rv.evaluate(k=>AMStudio.insertFx(k),k); await sleep(350); return rvSel(); };
+  /* contraste de um nó (texto × fundo computados) */
+  const pairC=(sel)=>rv.evaluate((sel)=>[...document.querySelectorAll(sel)].map(n=>{ const L=s=>{ const m=s.match(/[\d.]+/g).map(Number), f=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }; return .2126*f(m[0])+.7152*f(m[1])+.0722*f(m[2]); }; const cs=getComputedStyle(n), a=L(cs.color), b=L(cs.backgroundColor); return +((Math.max(a,b)+.05)/(Math.min(a,b)+.05)).toFixed(2); }), sel);
+  const warnTxt=()=>rv.evaluate(()=>{ const w=document.querySelector('#palSec .pal-warn'); return w?w.textContent:null; });
+
+  /* (a) destaque claro: roadmap — o texto branco das barras de destaque vira a principal escura (legível); contador — aviso nomeia o texto */
+  await blank(); let rm=await ins('roadmap');
+  const rmA=await pairC(rvNode(rm.id)+' .rm-ch.c');
+  await palHex('a','#FFE7A3'); rm=await rvSel();
+  const rmB=await pairC(rvNode(rm.id)+' .rm-ch.c'), rmW=await warnTxt();
+  await rv.screenshot({path:SH('rv-roadmap-light')});
+  await blank(); let ct=await ins('counter'); const ctW0=await warnTxt();
+  await palHex('a','#FFE7A3'); const ctW=await warnTxt();
+  await rv.screenshot({path:SH('rv-counter-warn')});
+  check('S20-21: destaque claro (#FFE7A3): no roadmap, o texto das barras de destaque troca de branco para a principal escura (contraste A&M '+rmA[0]+' → ≥ 3) e não há aviso; no contador, o texto de destaque sobre branco fica abaixo de 3:1 e o painel avisa citando o texto (sem aviso antes)', rm.pal&&rm.pal.a==='#FFE7A3'&&rmB.length===3&&rmB.every(c=>c>=3)&&rmW===null&&ctW0===null&&/Pouco contraste/.test(ctW||'')&&/\+18%/.test(ctW||'')&&/3:1/.test(ctW||''), {rmA,rmB,rmW,ctW0,ctW});
+  /* destaque escuro na RACI: o “A” (navy sobre o laranja) passa a branco; destaque próximo do laranja A&M não muda nada */
+  await blank(); let rc=await ins('raci');
+  const rcA=await rv.evaluate(s=>getComputedStyle(document.querySelector(s+' .b-A')).color, rvNode(rc.id));
+  await palHex('a','#5E141F'); const rcB=await pairC(rvNode(rc.id)+' .b-A'), rcCol=await rv.evaluate(s=>getComputedStyle(document.querySelector(s+' .b-A')).color, rvNode(rc.id));
+  await palHex('a','#D96F0B'); const rcN=await rv.evaluate(s=>getComputedStyle(document.querySelector(s+' .b-A')).color, rvNode(rc.id));
+  await blank(); await ins('swot'); await palHex('a','#5E141F'); const swW=await warnTxt();
+  check('S20-22: destaque escuro (#5E141F): na RACI o “A” troca o navy por branco (contraste ≥ 3); com um destaque próximo do laranja A&M (#D96F0B) o texto continua navy; na SWOT (título de destaque sobre a principal escura) o painel avisa', rcA==='rgb(0, 42, 70)'&&rcB.length>0&&rcB.every(c=>c>=3)&&rcCol==='rgb(255, 255, 255)'&&rcN==='rgb(0, 42, 70)'&&/Pouco contraste/.test(swW||''), {rcA,rcB,rcCol,rcN,swW});
+
+  /* (b) gráfico com Cores do componente + cores das séries: a cor escolhida aparece exata; o painel mostra as cores desenhadas */
+  await blank(); let co=await ins('columns');
+  await rv.click('#palSec .sw >> nth=0 >> button[data-v="#43698F"]'); await sleep(300);
+  await rv.evaluate(()=>document.querySelector('#props .cser').scrollIntoView({block:'center'})); await sleep(80);
+  await rv.click('#props .cser >> nth=0 >> button[data-v="#A3B8D6"]'); await sleep(300);
+  await rv.click('#props .cser >> nth=1 >> button[data-v="#002A46"]'); await sleep(300);
+  co=await rvSel();
+  const chI=await rv.evaluate(([s,pal])=>{ const n=document.querySelector(s); const bar=k=>[...n.querySelectorAll('.ch-bar[data-g="'+k+'"]')].map(r=>getComputedStyle(r).fill); const leg=k=>getComputedStyle(n.querySelector('.ch-leg span[data-g="'+k+'"] i')).backgroundColor;
+    const hx=c=>'#'+c.match(/\d+/g).slice(0,3).map(v=>(+v).toString(16).padStart(2,'0')).join('').toUpperCase();
+    return {b0:bar(0), b1:bar(1), b2:bar(2), l:[leg(0),leg(1),leg(2)], dots:[...document.querySelectorAll('#props .cser .cser-n i')].map(i=>getComputedStyle(i).backgroundColor), on:[...document.querySelectorAll('#props .cser')].map(r=>(r.querySelector('.sw button.on')||{dataset:{}}).dataset.v), map2:AMRT.pal.map('#A3B8D6',pal), note:!!document.querySelector('#props .cser-pal'), hx2:hx(getComputedStyle(n.querySelector('.ch-bar[data-g="2"]')).fill)}; }, [rvNode(co.id), co.pal]);
+  await rv.screenshot({path:SH('rv-chart-series')});
+  check('S20-23: colunas com cor principal #43698F + séries escolhidas (Gelo azulado, Navy): as barras e a legenda usam exatamente as cores escolhidas; a série 3 (sem cor própria) segue a paleta; os pontos e as amostras marcadas de “Cores das séries” mostram as cores desenhadas; há a nota', JSON.stringify(co.data.colors)==='["#A3B8D6","#002A46"]'&&co.pal.p==='#43698F'&&chI.b0.every(c=>c==='rgb(163, 184, 214)')&&chI.b1.every(c=>c==='rgb(0, 42, 70)')&&chI.l[0]==='rgb(163, 184, 214)'&&chI.l[1]==='rgb(0, 42, 70)'&&chI.hx2===chI.map2&&chI.map2!=='#A3B8D6'&&JSON.stringify(chI.dots)===JSON.stringify(chI.l)&&chI.on[0]==='#A3B8D6'&&chI.on[1]==='#002A46'&&chI.on[2]===chI.map2&&chI.note, chI);
+  /* o mesmo no arquivo exportado */
+  const exH=await rv.evaluate(()=>AMStudio.exportHTML()); const exF=path.join(__dirname,'saved-s20-rv.html'); fs.writeFileSync(exF,exH);
+  const qx=await open(ctx,'file://'+exF,'exp-rv'); await sleep(2500);
+  const exI=await qx.evaluate(()=>{ const n=document.querySelector('.amp-slide.on .am-el'); return {b0:getComputedStyle(n.querySelector('.ch-bar[data-g="0"]')).fill, b1:getComputedStyle(n.querySelector('.ch-bar[data-g="1"]')).fill}; });
+  await qx.close(); try{ fs.unlinkSync(exF); }catch(e){}
+  check('S20-24: arquivo exportado: as séries escolhidas continuam exatas no player (sem CR-04)', exI.b0==='rgb(163, 184, 214)'&&exI.b1==='rgb(0, 42, 70)'&&!/onerror|onmouseover|onclick/i.test(exH), exI);
+
+  /* (c) el.pal em ícone e Marca A&M (sem a seção no painel) sai ao abrir; DATA_TOKENS só texto/cor */
+  const icp=await rv.evaluate(()=>{ AMStudio.loadDeck({title:'i',slides:[{id:'s1',bg:'#FFFFFF',els:[{id:'i1',type:'fx',kind:'icon',x:100,y:100,w:200,h:200,data:JSON.parse(JSON.stringify(AMRT.FX.icon.data)),pal:{p:'#00FF00',a:'#FF00FF'}},{id:'l1',type:'fx',kind:'amlines',x:400,y:100,w:400,h:200,data:{c1:['x'],c2:{a:1}},pal:{p:'#00FF00'}},{id:'s9',type:'fx',kind:'swot',x:0,y:300,w:600,h:300,data:JSON.parse(JSON.stringify(AMRT.FX.swot.data)),pal:{p:'#00FF00'}}]}]},null,true,true);
+    const E=AMStudio.deck.slides[0].els; return {icon:E[0].pal===undefined, aml:E[1].pal===undefined, swot:JSON.stringify(E[2].pal), marks:[...document.querySelectorAll('#wrap .am-stage [data-pal]')].map(n=>n.dataset.id), c1:E[1].data.c1===undefined, c2:E[1].data.c2===undefined}; });
+  check('S20-25: ao abrir, el.pal de ícone e de “Linhas A&M” (sem “Cores do componente” no painel) é descartado (só a SWOT fica marcada); c1/c2 que não são texto/cor saem', icp.icon&&icp.aml&&icp.swot==='{"p":"#00FF00"}'&&JSON.stringify(icp.marks)==='["s9"]'&&icp.c1&&icp.c2, icp);
+
+  /* (d) CSS por paleta só com as regras do tipo; folhas sem uso saem (troca de cor, deck novo) */
+  const css=await rv.evaluate(()=>{ const ks=['swot','gantt','roadmap','columns','bmc'], pals=[{p:'#1B7F3B',a:'#C0392B'},{p:'#8E44AD',a:'#16A085'},{p:'#13406A',a:'#C0392B'},{p:'#B02A3E',a:'#1F66A8'},{p:'#6A1B9A',a:'#00897B'}];
+    AMStudio.loadDeck({title:'c',slides:[{id:'s1',bg:'#FFFFFF',els:ks.map((k,i)=>({id:'e'+i,type:'fx',kind:k,x:20,y:20,w:600,h:330,data:JSON.parse(JSON.stringify(AMRT.FX[k].data)),pal:pals[i]}))}]},null,true,true);
+    const S=pals.map(x=>document.getElementById('am-pal-'+AMRT.pal.key(x))).filter(Boolean); const sw=document.getElementById('am-pal-1b7f3bc0392b');
+    return {n:S.length, sizes:S.map(s=>s.textContent.length), total:S.reduce((a,s)=>a+s.textContent.length,0), swotGantt:/\.gt-/.test(sw.textContent), swotOwn:/\.sw-/.test(sw.textContent), bad:['e0','e1','e2','e3','e4'].map(id=>__am(document.querySelector('#wrap > .am-stage .am-el[data-id='+id+']')).length)}; });
+  check('S20-26: 5 componentes com 5 paletas: 5 folhas, cada uma só com as regras do próprio tipo (a da SWOT não leva regras do Gantt), total < 160 KB (antes: ≈ 120 KB por paleta, 602 KB) e nenhum navy/laranja sobrando', css.n===5&&css.total<160000&&css.sizes.every(s=>s<40000)&&!css.swotGantt&&css.swotOwn&&css.bad.every(x=>x===0), css);
+  await blank(); let sw2=await ins('swot');
+  await rv.click('#palSec .sw >> nth=0 >> button[data-v="#43698F"]'); await sleep(250);
+  await rv.click('#palSec .sw >> nth=0 >> button[data-v="#13315C"]'); await sleep(250);
+  await rv.click('#palSec [data-cpick="pal.a"]'); await sleep(200);
+  await rv.evaluate(()=>{ const n=document.querySelector('.cpop .cp-nat'); for(let i=0;i<40;i++){ n.value='#'+(0x9a3000+i*0x10203).toString(16).slice(0,6); n.dispatchEvent(new Event('input',{bubbles:true})); } });
+  await rv.keyboard.press('Escape'); await sleep(1800);
+  const gc=await rv.evaluate(()=>({ids:[...document.querySelectorAll('style[data-am-pal]')].map(s=>s.id), marks:[...new Set([...document.querySelectorAll('[data-pal]')].map(n=>n.dataset.pal))]}));
+  sw2=await rvSel();
+  await blank(); await sleep(1800); const gc2=await rv.evaluate(()=>document.querySelectorAll('style[data-am-pal]').length);
+  check('S20-27: trocar a cor duas vezes e arrastar o seletor do sistema (40 passos) e cancelar deixa só a folha da paleta em uso (as outras saem em ≈ 1 s); deck novo sem paleta → nenhuma folha', JSON.stringify(sw2.pal)==='{"p":"#13315C"}'&&gc.ids.length===1&&gc.ids[0]==='am-pal-13315cx'&&gc.marks.join()==='13315cx'&&gc2===0, {pal:sw2.pal,gc,gc2});
+
+  /* (e) amostras: sem cor própria, a linha marca a cor A&M (navy / laranja); clicá-la volta só aquela cor */
+  await blank(); let sw3=await ins('swot');
+  const on0=await rv.evaluate(()=>[...document.querySelectorAll('#palSec .sw')].map(s=>[...s.querySelectorAll('button.on')].map(x=>x.dataset.v).join('|')));
+  await rv.click('#palSec .sw >> nth=0 >> button[data-v="#43698F"]'); await sleep(250);
+  await palHex('a','#C0392B');
+  await rv.click('#palSec .sw >> nth=0 >> button[data-v="#002A46"]'); await sleep(250); const s3a=(await rvSel()).pal;
+  await rv.click('#palSec .sw >> nth=1 >> button[data-v="#F78C16"]'); await sleep(250); const s3b=(await rvSel()).pal;
+  const rsDis=await rv.evaluate(()=>document.querySelector('#palSec [data-act=palreset]').disabled);
+  await rv.mouse.click(640,700); await sleep(100); await rv.evaluate(id=>AMStudio.select(id), sw3.id); await sleep(100);
+  await rv.keyboard.press('Control+z'); await sleep(250); const s3u=(await rvSel()).pal;
+  check('S20-28: sem cores próprias as linhas marcam navy e laranja (cor A&M); clicar o navy apaga só a principal, clicar o laranja apaga a de destaque (sem pal, “Restaurar” desativado); Ctrl+Z volta um passo', on0[0]==='#002A46'&&on0[1]==='#F78C16'&&JSON.stringify(s3a)==='{"a":"#C0392B"}'&&s3b===undefined&&rsDis&&JSON.stringify(s3u)==='{"a":"#C0392B"}', {on0,s3a,s3b,rsDis,s3u});
+  await rv.close();
+
   check('Zero erros de console', errs.length===0, errs);
   console.log(results.join('\n'));
   console.log(failed?('FALHAS: '+failed):'TUDO OK', JSON.stringify({errs}));
