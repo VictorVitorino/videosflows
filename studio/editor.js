@@ -212,6 +212,11 @@
     if (F) {
       o.data = o.data && typeof o.data === 'object' && !Array.isArray(o.data) ? o.data : clone(F.data);
       DATA_TOKENS.forEach(function (k) { var v = o.data[k]; if (typeof v === 'string' && !TOKEN_RE.test(v) && !COLOR_RE.test(v)) delete o.data[k]; });
+      if (o.data.colors != null) { /* cores das séries (gráficos): até 6 posições, só #rrggbb; posição inválida = '' (cor padrão) */
+        var dc = Array.isArray(o.data.colors) ? o.data.colors.slice(0, 6).map(function (c) { return typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : ''; }) : [];
+        while (dc.length && !dc[dc.length - 1]) dc.pop();
+        if (dc.length) o.data.colors = dc; else delete o.data.colors;
+      }
       if (o.variant != null && !(F.variants && F.variants.some(function (x) { return x[0] === o.variant; }))) delete o.variant;
       if (typeof F.norm === 'function') { try { o.data = F.norm(o.data) || o.data; } catch (er) { } } /* normalização própria do modelo (SmartArt: itens do painel de texto viram [{t, lv}]) */
     }
@@ -403,9 +408,28 @@
   function txtIn(p, v) { return '<input type="text" data-p="' + p + '" value="' + esc(v) + '">'; }
   function area(p, v) { return '<textarea data-p="' + p + '">' + esc(v) + '</textarea>'; }
   function selIn(p, v, opts, isNum) { return '<select data-p="' + p + '"' + (isNum ? ' data-n="1"' : '') + '>' + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(v) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</select>'; }
-  function swatches(p, v, none) {
-    var cur = String(v || '').toUpperCase();
-    return '<div class="sw">' + (none ? '<button class="none' + (!v || v === 'none' ? ' on' : '') + '" data-set="' + p + '" data-v="none" title="Sem cor"></button>' : '') + SW.map(function (c) { return '<button style="background:' + c + '" class="' + (cur === c ? 'on' : '') + '" data-set="' + p + '" data-v="' + c + '" title="' + c + '"></button>'; }).join('') + '<input type="color" data-p="' + p + '" value="' + (/^#[0-9a-f]{6}$/i.test(v || '') ? v : '#002A46') + '" title="Outra cor"></div>';
+  /* linha de amostras de cor: [cor atual fora da lista] + [sem cor] + lista (padrão: paleta A&M; campos de cor de componentes passam as
+     próprias opções [[cor, nome]]) + “Mais cores…” (abre o seletor AMColorPop: paleta ampliada, recentes, hex, conta-gotas) */
+  var HEXC = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+  function swatches(p, v, none, list) {
+    var cur = String(v || '').toUpperCase(), L = list || SW.map(function (c) { return [c, c]; }), inL = L.some(function (o) { return String(o[0]).toUpperCase() === cur; });
+    var cust = HEXC.test(cur) && !inL ? '<button class="cust on" style="background:' + cur + '" data-set="' + p + '" data-v="' + cur + '" title="Cor atual: ' + cur + '" aria-label="Cor atual ' + cur + '"></button>' : '';
+    return '<div class="sw">' + cust + (none ? '<button class="none' + (!v || v === 'none' ? ' on' : '') + '" data-set="' + p + '" data-v="none" title="Sem cor"></button>' : '') + L.map(function (o) { var c = String(o[0]); return '<button style="background:' + c + '" class="' + (cur === c.toUpperCase() ? 'on' : '') + '" data-set="' + p + '" data-v="' + c + '" title="' + esc(o[1] === c ? c : o[1] + ' · ' + c) + '"></button>'; }).join('') +
+      '<button type="button" class="more" data-cpick="' + p + '" data-cv="' + (HEXC.test(cur) ? cur : '') + '" title="Mais cores…" aria-label="Mais cores…" aria-haspopup="dialog"></button></div>';
+  }
+  /* campo 'sel:#hex=Nome|…' de componente em que todas as opções são cores: vira amostras + “Mais cores…” (qualquer cor) */
+  function colorOpts(t) { var o = t.indexOf('sel:') === 0 ? t.slice(4).split('|').map(function (x) { return x.split('='); }) : null; return o && o.length && o.every(function (x) { return HEXC.test(x[0]); }) ? o : null; }
+  /* 'colors:N' (gráficos): N cores de série em data.colors (posição vazia = cor A&M do gráfico). f[3] = nomes fixos ou a chave da lista
+     cujos .t nomeiam as séries; FX.cols(d) = cores efetivas. “Cores A&M” apaga data.colors */
+  var QUICK = [['#002A46', 'Navy'], ['#13315C', 'Azul profundo'], ['#4A6FA5', 'Azul-aço'], ['#7EA1C3', 'Aço claro'], ['#A3B8D6', 'Gelo azulado'], ['#F78C16', 'Laranja'], ['#3E4C5E', 'Grafite'], ['#FFFFFF', 'Branco']];
+  function colorsField(el, f) {
+    var F = RT.FX[el.kind], d = el.data || {}, n = Math.max(1, Math.min(6, +f[2].split(':')[1] || 1)), eff = F.cols ? F.cols(d) : [], nm = f[3], names;
+    if (Array.isArray(nm)) names = nm.slice(0, n);
+    else { var rows = Array.isArray(d[nm]) ? d[nm] : []; names = rows.slice(0, n).map(function (r, k) { return (r && typeof r.t === 'string' && r.t.trim()) || 'Série ' + (k + 1); }); if (!names.length) names = ['Série 1']; }
+    var custom = Array.isArray(d.colors) && d.colors.some(function (c) { return HEXC.test(c || ''); });
+    return '<div class="cser-w"><span class="pf"><span>' + esc(f[1]) + '</span></span>' + names.map(function (t, k) {
+      return '<div class="cser"><span class="cser-n"><i style="background:' + (HEXC.test(eff[k] || '') ? eff[k] : '#FFFFFF') + '"></i>' + esc(t) + '</span>' + swatches('data.colors.' + k, eff[k], false, QUICK) + '</div>';
+    }).join('') + '<div class="row r1"><button type="button" class="btnw" data-act="colors-reset"' + (custom ? '' : ' disabled') + ' title="Volta às cores padrão do gráfico (paleta A&amp;M)">Cores A&amp;M</button></div></div>';
   }
   function seg(p, v, opts) { return '<div class="seg">' + opts.map(function (o) { return '<button class="' + (String(o[0]) === String(v) ? 'on' : '') + '" data-set="' + p + '" data-v="' + o[0] + '" title="' + (o[2] || o[1]) + '">' + o[1] + '</button>'; }).join('') + '</div>'; }
   /* alinhamento vertical; no card “Cabeçalho” o título fica sempre na faixa do alto, então os botões aparecem desativados */
@@ -554,6 +578,8 @@
         if (t.indexOf('rows:') === 0) return '<div class="row r1">' + fld(f[1], '<textarea data-p="' + k + '" data-codec="' + t + '" style="min-height:120px">' + esc(rowsToText(v, t.slice(5))) + '</textarea>') + '</div>';
         if (t === 'number') return '<div class="row r1">' + fld(f[1], num(k, v, 'any')) + '</div>';
         if (t === 'area') return '<div class="row r1">' + fld(f[1], area(k, v)) + '</div>';
+        var co = colorOpts(t); if (co) return '<div class="cfld"><span class="pf"><span>' + esc(f[1]) + '</span></span>' + swatches(k, v, false, co) + '</div>';
+        if (t.indexOf('colors:') === 0) return colorsField(el, f);
         if (t.indexOf('sel:') === 0) return '<div class="row r1">' + fld(f[1], selIn(k, v, t.slice(4).split('|').map(function (o) { return o.split('='); }))) + '</div>';
         if (t === 'icon') return '<div class="row r1">' + iconField(k, v) + '</div>';
         if (t === 'outline' || t.indexOf('outline:') === 0) { /* 'outline:3' = até 3 níveis abaixo; FD.outlineText = codec próprio do modelo (árvore de problemas: “ = valor”, “[*]”) */
@@ -675,6 +701,13 @@
   }
   /* texto quase da mesma claridade do preenchimento (navy no navy, branco no branco): vira branco no escuro, navy no claro */
   function inkOn(el) { var f = lumOf(el.fill), t = lumOf(el.color || '#002A46'); if (f != null && t != null && Math.abs(f - t) < .3) el.color = f < .55 ? '#FFFFFF' : '#002A46'; }
+  /* tira cores embutidas no texto (colado de outro lugar): style color e <font color> */
+  function stripColor(h) {
+    var t = document.createElement('template'); t.innerHTML = h;
+    $$('[style]', t.content).forEach(function (x) { x.style.removeProperty('color'); if (!x.getAttribute('style').trim()) x.removeAttribute('style'); });
+    $$('font[color]', t.content).forEach(function (x) { x.removeAttribute('color'); });
+    return t.innerHTML;
+  }
   function setPath(obj, path, val) { var ks = path.split('.'), o = obj; for (var i = 0; i < ks.length - 1; i++) { if (o[ks[i]] == null) o[ks[i]] = {}; o = o[ks[i]]; } o[ks[ks.length - 1]] = val; }
   function applyProp(path, val, live) {
     if (/^s\.(title|sec|secSub|notes)$/.test(path)) { /* campos de texto do slide: não redesenham o palco a cada tecla */
@@ -685,6 +718,17 @@
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    var mc = /^data\.colors\.([0-5])$/.exec(path);
+    if (mc) { /* cor de uma série: data.colors[k] (as posições antes dela ficam '' = cor padrão) */
+      if (el.type !== 'fx' || !el.data) return;
+      var ca = Array.isArray(el.data.colors) ? el.data.colors.slice(0, 6) : [], ci = +mc[1];
+      while (ca.length < ci) ca.push('');
+      ca[ci] = typeof val === 'string' && /^#[0-9a-f]{6}$/i.test(val) ? val.toUpperCase() : '';
+      while (ca.length && !ca[ca.length - 1]) ca.pop();
+      if (ca.length) el.data.colors = ca; else delete el.data.colors;
+      rerenderEl(el); if (!live) commit(); return;
+    }
+    if (path === 'color' && el.html && /color/i.test(el.html)) el.html = stripColor(el.html); /* a cor do painel vale para a caixa inteira */
     if (path === 'anim.in' && val === 'draw' && !canDraw(el)) toast('“Desenhar” funciona em linhas, setas, Linhas A&M e ícones animados.');
     if (path === 'anim.in' && val === 'words' && !hasText(el)) toast('“Palavra a palavra” funciona em textos e formas com texto.');
     if (path === 'shape' && el.type === 'shape') shapeSwitch(el, val);
@@ -738,6 +782,7 @@
   });
   props.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.cpick) { openColorPop(b, !e.detail); return; }
     if (b.dataset.set) {
       var v = b.dataset.v; if (b.dataset.b) v = v === '1'; else if (/^-?\d+(\.\d+)?$/.test(v) && b.dataset.set !== 'anim.in') v = parseFloat(v);
       applyProp(b.dataset.set, v); renderProps(); return;
@@ -745,6 +790,20 @@
     if (b.dataset.var) { setVariant(sel(), b.dataset.var); return; }
     if (b.dataset.act) act(b.dataset.act);
   });
+  /* “Mais cores…”: o seletor (ed-colors.js) aplica a cor pelo mesmo caminho das amostras (applyProp + commit = um passo de desfazer).
+     Cor do seletor nativo arrastando: prévia ao vivo (sem commit); a escolha final grava */
+  function openColorPop(b, kb) {
+    if (!window.AMColorPop) return;
+    var path = b.dataset.cpick, lab = b.closest('.cser') ? $('.cser-n', b.closest('.cser')).textContent : (function () { var q = b.parentNode.previousElementSibling; return q && (q.classList.contains('pf') || q.tagName === 'H3') ? q.textContent : ''; })();
+    var refocus = function () { var nb = $$('#props [data-cpick]').filter(function (x) { return x.dataset.cpick === path; })[0]; if (nb) nb.focus(); };
+    window.AMColorPop.open(b, {
+      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW,
+      onLive: function (c) { applyProp(path, c, true); },
+      onPick: function (c, viaKey) { applyProp(path, c); renderProps(); if (viaKey) refocus(); },
+      onCancel: function (live) { if (live) { flush(); renderProps(); } },
+      onClose: function (viaKey) { if (viaKey) refocus(); }
+    });
+  }
   function rowsToText(v, spec) {
     var cols = spec.split('|');
     return (v || []).map(function (o) { return cols.map(function (c) { if (c[0] === '*') return (o[c.slice(1)] || []).join(' | '); return o[c.split(':')[0]] == null ? '' : o[c.split(':')[0]]; }).join(' | '); }).join('\n');
@@ -907,6 +966,7 @@
     if (a === 'replace') { pickImage(function (src) { el.src = src; rerenderEl(el); commit(); }); return; }
     if (a === 'bgimg') { pickImage(function (src) { s.bgImg = src; renderStage(); renderProps(); commit(); }); return; }
     if (a === 'bgimgdel') { delete s.bgImg; renderStage(); renderProps(); commit(); return; }
+    if (a === 'colors-reset') { if (el && el.data && el.data.colors) { delete el.data.colors; rerenderEl(el); renderProps(); commit(); toast('Cores A&M de volta.'); } return; }
     if (a === 'autonotes') { s.notes = RT.autoNotes(s, cur, deck); commit(); renderProps(); var nta = $('#props textarea[data-p="s.notes"]'); if (nta) nta.focus(); toast('Resumo gerado a partir do conteúdo do slide · edite à vontade · Ctrl+Z desfaz'); return; }
     if (a === 'viewnotes') { closeMenus(); present(cur); if (player && player.nav) player.nav.notes(true); return; }
     if (a === 'seq') {
@@ -1751,7 +1811,7 @@
   /* botão clicado com o mouse não guarda o foco: o teclado volta ao slide (setas, Delete, digitar), como no PowerPoint */
   document.addEventListener('click', function (e) {
     var b = e.detail && e.target.closest && e.target.closest('button'); if (!b || b !== document.activeElement) return;
-    if (b.closest('#modal,#cover,.xmenu,.menu,#mbar,#presenter')) return;
+    if (b.closest('#modal,#cover,.xmenu,.menu,#mbar,#presenter,.cpop')) return;
     b.blur();
   });
   var MODS = ['Shift', 'Control', 'Alt', 'Meta', 'AltGraph', 'CapsLock', 'Fn', 'OS'];

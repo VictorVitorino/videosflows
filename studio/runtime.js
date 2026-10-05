@@ -8,6 +8,17 @@ window.AMRT = (function () {
   var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace" };
   function fmt(v, dec) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
   function lines(s) { return String(s || '').split(/\n|;/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  /* cores vindas dos dados (campos de cor dos componentes e data.colors dos gráficos): só valores seguros chegam ao markup.
+     colOr: cor de um campo (hex, nome ou rgb[a]) ou o padrão; ucols(d): data.colors com até 6 posições, '' = cor padrão da posição */
+  var COL_OK = /^(#[0-9a-f]{3,8}|[a-z]{3,20}|rgba?\([\d.,\s%]+\))$/i, HEX6 = /^#[0-9a-f]{6}$/i;
+  function colOr(v, d) { return typeof v === 'string' && COL_OK.test(v) ? v : d; }
+  function ucols(d) { var c = d && d.colors; return Array.isArray(c) ? c.slice(0, 6).map(function (x) { return typeof x === 'string' && HEX6.test(x) ? x : ''; }) : []; }
+  function lumHex(c) { var m = /^#([0-9a-f]{6})$/i.exec(c || ''); if (!m) return null; var n = parseInt(m[1], 16); return (0.2126 * (n >> 16) + 0.7152 * (n >> 8 & 255) + 0.0722 * (n & 255)) / 255; }
+  /* mistura c (#rrggbb) com branco (t > 0) ou preto (t < 0); t de -1 a 1 */
+  function mixHex(c, t) {
+    var m = /^#([0-9a-f]{6})$/i.exec(c || ''); if (!m) return c; var n = parseInt(m[1], 16), to = t > 0 ? 255 : 0, a = Math.abs(t);
+    return '#' + [n >> 16, n >> 8 & 255, n & 255].map(function (v) { var x = Math.round(v + (to - v) * a); return (x < 16 ? '0' : '') + x.toString(16); }).join('').toUpperCase();
+  }
 
   /* ---------- formas ---------- */
   function shapeBody(el, w, h) {
@@ -90,14 +101,15 @@ window.AMRT = (function () {
       name: 'Gráfico de barras', cat: 'Gráficos', model: true, kw: 'gráfico grafico barras colunas comparação ranking volume', w: 640, h: 340, anim: { in: 'fade' }, variant: 'grow',
       variants: [['grow', 'Barras crescendo', 'As barras sobem uma a uma; os destaques já nascem em laranja.'], ['highlight', 'Destaque depois', 'Todas as barras sobem em navy e, em seguida, os destaques acendem em laranja.']],
       data: { title: 'Horas liberadas por área', labels: 'Finanças, Operações, Supply, TI, RH, Comercial', values: '1240, 980, 860, 640, 520, 470', unit: ' h', highlight: '1, 2, 3', style: 'clear' },
-      fields: [['title', 'Título'], ['labels', 'Categorias (separe por vírgula)'], ['values', 'Valores (separe por vírgula)'], ['unit', 'Unidade'], ['highlight', 'Destacar posições (ex.: 1, 3)'], ['style', 'Estilo', 'sel:clear=Transparente|light=Branco|ice=Gelo|dark=Navy']],
+      fields: [['title', 'Título'], ['labels', 'Categorias (separe por vírgula)'], ['values', 'Valores (separe por vírgula)'], ['unit', 'Unidade'], ['highlight', 'Destacar posições (ex.: 1, 3)'], ['style', 'Estilo', 'sel:clear=Transparente|light=Branco|ice=Gelo|dark=Navy'], ['colors', 'Cores', 'colors:2', ['Barras', 'Destaque']]],
+      cols: function (d) { var c = ucols(d); return [c[0] || (d.style === 'dark' ? '#7EA1C3' : '#002A46'), c[1] || '#F78C16']; },
       html: function (d, w, h, el) {
-        var labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
+        var cc = FX.bars.cols(d), labs = String(d.labels || '').split(',').map(function (s) { return s.trim(); }), vals = String(d.values || '').split(',').map(function (s) { return parseFloat(s) || 0; });
         var n = Math.max(1, Math.min(labs.length, vals.length)), mx = Math.max.apply(null, vals.slice(0, n).concat([1])), hl = String(d.highlight || '').split(',').map(function (s) { return parseInt(s, 10); });
         var dark = d.style === 'dark', top = d.title ? h * .17 : h * .06, bot = h * .13, ch = h - top - bot, gap = w / n, bw = gap * .58, fs = Math.max(10, Math.min(h * .05, gap * .2)), out = '';
         for (var k = 0; k < n; k++) {
           var bh = Math.max(2, vals[k] / mx * ch * .88), x = gap * k + (gap - bw) / 2, y = top + ch - bh, on = hl.indexOf(k + 1) >= 0;
-          out += '<rect class="fxb-bar' + (on ? ' hl' : '') + '" style="--i:' + k + '" x="' + x + '" y="' + y + '" width="' + bw + '" height="' + bh + '" rx="' + Math.min(4, bw * .08) + '" fill="' + (on ? '#F78C16' : (dark ? '#7EA1C3' : '#002A46')) + '"/>';
+          out += '<rect class="fxb-bar' + (on ? ' hl' : '') + '" style="--i:' + k + (on ? ';--bc:' + cc[0] : '') + '" x="' + x + '" y="' + y + '" width="' + bw + '" height="' + bh + '" rx="' + Math.min(4, bw * .08) + '" fill="' + (on ? cc[1] : cc[0]) + '"/>';
           out += '<text class="fxb-v" style="--i:' + k + '" x="' + (x + bw / 2) + '" y="' + (y - fs * .6) + '" text-anchor="middle" font-family="Roboto,Arial,sans-serif" font-weight="600" font-size="' + fs + '" fill="' + (dark ? '#fff' : '#002A46') + '">' + esc(fmt(vals[k], vals[k] % 1 ? 1 : 0) + (d.unit || '')) + '</text>';
           out += '<text x="' + (x + bw / 2) + '" y="' + (h - bot * .3) + '" text-anchor="middle" font-family="Roboto Condensed,Arial,sans-serif" font-weight="700" font-size="' + fs * 1.05 + '" fill="' + (dark ? '#C9D6E8' : '#3E4C5E') + '">' + esc(labs[k]) + '</text>';
         }
@@ -112,7 +124,7 @@ window.AMRT = (function () {
       data: { items: '2026 T1 | Diagnóstico\n2026 T2 | Desenho\n2026 T4 | Implementação\n2027 | Escala', current: 2, style: 'clear', tcolor: '#002A46' },
       fields: [['items', 'Marcos (um por linha: data | texto)', 'area'], ['current', 'Marco atual (para “Até o marco atual”)', 'number'], ['tcolor', 'Cor do texto', 'sel:#002A46=Navy|#FFFFFF=Branco'], ['style', 'Fundo', 'sel:clear=Transparente|light=Branco|ice=Gelo|dark=Navy']],
       html: function (d, w, h, el) {
-        var v = (el && el.variant) || 'draw', it = lines(d.items).map(function (s) { var p = s.split('|'); return { a: (p[0] || '').trim(), b: (p[1] || '').trim() }; }), n = Math.max(1, it.length), y = h * .34, x0 = w * .06, x1 = w * .94, fs = Math.max(11, Math.min(h * .1, (x1 - x0) / n * .11)), col = d.tcolor || '#002A46', cur = Math.max(1, Math.min(n, Math.round(+d.current || 1))) - 1;
+        var v = (el && el.variant) || 'draw', it = lines(d.items).map(function (s) { var p = s.split('|'); return { a: (p[0] || '').trim(), b: (p[1] || '').trim() }; }), n = Math.max(1, it.length), y = h * .34, x0 = w * .06, x1 = w * .94, fs = Math.max(11, Math.min(h * .1, (x1 - x0) / n * .11)), col = colOr(d.tcolor, '#002A46'), cur = Math.max(1, Math.min(n, Math.round(+d.current || 1))) - 1;
         function X(k) { return n === 1 ? (x0 + x1) / 2 : x0 + (x1 - x0) * k / (n - 1); }
         var sw = Math.max(2, h * .016), svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"><line class="fxt-line" pathLength="1" x1="' + x0 + '" y1="' + y + '" x2="' + x1 + '" y2="' + y + '" stroke="' + (v === 'progress' ? '#CBD4E1' : '#7EA1C3') + '" stroke-width="' + sw + '" stroke-linecap="round"/>';
         if (v === 'progress') svg += '<line class="fxt-prog" pathLength="1" x1="' + x0 + '" y1="' + y + '" x2="' + X(cur) + '" y2="' + y + '" stroke="#002A46" stroke-width="' + sw * 1.4 + '" stroke-linecap="round"/>';
@@ -120,7 +132,7 @@ window.AMRT = (function () {
         it.forEach(function (o, k) {
           var x = X(k), r = Math.max(6, h * .055), fill = v === 'progress' ? (k < cur ? '#002A46' : k === cur ? '#F78C16' : '#CBD4E1') : (k === n - 1 ? '#F78C16' : '#002A46');
           svg += '<circle class="fxt-node' + (v === 'progress' && k === cur ? ' cur' : '') + '" data-g="' + k + '" style="--i:' + k + '" cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '" stroke="#fff" stroke-width="' + r * .45 + '"/>';
-          labs += '<div class="fxt-lab' + (v === 'progress' && k > cur ? ' fut' : '') + (/^#fff(fff)?$/i.test(col) ? ' on-dark' : '') + '" data-g="' + k + '" style="--i:' + k + ';left:' + P(x, w) + ';top:' + P(y + h * .12, h) + ';width:' + P((x1 - x0) / n * .95, w) + ';font-size:' + CQ(fs) + ';color:' + col + '"><b>' + esc(o.a) + '</b>' + esc(o.b) + '</div>';
+          labs += '<div class="fxt-lab' + (v === 'progress' && k > cur ? ' fut' : '') + (/^#fff(fff)?$/i.test(col) || lumHex(col) > .6 ? ' on-dark' : '') + '" data-g="' + k + '" style="--i:' + k + ';left:' + P(x, w) + ';top:' + P(y + h * .12, h) + ';width:' + P((x1 - x0) / n * .95, w) + ';font-size:' + CQ(fs) + ';color:' + col + '"><b>' + esc(o.a) + '</b>' + esc(o.b) + '</div>';
         });
         return '<div class="fx fxtl fxv-' + v + ' fx-' + (d.style || 'clear') + '"' + (v === 'steps' ? ' data-cycle="g"' : '') + ' style="overflow:visible;border-radius:' + CQ(Math.min(w, h) * .06) + '">' + svg + '</svg>' + labs + '</div>';
       }
@@ -141,7 +153,7 @@ window.AMRT = (function () {
       fields: [['title', 'Título'], ['text', 'Texto'], ['tcolor', 'Cor do texto', 'sel:#002A46=Navy|#FFFFFF=Branco']],
       html: function (d, w, h) {
         var fs = Math.max(11, Math.min(h * .24, 22));
-        return '<div class="fx fxbe" style="overflow:visible;color:' + (d.tcolor || '#002A46') + ';font-size:' + CQ(fs) + '"><span class="fxbe-dot" style="margin-left:' + CQ(h * .46 * .6) + '"></span><div class="fxbe-txt"><b>' + esc(d.title) + '</b>' + esc(d.text) + '</div></div>';
+        return '<div class="fx fxbe" style="overflow:visible;color:' + colOr(d.tcolor, '#002A46') + ';font-size:' + CQ(fs) + '"><span class="fxbe-dot" style="margin-left:' + CQ(h * .46 * .6) + '"></span><div class="fxbe-txt"><b>' + esc(d.title) + '</b>' + esc(d.text) + '</div></div>';
       }
     },
     headline: {
@@ -151,7 +163,7 @@ window.AMRT = (function () {
       html: function (d) {
         var ws = String(d.text || '').split(/\s+/).filter(Boolean), hl = String(d.hl || '').toLowerCase().replace(/[^\wÀ-ú]/g, ''), n = -1;
         var out = ws.map(function (wd, k) { var on = hl && wd.toLowerCase().replace(/[^\wÀ-ú]/g, '') === hl; if (on && n < 0) n = k; return '<span class="fxhl-w' + (on ? ' fxhl-hl' : '') + '" style="--i:' + k + '">' + esc(wd) + '</span>'; }).join(' ');
-        return '<div class="fx fxhl" style="--n:' + Math.max(0, n) + ';font-family:' + (FONTS[d.font] || FONTS.Roboto) + ';font-weight:' + (d.weight || 300) + ';font-size:' + CQ(+d.size || 60) + ';line-height:1.08;letter-spacing:-.02em;color:' + (d.color || '#002A46') + '"><div>' + out + '</div></div>';
+        return '<div class="fx fxhl" style="--n:' + Math.max(0, n) + ';font-family:' + (FONTS[d.font] || FONTS.Roboto) + ';font-weight:' + (d.weight || 300) + ';font-size:' + CQ(+d.size || 60) + ';line-height:1.08;letter-spacing:-.02em;color:' + colOr(d.color, '#002A46') + '"><div>' + out + '</div></div>';
       }
     },
     card: {
@@ -195,7 +207,7 @@ window.AMRT = (function () {
       data: { c1: '#F78C16', c2: '#3D5A74' },
       fields: [['c1', 'Cor da linha fina', 'sel:#F78C16=Laranja|#FFFFFF=Branco|#7EA1C3=Steel'], ['c2', 'Cor das linhas largas', 'sel:#3D5A74=Steel escuro|#7EA1C3=Steel|#DFE8F0=Gelo']],
       html: function (d, w, h) {
-        var c1 = d.c1 || '#F78C16', c2 = d.c2 || '#3D5A74', u = Math.min(w, h) / 100;
+        var c1 = colOr(d.c1, '#F78C16'), c2 = colOr(d.c2, '#3D5A74'), u = Math.min(w, h) / 100;
         return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" style="overflow:hidden"><path class="am-ln" pathLength="1" d="M' + w * .02 + ' ' + h + 'L' + w * .46 + ' ' + h * .35 + 'L' + w * .46 + ' ' + h + '" fill="none" stroke="' + c1 + '" stroke-width="' + Math.max(1.6, u * .45) + '"/><path class="am-ln" pathLength="1" d="M' + w * .26 + ' ' + h + 'L' + w * .86 + ' ' + h * .14 + 'L' + w * .86 + ' ' + h + '" fill="none" stroke="' + c2 + '" stroke-width="' + Math.max(4, u * 1.9) + '" stroke-linecap="round"/><path class="am-ln" pathLength="1" d="M' + w * .54 + ' ' + h + 'L' + w * 1.15 + ' ' + h * .05 + '" fill="none" stroke="' + c2 + '" stroke-width="' + Math.max(7, u * 3.4) + '"/></svg>';
       }
     }
@@ -313,27 +325,30 @@ window.AMRT = (function () {
     name: 'Gráfico de evolução (linha)', cat: 'Gráficos', model: true, kw: 'gráfico grafico linha evolução evolucao tendência série histórico curva adoção', w: 800, h: 360, variant: 'draw',
     variants: [['draw', 'Linha desenhando', 'A linha é traçada da esquerda para a direita.'], ['points', 'Ponto a ponto', 'Cada ponto surge com seu valor no ritmo da linha.'], ['area', 'Área subindo', 'A área sobe da base e a linha aparece por cima.'], ['last', 'Destaque do último ponto', 'O último valor pulsa, chamando atenção para o resultado atual.']],
     data: { title: 'Evolução da adoção (%)', labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'], values: [12, 18, 27, 35, 48, 62], target: 60, unit: '%' },
-    fields: [['title', 'Título'], ['labels', 'Rótulos do eixo (um por linha)', 'lines'], ['values', 'Valores (um por linha)', 'lines'], ['unit', 'Unidade'], ['target', 'Meta (0 oculta)', 'number']],
+    fields: [['title', 'Título'], ['labels', 'Rótulos do eixo (um por linha)', 'lines'], ['values', 'Valores (um por linha)', 'lines'], ['unit', 'Unidade'], ['target', 'Meta (0 oculta)', 'number'], ['colors', 'Cores', 'colors:2', ['Linha e pontos', 'Último ponto']]],
+    cols: function (d) { var c = ucols(d); return [c[0] || '#002A46', c[1] || '#F78C16']; },
     html: function (d, w, h, el) {
-      var v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
+      var cu = ucols(d), cc = M.linechart.cols(d), lastT = lumHex(cc[1]) > .75 ? '#002A46' : cc[1], v = VV(el, 'linechart'), lb = arr(d.labels), vs = arr(d.values).map(num), n = Math.max(2, Math.min(lb.length, vs.length)), t = num(d.target);
       var mx = Math.max.apply(null, vs.slice(0, n).concat([t, 1])) * 1.15, top = d.title ? h * .16 : h * .06, bot = h * .12, L = w * .04, R = w * .96, ch = h - top - bot, fs = Math.max(10, h * .045);
       function X(k) { return L + (R - L) * k / (n - 1); } function Y(val) { return top + ch - val / mx * ch; }
       var pts = vs.slice(0, n).map(function (val, k) { return [X(k), Y(val)]; }), dl = 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L');
       var o = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none">' + (d.title ? '<text x="0" y="' + h * .08 + '" font-family="Roboto Condensed,Arial" font-weight="700" font-size="' + Math.max(12, h * .06) + '" fill="#002A46">' + esc(d.title) + '</text>' : '');
       [0, .5, 1].forEach(function (f) { o += '<line x1="' + L + '" x2="' + R + '" y1="' + (top + ch * f) + '" y2="' + (top + ch * f) + '" stroke="#E2E7EF"/>'; });
       if (t > 0) o += '<line x1="' + L + '" x2="' + R + '" y1="' + Y(t) + '" y2="' + Y(t) + '" stroke="#F78C16" stroke-dasharray="6 5" stroke-width="1.5"/><text x="' + R + '" y="' + (Y(t) - 6) + '" text-anchor="end" font-family="Roboto,Arial,sans-serif" font-size="' + fs * .9 + '" fill="#43698F">meta ' + fmtN(t) + (d.unit || '') + '</text>';
-      o += '<path class="lc-area" d="' + dl + 'L' + X(n - 1) + ' ' + (top + ch) + 'L' + L + ' ' + (top + ch) + 'Z" fill="rgba(74,111,165,.14)"/><path class="lc-line" pathLength="1" d="' + dl + '" fill="none" stroke="#002A46" stroke-width="' + Math.max(2.5, h * .009) + '" stroke-linecap="round" stroke-linejoin="round"/>';
-      pts.forEach(function (p, k) { var last = k === n - 1; o += '<g class="lc-pt' + (last ? ' last' : '') + '" style="--k:' + k + ';--kn:' + (k / (n - 1)) + '"><circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + Math.max(4, h * .014) * (last ? 1.35 : 1) + '" fill="' + (last ? '#F78C16' : '#002A46') + '" stroke="#fff" stroke-width="2"/><text x="' + p[0] + '" y="' + (p[1] - fs * .9) + '" text-anchor="middle" font-family="Roboto,Arial,sans-serif" font-weight="600" font-size="' + fs * (last ? 1.15 : .9) + '" fill="' + (last ? '#F78C16' : '#002A46') + '">' + esc(fmtN(vs[k]) + (d.unit || '')) + '</text></g><text x="' + p[0] + '" y="' + (h - bot * .25) + '" text-anchor="middle" font-family="Roboto Condensed,Arial" font-weight="700" font-size="' + fs + '" fill="#3E4C5E">' + esc(lb[k]) + '</text>'; });
+      o += '<path class="lc-area" d="' + dl + 'L' + X(n - 1) + ' ' + (top + ch) + 'L' + L + ' ' + (top + ch) + 'Z" fill="' + (cu[0] ? cc[0] + '" fill-opacity=".14' : 'rgba(74,111,165,.14)') + '"/><path class="lc-line" pathLength="1" d="' + dl + '" fill="none" stroke="' + cc[0] + '" stroke-width="' + Math.max(2.5, h * .009) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+      pts.forEach(function (p, k) { var last = k === n - 1; o += '<g class="lc-pt' + (last ? ' last' : '') + '" style="--k:' + k + ';--kn:' + (k / (n - 1)) + '"><circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + Math.max(4, h * .014) * (last ? 1.35 : 1) + '" fill="' + (last ? cc[1] : cc[0]) + '" stroke="#fff" stroke-width="2"/><text x="' + p[0] + '" y="' + (p[1] - fs * .9) + '" text-anchor="middle" font-family="Roboto,Arial,sans-serif" font-weight="600" font-size="' + fs * (last ? 1.15 : .9) + '" fill="' + (last ? lastT : '#002A46') + '">' + esc(fmtN(vs[k]) + (d.unit || '')) + '</text></g><text x="' + p[0] + '" y="' + (h - bot * .25) + '" text-anchor="middle" font-family="Roboto Condensed,Arial" font-weight="700" font-size="' + fs + '" fill="#3E4C5E">' + esc(lb[k]) + '</text>'; });
       return '<div class="fx fxlc fxv-' + v + '" style="overflow:visible">' + o + '</svg></div>';
     }
   };
+  var DN_C = ['#002A46', '#4A6FA5', '#7EA1C3', '#F78C16', '#A3B8D6', '#13315C'];
   M.donut = {
     name: 'Gráfico de rosca', cat: 'Gráficos', model: true, kw: 'rosca pizza donut distribuição composição participação percentual gráfico', w: 720, h: 340, variant: 'sweep',
     variants: [['sweep', 'Fatias desenhando', 'Cada fatia é traçada em sequência ao redor do círculo.'], ['pop', 'Fatias surgindo', 'As fatias aparecem com um leve zoom.'], ['focus', 'Foco percorrendo', 'Na apresentação, o destaque passa de fatia em fatia, junto da legenda.']],
     data: { center: 'Portfólio', items: [{ t: 'Transformação', v: 40 }, { t: 'Turnaround', v: 25 }, { t: 'Estratégia & M&A', v: 20 }, { t: 'Data & AI', v: 15 }] },
-    fields: [['items', 'Fatias (nome | valor)', 'rows:t|v:n'], ['center', 'Texto no centro']],
+    fields: [['items', 'Fatias (nome | valor)', 'rows:t|v:n'], ['center', 'Texto no centro'], ['colors', 'Cores das fatias', 'colors:6', 'items']],
+    cols: function (d) { var c = ucols(d); return DN_C.map(function (x, k) { return c[k] || x; }); },
     html: function (d, w, h, el) {
-      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = ['#002A46', '#4A6FA5', '#7EA1C3', '#F78C16', '#A3B8D6', '#13315C'], acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
+      var v = VV(el, 'donut'), it = d.items || [], tot = it.reduce(function (a, b) { return a + Math.max(0, num(b.v)); }, 0) || 1, C = M.donut.cols(d), acc = 0, segs = '', leg = '', fs = Math.max(10, Math.min(h * .055, w * .028));
       it.forEach(function (o, g) {
         var p = Math.max(0, num(o.v)) / tot * 100;
         segs += '<circle class="dn-seg" data-g="' + g + '" style="--g:' + g + '" cx="50" cy="50" r="38" fill="none" stroke="' + C[g % C.length] + '" stroke-width="16" pathLength="100" stroke-dasharray="' + Math.max(0, p - .6).toFixed(2) + ' ' + (100 - Math.max(0, p - .6)).toFixed(2) + '" stroke-dashoffset="' + (-acc).toFixed(2) + '"/>';
@@ -571,7 +586,7 @@ window.AMRT = (function () {
     return real ? { list: out, secOf: secOf } : { list: [], secOf: [] };
   }
   /* textos livres de el.data (rótulos, valores), sem chaves de estilo/cor: alimenta o resumo automático */
-  var NOTEXT_KEYS = ['style', 'weight', 'color', 'tcolor', 'c1', 'c2', 'variant', 'name', 'trig', 'accent', 'bg', 'stroke', 'pair', 'layout', 'mode', 'sort', 'kind', 'legend', 'panel', 'font', 'hl', 'highlight', 'bands', 'k'];
+  var NOTEXT_KEYS = ['colors', 'style', 'weight', 'color', 'tcolor', 'c1', 'c2', 'variant', 'name', 'trig', 'accent', 'bg', 'stroke', 'pair', 'layout', 'mode', 'sort', 'kind', 'legend', 'panel', 'font', 'hl', 'highlight', 'bands', 'k'];
   var COLOR_LIKE = /^(#[0-9a-f]{3,8}|none|transparent|rgba?\([\d.,\s%]+\)|[a-z]{3,20})$/i;
   function dataStrings(d) {
     var out = [];
@@ -738,6 +753,6 @@ window.AMRT = (function () {
        shapeInset(el) devolve o recuo do texto de uma forma ('0 0 22% 0') ou null; shapeText(el, w, h, html) pode reescrever o texto da forma */
     hooks: { player: [], show: [], key: [] }, shapeInset: null, shapeText: null,
     /* para arquivos de extensão rt-*.js (modelos, gráficos, ícones): os mesmos utilitários dos modelos internos */
-    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid } };
+    util: { E: E, arr: arr, VV: VV, num: num, fmt: fmt, fmtN: fmtN, CQ: CQ, P: P, lines: lines, textHTML: textHTML, esc: esc, nid: nid, colOr: colOr, ucols: ucols, lumHex: lumHex, mixHex: mixHex } };
   return API;
 })();
