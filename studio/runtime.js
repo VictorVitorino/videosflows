@@ -640,6 +640,14 @@ window.AMRT = (function () {
   function player(deck, root, opts) {
     opts = opts || {};
     root.innerHTML = '';
+    /* slides ocultos (slide.hidden === true) ficam fora da apresentação: o player, o índice, a linha do tempo, o contador e o resumo
+       automático recebem só os visíveis. map[k] = posição original do k-ésimo slide visível. Todos ocultos (ou opts.showHidden): mostra todos */
+    var all = deck.slides || [], map = [], vis = [];
+    all.forEach(function (s, i) { if (opts.showHidden || !s || s.hidden !== true) { vis.push(s); map.push(i); } });
+    if (!vis.length) { vis = all.slice(); map = all.map(function (s, i) { return i; }); }
+    if (vis.length < all.length) { var dv = {}; Object.keys(deck).forEach(function (k) { dv[k] = deck[k]; }); dv.slides = vis; deck = dv; }
+    /* início pedido num slide oculto: o próximo visível (senão o anterior) */
+    function visIdx(i) { i = +i || 0; for (var k = 0; k < map.length; k++) if (map[k] >= i) return k; return map.length - 1; }
     var wrap = document.createElement('div'); wrap.className = 'amp';
     wrap.innerHTML = '<div class="amp-view"><div class="amp-deck"></div></div><div class="amp-prog"></div><div class="amp-bar"><div class="amp-brand">' + (opts.brand ? '<img class="amp-wm" alt="Alvarez &amp; Marsal" src="' + esc(opts.brand) + '">' : '<b>Alvarez &amp; Marsal</b>') + '<span></span></div><div class="amp-c"><button class="amp-b" data-a="prev" type="button" aria-label="Anterior">← <span class="amp-bw">Anterior</span></button><button type="button" class="amp-pos" data-a="index" aria-haspopup="dialog" aria-expanded="false" title="Índice de slides (G)" aria-label="Índice de slides (G)"><b>01</b> / 01</button><button class="amp-b" data-a="next" type="button" aria-label="Próximo"><span class="amp-bw">Próximo</span> →</button></div><div class="amp-r">' + (opts.onExit ? '<button class="amp-b amp-ic" data-a="exit" type="button" aria-label="Sair (Esc)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="amp-bw">Sair (Esc)</span></button>' : '') +
       '<button class="amp-b amp-ic" data-a="zoom" type="button" title="Ampliar o gráfico (Z)" aria-label="Ampliar (Z)" hidden>' + ZOOM_IC + '<span class="amp-bw">Ampliar</span></button><button class="amp-b amp-ic" data-a="full" type="button" title="Tela cheia (F)" aria-label="Tela cheia (F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div></div>' +
@@ -737,11 +745,11 @@ window.AMRT = (function () {
     zb.addEventListener('pointerenter', function () { clearTimeout(zbT); });
     zb.addEventListener('pointerleave', function () { hideZb(300); });
     bindTilt(deckEl);
-    var start = opts.start || 0; if (!opts.noHash) { var m = location.hash.match(/#\/(\d+)/); if (m) start = +m[1] - 1; }
+    var start = visIdx(opts.start || 0); if (!opts.noHash) { var m = location.hash.match(/#\/(\d+)/); if (m) start = +m[1] - 1; }
     /* editar #/N na barra de endereço leva ao slide N */
     function onHash() { var h = location.hash.match(/#\/(\d+)/); if (h) go(+h[1] - 1); }
     if (!opts.noHash) window.addEventListener('hashchange', onHash);
-    var kills = [], hd = { go: go, cur: function () { return cur; }, deck: deck, root: wrap, deckEl: deckEl, opts: opts,
+    var kills = [], hd = { go: go, cur: function () { return cur; }, deck: deck, map: map.slice(), allHidden: all.length > 0 && all.every(function (s) { return s && s.hidden === true; }), root: wrap, deckEl: deckEl, opts: opts,
       zoom: { open: openZoom, close: closeZoom, isOpen: function () { return zoomOpen; }, list: function () { return zs.slice(); }, index: function () { return zi; } },
       onDestroy: function (f) { kills.push(f); },
       destroy: function () { closeZoom(); clearTimeout(zbT); if (clean) clean(); document.removeEventListener('keydown', key); window.removeEventListener('hashchange', onHash); kills.forEach(function (f) { try { f(); } catch (err) { } }); root.innerHTML = ''; } };

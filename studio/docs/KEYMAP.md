@@ -49,6 +49,8 @@ Status: **today** = shipped; **F0** = shipped in step S0 (Fundação); **Fn** = 
 
 Editor present mode only: **F5** (start from the beginning) and **Shift+F5** (from the current slide) are handled by the editor before the player sees them (editor.js keydown). The player never binds F-keys other than F.
 
+Hidden slides (S21, `slide.hidden`): F5, Shift+F5, ←/→, Home/End, the índice (G), the rail and the exported file all skip them (the player only receives the visible slides). Shift+F5 on a hidden slide starts at the next visible one (else the previous); if every slide is hidden, all are shown. No key was added for “Ocultar slide” / “Redefinir slide” (menus and the slide panel only).
+
 ---
 
 ## 3. Esc priority (topmost first)
