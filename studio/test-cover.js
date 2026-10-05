@@ -49,6 +49,7 @@ async function slideCheck(p){
 }
 
 (async()=>{
+  if(!fs.existsSync(path.join(FONTS,'gf.css'))) console.log('aviso: sem a cópia local das fontes em '+FONTS+' (defina AM_FONTS_DIR ou crie ../fonts2): os textos usam a fonte substituta e as medidas da capa mudam');
   browser=await chromium.launch();
   /* 1. capa visível ao abrir */
   { const {p,ctx}=await open({tag:'load',wait:3400});
@@ -249,7 +250,13 @@ async function slideCheck(p){
     await p.mouse.move(w/2,h/2); await p.mouse.wheel(600,0); await sleep(250);
     const m=await p.evaluate(()=>{const c=document.getElementById('cover'); return {sh:c.scrollHeight,ch:c.clientHeight,sw:c.scrollWidth,cw:c.clientWidth,winX:window.scrollX,coverX:c.scrollLeft};});
     if(w>=1024) ok(`${w}×${h}: cabe sem rolagem`,m.sh<=m.ch+1&&m.sw<=m.cw,m);
-    if(w>=1024){ const tops=await p.evaluate(()=>[...document.querySelectorAll('.cv-opt')].map(o=>Math.round(o.querySelector('.cv-lbl').getBoundingClientRect().top-o.getBoundingClientRect().top))); ok(`${w}×${h}: títulos das opções alinhados por linha`,tops[0]===tops[1]&&tops[1]===tops[2]&&tops[3]===tops[4]&&tops[4]===tops[5],tops); }
+    /* o alinhamento depende da fonte dos títulos: com a fonte substituta (sem a cópia local das fontes) “Projetos prontos” quebra em 2 linhas
+       a 1280 px e a linha 1 dá [74,53,74,…]. Mede só depois de a face Roboto Condensed 700 carregar e diz no resultado se ela está em uso. */
+    if(w>=1024){ const r=await p.evaluate(async()=>{ try{ await document.fonts.load("700 18px 'Roboto Condensed'"); await document.fonts.ready; }catch(e){}
+        await new Promise(z=>requestAnimationFrame(()=>requestAnimationFrame(z)));
+        const brand=[...document.fonts].some(f=>/Roboto Condensed/.test(f.family)&&String(f.weight)==='700'&&f.status==='loaded');
+        return {brand, tops:[...document.querySelectorAll('.cv-opt')].map(o=>Math.round(o.querySelector('.cv-lbl').getBoundingClientRect().top-o.getBoundingClientRect().top))}; });
+      const tops=r.tops; ok(`${w}×${h}: títulos das opções alinhados por linha`,tops[0]===tops[1]&&tops[1]===tops[2]&&tops[3]===tops[4]&&tops[4]===tops[5],r.brand?tops:{tops,fonte:'Roboto Condensed 700 não carregou (sem a cópia local das fontes: defina AM_FONTS_DIR ou crie ../fonts2)'}); }
     ok(`${w}×${h}: sem rolagem horizontal`,m.sw<=m.cw&&m.winX===0&&m.coverX===0,m);
     await p.screenshot({path:path.join(SHOTS,`10-capa-${w}x${h}.png`),fullPage:false});
     if(w<=640) await p.screenshot({path:path.join(SHOTS,`10-capa-${w}x${h}-rolagem.png`),fullPage:false,clip:undefined});
