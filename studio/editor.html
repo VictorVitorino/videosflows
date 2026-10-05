@@ -189,11 +189,13 @@ body.side-off #sideMini{display:flex}
 #thumbs{flex:1;overflow:auto;padding:12px 12px 4px}
 #side.cols2 #thumbs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 10px;align-content:start;padding-left:8px}
 #side.cols2 .th{margin-bottom:0;min-width:0}
-#side.cols2 .th.drop-before .box{box-shadow:-4px 0 0 var(--orange)}
 .th{position:relative;display:grid;grid-template-columns:18px 1fr;gap:6px;margin-bottom:10px;cursor:pointer}
 .th .n{font-size:11px;font-weight:600;color:var(--mut);padding-top:2px;text-align:right}
 .th .box{position:relative;border-radius:6px;overflow:hidden;outline:2px solid transparent;outline-offset:1px;box-shadow:0 1px 3px rgba(0,30,50,.15);transition:outline-color .15s}
-.th .box .am-stage{pointer-events:none}
+.th .box .am-stage{pointer-events:none;content-visibility:auto} /* miniatura fora da vista não é refeita quando a largura muda (a altura vem do aspect-ratio) */
+/* arrastando a divisória: cada miniatura fica do tamanho do início e só escala (transform), sem refazer o layout do slide a cada quadro */
+#thumbs.frz .th .box{aspect-ratio:16/9}
+#thumbs.frz .th .box .am-stage{position:absolute;left:0;top:0;width:var(--tw0);transform:scale(var(--tk,1));transform-origin:0 0}
 .th.on .box{outline-color:var(--orange)}
 .th:hover .box{outline-color:#C5D2E2}
 .th.on:hover .box{outline-color:var(--orange)}
@@ -202,7 +204,13 @@ body.side-off #sideMini{display:flex}
 .th .act button{display:grid;place-items:center;width:22px;height:22px;border-radius:6px;background:rgba(0,30,50,.78);color:#fff}
 .th .act button svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .th .act button:hover{background:var(--orange);color:var(--navy)}
-.th.drop-before .box{box-shadow:0 -3px 0 var(--orange)}
+/* onde a miniatura arrastada vai cair: barra laranja própria (pseudo-elemento), que não disputa a sombra de foco da miniatura atual */
+.th.drop-before::before,.th.drop-after::after{content:"";position:absolute;z-index:4;left:20px;right:-4px;height:3px;border-radius:2px;background:var(--orange);pointer-events:none}
+.th.drop-before::before{top:-7px}
+.th.drop-after::after{bottom:-7px}
+#side.cols2 .th.drop-before::before,#side.cols2 .th.drop-after::after{top:-6px;bottom:-6px;width:3px;height:auto}
+#side.cols2 .th.drop-before::before{left:18px;right:auto}
+#side.cols2 .th.drop-after::after{left:auto;right:-7px}
 #addSlide{margin:6px 12px 12px;height:38px;border-radius:var(--r-ctl);border:1.5px dashed #B8C6D8;color:var(--navy);font-weight:600}
 #addSlide:hover{border-color:var(--orange);color:var(--navy);background:#fff}
 /* canvas */

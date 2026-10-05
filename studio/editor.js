@@ -263,7 +263,8 @@
     if (!d) { if (!quiet) toast('Arquivo sem apresentação reconhecível.'); return false; }
     if (!d.id) d.id = deckId(); /* modelos prontos e arquivos antigos ganham id ao abrir */
     deck = d; cur = 0; pick([]); editingId = null; freshId = null; hist.length = 0; fut.length = 0; rev++; last = JSON.stringify(deck);
-    $('#title').value = deck.title || ''; renderAll(); updUndo(); if (msg) toast(msg);
+    $('#title').value = deck.title || ''; renderAll(); $('#thumbs').scrollTop = 0; /* outra obra: a lista começa no slide 1, não na rolagem da anterior */
+    updUndo(); if (msg) toast(msg);
     if (!noHist) histCall('put', JSON.parse(last)); /* arquivo aberto, projeto pronto ou rascunho entram em Minhas obras */
     return true;
   }
@@ -1088,7 +1089,8 @@
     if (b.dataset.vall) { var ve = sel(), vF = ve && ve.type === 'fx' ? RT.FX[ve.kind] : null; closeMenus(); if (vF && vF.gal === 'icon') openGallery('icon'); else if (vF && vF.variants) openGallery(vF.model ? 'model' : 'cmp', vF.name); else openGallery('in'); return; }
     if (b.dataset.v) { closeMenus(); setVariant(sel(), b.dataset.v); }
   });
-  function closeOld() { if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
+  var menuFrom = null; /* { m: menu antigo, b: botão } quando o menu foi aberto pelo teclado: Esc devolve o foco ao botão */
+  function closeOld() { menuFrom = null; if (icOpen()) closeIcons(false); $$('.menu.open').forEach(function (m) { m.classList.remove('open'); }); $$('.rb.open').forEach(function (b) { b.classList.remove('open'); }); }
   function closeMenus() { closeOld(); if (typeof closeAllX === 'function') closeAllX(); }
   document.addEventListener('pointerdown', function (e) { if (!e.target.closest('.menu,[data-menu],#addSlide,#sideAdd,#fxArrow')) closeOld(); if (!e.target.closest('.xmenu,#mbar')) closeAllX(); });
   /* galeria “Formas ▾”: grupos (Retângulos e cards, Básicas, Setas, Fluxo, Chaves) em grade de 6; os cards prontos vêm com o retângulo */
@@ -1335,15 +1337,35 @@
     goSlide(i);
   });
   thumbs.addEventListener('dragstart', function (e) { var t = e.target.closest('.th'); if (!t) return; dragFrom = +t.dataset.i; e.dataTransfer.setData('text/plain', 'slide'); e.dataTransfer.effectAllowed = 'move'; });
-  thumbs.addEventListener('dragover', function (e) { if (dragFrom == null) return; e.preventDefault(); $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); var t = e.target.closest('.th'); if (t) t.classList.add('drop-before'); });
-  thumbs.addEventListener('drop', function (e) { if (dragFrom == null) return; e.preventDefault(); var t = e.target.closest('.th'), to = t ? +t.dataset.i : deck.slides.length; var s = deck.slides.splice(dragFrom, 1)[0]; if (to > dragFrom) to--; deck.slides.splice(to, 0, s); cur = to; dragFrom = null; pick([]); renderAll(); commit(); });
-  thumbs.addEventListener('dragend', function () { dragFrom = null; $$('.th.drop-before').forEach(function (x) { x.classList.remove('drop-before'); }); });
+  /* posição de inserção (0…n) sob o ponteiro: sobre uma miniatura = antes dela; num vão (margem, espaço entre colunas ou entre linhas)
+     = antes da miniatura seguinte daquela linha/coluna; abaixo da última linha, ou na casa vazia ao lado da última = no fim */
+  function dropIndex(e) {
+    var t = e.target.closest && e.target.closest('#thumbs .th'); if (t) return +t.dataset.i;
+    var ths = $$('#thumbs .th'), n = ths.length, x = e.clientX, y = e.clientY; if (!n) return 0;
+    var R = ths.map(function (q) { return q.getBoundingClientRect(); }), cols = 1, i = 0, j, k;
+    while (cols < n && Math.abs(R[cols].top - R[0].top) < 2) cols++;
+    while (i < n && R[i].bottom < y) i++; /* primeira linha que não fica toda acima do ponteiro */
+    if (i === n) return n;
+    for (j = i; j < n && Math.abs(R[j].top - R[i].top) < 2; j++); /* a linha é [i, j) */
+    for (k = i; k < j; k++) if (x < R[k].right) return k;
+    return j === n && j - i < cols ? n : j - 1; /* à direita da linha: antes da última dela (como soltar sobre ela); na linha final incompleta, no fim */
+  }
+  function dropMark(to) {
+    $$('#thumbs .th.drop-before, #thumbs .th.drop-after').forEach(function (x) { x.classList.remove('drop-before', 'drop-after'); });
+    var ths = $$('#thumbs .th'); if (to == null || !ths.length) return;
+    if (to < ths.length) ths[to].classList.add('drop-before'); else ths[ths.length - 1].classList.add('drop-after');
+  }
+  thumbs.addEventListener('dragover', function (e) { if (dragFrom == null) return; e.preventDefault(); dropMark(dropIndex(e)); });
+  thumbs.addEventListener('drop', function (e) { if (dragFrom == null) return; e.preventDefault(); var to = dropIndex(e); dropMark(null); var s = deck.slides.splice(dragFrom, 1)[0]; if (to > dragFrom) to--; deck.slides.splice(to, 0, s); cur = to; dragFrom = null; pick([]); renderAll(); commit(); });
+  thumbs.addEventListener('dragend', function () { dragFrom = null; dropMark(null); });
 
   /* ---------------- painel de slides: largura ajustável e recolher (S18) ----------------
      --side-w no <body> alimenta a grade; a divisória (#sideSplit) arrasta, aceita ← → Home End e duplo clique (padrão);
      recolhido vira uma faixa de 40 px (», posição "3/14", +). Largura e estado ficam no localStorage (amStudio.sideW / amStudio.sideOff). */
-  var SIDE_MIN = 132, SIDE_DEF = 196, SIDE_MAX = 440, SIDE_OFF_W = 40, SIDE_COLS2 = 340;
-  var sideW = SIDE_DEF, sideOff = false, sideRaf = 0;
+  /* SIDE_COLS2: 2 colunas só quando cada miniatura fica pelo menos do tamanho da miniatura na largura padrão
+     (196 px → 147 px de largura; em 2 colunas: (w − 31) / 2 − 24 ≥ 147 ⇔ w ≥ 373) */
+  var SIDE_MIN = 132, SIDE_DEF = 196, SIDE_MAX = 440, SIDE_OFF_W = 40, SIDE_COLS2 = 380;
+  var sideW = SIDE_DEF, sideOff = false, sideRaf = 0, sideKey = '', sideFrz = 0, sideFree = false, sideWheel = 0, sideWheelT = 0;
   try {
     var sw0 = parseInt(localStorage.getItem('amStudio.sideW'), 10); if (isFinite(sw0)) sideW = sw0;
     sideOff = localStorage.getItem('amStudio.sideOff') === '1';
@@ -1357,59 +1379,98 @@
     if (ps) { ps.innerHTML = '<b></b><span></span>'; ps.firstChild.textContent = cur + 1; ps.lastChild.textContent = '/' + n; ps.title = 'Slide ' + (cur + 1) + ' de ' + n; }
   }
   /* aplica a largura (sem salvar); a mesma largura vale para o recolhido voltar */
+  function drawerOpen() { var d = $('#drawer'); return !!(d && d.classList.contains('open')); }
+  /* largura à vista: com a Biblioteca aberta o painel fica no máximo na largura padrão, para a gaveta não cobrir metade do slide;
+     se a pessoa ajustar a largura com a gaveta aberta, vale o que ela escolheu (sideFree) até a gaveta fechar */
+  function sideNow() { var w = sideClamp(sideW); return drawerOpen() && !sideFree ? Math.min(w, SIDE_DEF) : w; }
+  function sideTouch() { if (drawerOpen() && !sideFree) { sideW = sideNow(); sideFree = true; } return sideClamp(sideW); }
+  function sideKeyNow() { var w = sideNow(); return sideOff ? 'off' : w + (w >= SIDE_COLS2 ? 'c' : ''); }
+  /* a miniatura do slide atual fica no mesmo ponto da lista quando a largura muda (e, se estava fora, volta para a vista) */
+  function keepThumb(on, rel) {
+    var tb = $('#thumbs'), r = tb.getBoundingClientRect(), o = on.getBoundingClientRect();
+    rel = Math.max(0, Math.min(rel, tb.clientHeight - o.height)); tb.scrollTop += (o.top - r.top) - rel;
+  }
   function applySide() {
-    var w = sideClamp(sideW), sp = $('#sideSplit'), cols = !sideOff && w >= SIDE_COLS2;
+    var w = sideNow(), sp = $('#sideSplit'), cols = !sideOff && w >= SIDE_COLS2, key = sideKeyNow(), tb = $('#thumbs'), on = $('#thumbs .th.on'), rel = null;
+    if (on && key !== sideKey && sideKey && sideKey !== 'off' && key !== 'off') rel = on.getBoundingClientRect().top - tb.getBoundingClientRect().top;
     document.body.style.setProperty('--side-w', (sideOff ? SIDE_OFF_W : w) + 'px');
     document.body.classList.toggle('side-off', sideOff);
     $('#side').classList.toggle('cols2', cols);
     if (sp) { sp.setAttribute('aria-valuenow', w); sp.setAttribute('aria-valuemax', sideMax()); sp.setAttribute('aria-valuemin', SIDE_MIN); sp.setAttribute('aria-valuetext', w + ' pixels'); }
+    if (sideFrz) { var bx = $('#thumbs .th .box'); if (bx) tb.style.setProperty('--tk', bx.getBoundingClientRect().width / sideFrz); }
+    if (rel != null) keepThumb(on, rel);
+    sideKey = key;
     fit(); drawSel();
+  }
+  /* durante o arraste da divisória as miniaturas guardam o tamanho do início e só escalam (CSS #thumbs.frz): cada quadro refaz
+     só as caixas, não o conteúdo dos slides; ao soltar, um único layout de verdade (as fora da vista ficam para quando aparecerem) */
+  function freezeThumbs(on) {
+    var tb = $('#thumbs');
+    if (on) { var bx = !sideOff && $('#thumbs .th .box'), bw = bx ? bx.getBoundingClientRect().width : 0; if (!bw) return; sideFrz = bw; tb.style.setProperty('--tw0', bw + 'px'); tb.style.setProperty('--tk', '1'); tb.classList.add('frz'); }
+    else if (sideFrz) { sideFrz = 0; tb.classList.remove('frz'); tb.style.removeProperty('--tw0'); tb.style.removeProperty('--tk'); }
   }
   function setSideW(w, save) { sideW = sideClamp(w); if (sideRaf) { cancelAnimationFrame(sideRaf); sideRaf = 0; } applySide(); if (save) sideSave(); }
   function sideLater(w) { sideW = sideClamp(w); if (!sideRaf) sideRaf = requestAnimationFrame(function () { sideRaf = 0; applySide(); }); }
-  function toggleSide(off) {
+  function toggleSide(off, kb) {
     off = off == null ? !sideOff : !!off; if (off === sideOff) return;
-    var hadFocus = document.activeElement && $('#side').contains(document.activeElement);
+    var ae = document.activeElement, hadFocus = ae && $('#side').contains(ae);
     sideOff = off; applySide(); sideSave();
+    if (off && zone === 'thumbs') setZone('canvas'); /* miniaturas escondidas: setas, Delete, Ctrl+D e Shift+F10 voltam a agir no slide à vista */
     var on = $('#thumbs .th.on'); if (!off && on) on.scrollIntoView({ block: 'nearest' });
-    if (hadFocus) { var f = $(off ? '#sideExpand' : '#sideCollapse'); if (f) f.focus(); }
+    /* pelo teclado o foco passa ao botão par (« ↔ »); com o mouse o botão solta o foco, e ↓/PageDown/Espaço voltam ao slide */
+    if (hadFocus) { if (kb) { var f = $(off ? '#sideExpand' : '#sideCollapse'); if (f) f.focus(); } else ae.blur(); }
   }
   var split = $('#sideSplit'), sDrag = null;
   split.addEventListener('pointerdown', function (e) {
     if (e.button !== 0) return; e.preventDefault(); closeMenus();
-    sDrag = { x: e.clientX, w: sideClamp(sideW), id: e.pointerId };
+    sDrag = { x: e.clientX, w: sideTouch(), id: e.pointerId };
     try { split.setPointerCapture(e.pointerId); } catch (er) { }
-    split.classList.add('drag'); document.body.classList.add('side-drag');
+    split.classList.add('drag'); document.body.classList.add('side-drag'); freezeThumbs(true);
   });
   split.addEventListener('pointermove', function (e) { if (sDrag && e.pointerId === sDrag.id) sideLater(sDrag.w + e.clientX - sDrag.x); });
   function endSideDrag(e) {
     if (!sDrag || (e && e.pointerId !== sDrag.id)) return;
     if (e && e.type === 'pointerup') sideW = sideClamp(sDrag.w + e.clientX - sDrag.x);
-    sDrag = null; split.classList.remove('drag'); document.body.classList.remove('side-drag'); setSideW(sideW, true);
+    sDrag = null; split.classList.remove('drag'); document.body.classList.remove('side-drag'); freezeThumbs(false); setSideW(sideW, true);
   }
   split.addEventListener('pointerup', endSideDrag);
   split.addEventListener('pointercancel', endSideDrag);
   split.addEventListener('lostpointercapture', endSideDrag);
-  split.addEventListener('dblclick', function () { setSideW(SIDE_DEF, true); toast('Painel de slides na largura padrão'); });
+  /* Esc durante o arraste cancela: volta à largura do início e não salva (como girar/redimensionar no slide) */
+  addEventListener('keydown', function (e) {
+    if (!sDrag || e.key !== 'Escape') return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    var d = sDrag; sDrag = null; try { split.releasePointerCapture(d.id); } catch (er) { }
+    split.classList.remove('drag'); document.body.classList.remove('side-drag'); freezeThumbs(false); setSideW(d.w, false);
+  }, true);
+  split.addEventListener('dblclick', function () { sideTouch(); setSideW(SIDE_DEF, true); toast('Painel de slides na largura padrão'); });
   split.addEventListener('keydown', function (e) {
-    var w = sideClamp(sideW), st = e.shiftKey ? 64 : 16, n = null;
+    var w = sideNow(), st = e.shiftKey ? 64 : 16, n = null;
     if (e.key === 'ArrowLeft') n = w - st; else if (e.key === 'ArrowRight') n = w + st;
     else if (e.key === 'Home') n = SIDE_MIN; else if (e.key === 'End') n = sideMax();
     else if (e.key === 'Enter' || e.key === ' ') n = SIDE_DEF;
     if (n == null || e.ctrlKey || e.metaKey || e.altKey) return;
-    e.preventDefault(); e.stopPropagation(); setSideW(n, true);
+    e.preventDefault(); e.stopPropagation(); sideTouch(); setSideW(n, true);
   });
-  /* Ctrl/⌘ + rolar sobre as miniaturas muda a largura (no lugar do zoom da página) */
+  /* Ctrl/⌘ + rolar sobre as miniaturas muda a largura (no lugar do zoom da página): proporcional ao giro (16 px por “dente” de 100),
+     no máximo 16 px por evento, para a pinça do trackpad (muitos eventos pequenos) não saltar; aplica no quadro seguinte e salva quando para */
   $('#side').addEventListener('wheel', function (e) {
     if (!(e.ctrlKey || e.metaKey) || sideOff || !e.deltaY) return;
-    e.preventDefault(); setSideW(sideClamp(sideW) + (e.deltaY < 0 ? 16 : -16), true);
+    e.preventDefault();
+    var dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaMode === 2 ? e.deltaY * 100 : e.deltaY;
+    sideWheel += Math.max(-16, Math.min(16, -dy * 0.16));
+    var n = sideWheel < 0 ? Math.ceil(sideWheel) : Math.floor(sideWheel); if (!n) return;
+    sideWheel -= n; sideLater(sideTouch() + n);
+    clearTimeout(sideWheelT); sideWheelT = setTimeout(sideSave, 300);
   }, { passive: false });
-  $('#sideCollapse').addEventListener('click', function () { toggleSide(true); });
-  $('#sideExpand').addEventListener('click', function () { toggleSide(false); });
+  $('#sideCollapse').addEventListener('click', function (e) { toggleSide(true, !e.detail); });
+  $('#sideExpand').addEventListener('click', function (e) { toggleSide(false, !e.detail); });
   $('#sideAdd').addEventListener('click', function (e) {
     var m = $('#mSlide'), open = m.classList.contains('open'); closeMenus(); if (open) return;
     var r = e.currentTarget.getBoundingClientRect(); m.classList.add('open');
     m.style.left = (r.right + 8) + 'px'; m.style.top = Math.max(60, Math.min(r.top, innerHeight - m.offsetHeight - 8)) + 'px';
+    /* pelo teclado (Enter/Espaço) o foco entra no primeiro layout; Esc fecha e devolve o foco ao + */
+    if (!e.detail) { var f = m.querySelector('button[data-layout]'); if (f) f.focus(); menuFrom = { m: m, b: e.currentTarget }; }
   });
 
   /* ---------------- canvas: selecionar, mover, redimensionar, editar ---------------- */
@@ -1856,12 +1917,16 @@
       bs[(i + (k === 'ArrowDown' || k === 'ArrowRight' ? 1 : bs.length - 1) + bs.length) % bs.length].focus(); return;
     }
     if ((k === 'Enter' || k === ' ') && i >= 0) return; /* o próprio botão em foco é ativado */
+    var back = k === 'Escape' && menuFrom && menuFrom.m === m ? menuFrom.b : null;
     e.preventDefault(); closeOld();
+    if (back && back.offsetParent) back.focus();
   }
   var kbCtx = 0;
   function openCtxKeyboard() {
     var r, items;
-    if (zone === 'thumbs') { var th = $('#thumbs .th.on .box'); if (!th) return; r = th.getBoundingClientRect(); items = ctxThumbItems; }
+    if (zone === 'thumbs') { /* painel recolhido: o menu do slide abre ao lado da faixa (posição “3/14”), não no canto da tela */
+      var th = $(sideOff ? '#sidePos' : '#thumbs .th.on .box'); if (!th) return; r = th.getBoundingClientRect(); if (sideOff) r = { left: $('#side').getBoundingClientRect().right - 4, top: r.top - 8 }; items = ctxThumbItems;
+    }
     else {
       var wr = wrap.getBoundingClientRect(), g = selIds.length ? groupBox(sels()) : { x: W / 2, y: H / 2, w: 0, h: 0 };
       r = { left: wr.left + (g.x + g.w / 2) / W * wr.width, top: wr.top + (g.y + g.h / 2) / H * wr.height };
@@ -1917,7 +1982,12 @@
       nudge(e.key === 'ArrowLeft' ? -d : e.key === 'ArrowRight' ? d : 0, e.key === 'ArrowUp' ? -d : e.key === 'ArrowDown' ? d : 0); return;
     }
     /* miniaturas em 2 colunas (painel largo): ↑ ↓ andam uma linha (2 slides) */
-    if (!list.length && zone === 'thumbs' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && $('#side').classList.contains('cols2')) { e.preventDefault(); goSlide(cur + (e.key === 'ArrowDown' ? 2 : -2)); return; }
+    if (!list.length && zone === 'thumbs' && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && $('#side').classList.contains('cols2')) {
+      /* como na grade do PowerPoint: ↑ na primeira linha e ↓ na última ficam onde estão; ↓ vai ao último slide só se ele estiver na linha de baixo */
+      e.preventDefault(); var last = deck.slides.length - 1, to = cur + (e.key === 'ArrowDown' ? 2 : -2);
+      if (to > last && e.key === 'ArrowDown' && (cur >> 1) < (last >> 1)) to = last;
+      if (to >= 0 && to <= last) goSlide(to); return;
+    }
     if (!list.length && (e.key === 'PageDown' || e.key === 'ArrowDown' || (zone === 'thumbs' && e.key === 'ArrowRight'))) { e.preventDefault(); goSlide(cur + 1); }
     if (!list.length && (e.key === 'PageUp' || e.key === 'ArrowUp' || (zone === 'thumbs' && e.key === 'ArrowLeft'))) { e.preventDefault(); goSlide(cur - 1); }
   });
@@ -2006,6 +2076,7 @@
     var d = $('#drawer'), open = v == null ? !(d.classList.contains('open') && (!tab || tab === drawerTab)) : v;
     if (tab) setTab(tab);
     d.classList.toggle('open', open); $('#bFx').classList.toggle('open', open && drawerTab === 'fx'); $('#bModels').classList.toggle('open', open && drawerTab === 'models');
+    if (!open) sideFree = false; if (sideKeyNow() !== sideKey) applySide(); /* painel de slides largo: estreita enquanto a gaveta está aberta (S18) */
     drawerTimers.forEach(clearInterval); drawerTimers = [];
     if (open) { playPreviews(); drawerTimers.push(setInterval(playPreviews, 5200)); }
     else { $$('.fxi', d).forEach(stopCard); gxClose(true); if (d.contains(document.activeElement)) document.activeElement.blur(); } /* fechada: para contadores e ciclos das prévias e solta o foco (setas e Espaço voltam ao slide e ao modo apresentação) */
