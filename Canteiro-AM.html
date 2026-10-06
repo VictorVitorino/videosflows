@@ -2143,6 +2143,34 @@ html.xp-open .cpop{z-index:210} /* “Mais cores…” aberto de dentro de uma c
 .bk-hint{flex:1;align-self:center;font-size:12px;color:var(--mut,#566579)}
 @media (max-width:640px){.bk-pal{grid-template-columns:1fr}.bk-hint{display:none}}
 
+/* ---- ed-44-batch.css ---- */
+/* ===== ed-44-batch.css — caixa “Gerar slides de uma planilha” (S33; só no editor) ===== */
+.bt-box{width:min(680px,100%)}
+.bt .xp-sum code,.bt .note code{font:11px/1 'JetBrains Mono',Consolas,monospace;background:#EEF2F7;padding:1px 4px;border-radius:4px;color:var(--navy,#002A46)}
+.bt-ph{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 6px}
+.bt-ph .chip{height:26px;padding:0 10px;border:1px solid var(--line,#DCE3EC);border-radius:13px;background:#fff;font:600 11.5px/1 'JetBrains Mono',Consolas,monospace;color:var(--navy,#002A46);cursor:pointer}
+.bt-ph .chip:hover{background:#EEF2F7}
+.bt-ph .chip.bad{border-color:#D23F55;color:#B02A3E;background:#FDECEE}
+.bt-ph .chip.ghost{border-style:dashed;color:var(--steel2,#43698F);font-weight:500}
+.bt-ph .chip:focus-visible{outline:2px solid var(--navy,#002A46);outline-offset:2px}
+.bt-cols{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding-top:6px;border-top:1px dashed var(--line,#DCE3EC)}
+.bt-empty{font-size:12.5px;color:var(--mut,#566579)}
+.bt-warn{flex-basis:100%;font-size:12px;color:#9A4A00;background:#FFF4E6;border-radius:6px;padding:6px 8px}
+#btSrc{display:block;width:100%;box-sizing:border-box;min-height:96px;padding:8px 10px;border:1px solid var(--line,#DCE3EC);border-radius:8px;background:#fff;font:12px/1.45 'JetBrains Mono',Consolas,monospace;color:var(--ink,#1C2733);resize:vertical;white-space:pre}
+#btSrc:focus-visible{outline:2px solid var(--navy,#002A46);outline-offset:1px}
+.bt-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0 6px}
+.bt .xp-btn.sm{height:32px;padding:0 12px;font-size:12.5px}
+.bt-info{flex:1;min-width:0;font-size:12px;color:var(--mut,#566579)}
+.bt-prev{max-height:168px;overflow:auto;border:1px solid var(--line,#DCE3EC);border-radius:8px;scrollbar-width:thin}
+.bt-prev:empty{display:none}
+.bt-prev table{border-collapse:collapse;width:100%;font-size:12px}
+.bt-prev th,.bt-prev td{padding:5px 8px;border-bottom:1px solid #EEF2F7;text-align:left;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis}
+.bt-prev th{position:sticky;top:0;background:#F7F9FC;font-weight:700;color:var(--navy,#002A46)}
+.bt-prev .bt-more{color:var(--mut,#566579);font-style:italic}
+.bt-opt{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink,#1C2733)}
+.bt-opt select{height:32px;padding:0 8px;border:1px solid var(--line,#DCE3EC);border-radius:8px;background:#fff;font:inherit}
+.bt-ck{margin:0!important;padding:0!important;border:0!important}
+
 /* ---- ed-colors.css ---- */
 /* ===== S19 · “Mais cores…”: botão nas linhas de amostras, campos de cor de componentes, cores das séries e o popover (só no editor) ===== */
 .sw button.more{background:conic-gradient(from 200deg,#E4677A,#FDB833,#5DBB82,#3B82C4,#7B5BB3,#E4677A);border-color:rgba(0,30,50,.25)}
@@ -6967,6 +6995,7 @@ window.AMRT = (function () {
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     note: '<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/>',
+    csv: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',
     unlink: '<path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.3-1.3"/><path d="M4 4l16 16"/>',
     vote: '<path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
     timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
@@ -9392,7 +9421,7 @@ window.AMRT = (function () {
     },
     slide: function () {
       var n = deck.slides.length;
-      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
         { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
@@ -9609,11 +9638,13 @@ window.AMRT = (function () {
   /* S24: importar PowerPoint/PDF (ed-42-import.js): a caixa de importação decide entre substituir e acrescentar */
   function importPicker() { if (editingId) endEdit(); flush(); closeMenus(); if (window.AMImport) window.AMImport.pick($('#mbar button[data-m=file]')); else toast('Importação indisponível'); }
   /* slides importados entram no fim, validados como um arquivo aberto (safeSlide), com base para “Redefinir”; um passo de Ctrl+Z */
-  function appendSlides(list) {
+  function appendSlides(list, at, before) { /* at (S33): posição de inserção (padrão: fim); o primeiro slide inserido vira o atual; before(): mudança que entra no mesmo passo de desfazer (ex.: ocultar o modelo) */
     if (editingId) endEdit(); flush();
     var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
     if (!ins.length) return 0;
-    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
+    if (typeof before === 'function') { try { before(); } catch (er) { } }
+    at = at == null || !isFinite(+at) ? deck.slides.length : Math.max(0, Math.min(deck.slides.length, +at | 0));
+    Array.prototype.splice.apply(deck.slides, [at, 0].concat(ins)); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
     return ins.length;
   }
@@ -12351,6 +12382,178 @@ window.AMExport = (function () {
     if (p && p.isConnected && p.focus) p.focus();
   }
   window.AMBrand = { open: open, close: close, isOpen: isOpen, parseColors: parseColors, colorsFromImage: colorsFromImage, kits: kits, saveKit: saveKit, removeKit: removeKit, toJSON: toJSON, fromJSON: fromJSON, render: render };
+})();
+</script>
+<script id="am-ed-44-batch">/* ===== ed-44-batch.js — “Gerar slides de uma planilha (CSV)” (S33; só no editor) =====
+   O slide atual é o modelo: nos textos (e em qualquer campo de componente) escreva {{Coluna}}; cada linha da planilha vira um
+   slide com os valores no lugar. Fonte dos dados: colar as células copiadas do Excel/Sheets (TSV), colar CSV (; ou ,) ou abrir um
+   arquivo .csv/.tsv. Cabeçalho = primeira linha; coluna é casada sem acento e sem caixa ({{area}} = “Área”). Extras: {{#}} =
+   número do slide no lote, {{##}} = total; N linhas por slide ({{Nome#2}} = 2ª linha do grupo). Textos (html) entram escapados
+   (quebra de linha = <br>); os outros campos entram como texto. Os slides entram logo depois do modelo (um Ctrl+Z tira todos) e
+   o modelo pode ficar oculto (não aparece na apresentação).
+   API: window.AMBatch = { open(opener), close(), isOpen(), parse(text), build(template, table, opts), sample() } */
+(function () {
+  'use strict';
+  function S() { return window.AMStudio; }
+  function $(q, r) { return (r || document).querySelector(q); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var MAXR = 200, MAXC = 40, TOK = /\{\{\s*([^{}#]+?)\s*(?:#(\d{1,2}))?\s*\}\}|\{\{\s*(##?)\s*\}\}/g;
+  var dlg = null, st = null;
+  function svg(p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>'; }
+  var ICSV = '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>';
+  function toast(m) { var A = S(); if (A && A.toast) A.toast(m); }
+  function normKey(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  /* ---------- CSV / TSV ---------- */
+  function delimOf(text) {
+    var first = String(text).split(/\r?\n/).filter(function (l) { return l.trim(); })[0] || '';
+    var t = (first.match(/\t/g) || []).length, sc = (first.match(/;/g) || []).length, cm = (first.match(/,/g) || []).length;
+    if (t) return '\t'; if (sc >= cm && sc) return ';'; if (cm) return ','; return '\t';
+  }
+  function parseTable(text) {
+    text = String(text == null ? '' : text).replace(/^﻿/, ''); var d = delimOf(text), rows = [], row = [], cell = '', q = false, i, c;
+    for (i = 0; i < text.length; i++) {
+      c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+      if (c === '"') { q = true; continue; }
+      if (c === d) { row.push(cell); cell = ''; continue; }
+      if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; continue; }
+      cell += c;
+    }
+    if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+    rows = rows.map(function (r) { return r.map(function (x) { return String(x).trim(); }); }).filter(function (r) { return r.some(function (x) { return x !== ''; }); });
+    if (!rows.length) return { delim: d, head: [], rows: [], over: 0 };
+    var head = rows[0].slice(0, MAXC).map(function (h, k) { return h || 'Coluna ' + (k + 1); }), body = rows.slice(1).map(function (r) { return r.slice(0, head.length); }), over = Math.max(0, body.length - MAXR);
+    return { delim: d, head: head, rows: body.slice(0, MAXR), over: over };
+  }
+  /* ---------- modelo ---------- */
+  function tokensOf(slide) { var out = [], seen = {}, s = JSON.stringify(slide || {}), m; TOK.lastIndex = 0; while ((m = TOK.exec(s))) { var k = m[3] ? m[3] : normKey(m[1]) + (m[2] ? '#' + (+m[2]) : ''); if (!seen[k]) { seen[k] = 1; out.push({ key: m[3] ? m[3] : normKey(m[1]), raw: m[0], n: m[2] ? +m[2] : 1, special: !!m[3] }); } } return out; }
+  function build(template, table, opts) {
+    opts = opts || {}; var A = S(), per = Math.max(1, Math.min(6, +opts.per || 1)), idx = {}, out = [];
+    table.head.forEach(function (h, k) { var nk = normKey(h); if (!(nk in idx)) idx[nk] = k; });
+    var chunks = []; for (var i = 0; i < table.rows.length; i += per) chunks.push(table.rows.slice(i, i + per));
+    var total = chunks.length;
+    function val(key, n, chunk) { var k = idx[normKey(key)]; if (k == null) return null; var r = chunk[n - 1]; return r ? (r[k] == null ? '' : String(r[k])) : ''; }
+    function rep(str, chunk, no, isHtml) {
+      return str.replace(TOK, function (m, key, n, sp) {
+        var v; if (sp) v = sp === '#' ? String(no) : String(total); else { v = val(key, n ? +n : 1, chunk); if (v == null) return m; } /* coluna que não existe: fica como está */
+        return isHtml ? esc(v).replace(/\r?\n/g, '<br>') : v;
+      });
+    }
+    function walk(v, chunk, no, k) {
+      if (typeof v === 'string') return v.indexOf('{{') >= 0 ? rep(v, chunk, no, k === 'html') : v;
+      if (Array.isArray(v)) return v.map(function (x) { return walk(x, chunk, no, k); });
+      if (v && typeof v === 'object') { var o = {}; Object.keys(v).forEach(function (q) { o[q] = walk(v[q], chunk, no, q); }); return o; }
+      return v;
+    }
+    chunks.forEach(function (chunk, c) {
+      var s = A.clone(template); delete s.base; delete s.hidden; delete s.id;
+      s = walk(s, chunk, c + 1); out.push(s);
+    });
+    return out;
+  }
+  function sample() { return 'Nome;Cargo;Área;Mensagem\nAna Souza;Diretora de Operações;Operações;"Reduzimos o lead time em 30 %"\nBruno Lima;Gerente de TI;Tecnologia;"Portal único no ar; 2 mil usuários"\nCarla Dias;Líder de Pessoas;Pessoas;"Capacitação de 120 líderes"\n'; }
+  /* ---------- caixa ---------- */
+  function build_() {
+    dlg = document.createElement('div'); dlg.id = 'btDlg'; dlg.className = 'xp bt'; dlg.hidden = true;
+    dlg.innerHTML = '<div class="xp-bk" data-x="bk"></div>' +
+      '<form class="xp-box bt-box" role="dialog" aria-modal="true" aria-labelledby="btT" aria-describedby="btSum" novalidate>' +
+      '<header class="xp-h"><div class="xp-ic">' + svg(ICSV) + '</div><div class="xp-hd"><div class="xp-ey">Planilha → slides</div><h3 id="btT">Gerar slides de uma planilha</h3></div>' +
+      '<button type="button" class="xp-x" data-x="close" title="Fechar (Esc)" aria-label="Fechar">' + svg('<path d="M6 6l12 12M18 6L6 18"/>') + '</button></header>' +
+      '<div class="xp-b">' +
+      '<p class="xp-sum" id="btSum">O <b>slide atual é o modelo</b>: escreva <code>{{Coluna}}</code> nos textos (ou nos campos de um componente) e cada <b>linha</b> da planilha vira um slide com os valores no lugar. Os slides entram logo depois do modelo; um Ctrl+Z tira todos.</p>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Modelo (slide <span id="btCur"></span>)</legend><div class="bt-ph" id="btPh"></div><p class="note" id="btPhNote"></p></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Dados</legend>' +
+      '<textarea id="btSrc" rows="5" spellcheck="false" placeholder="Cole aqui as células copiadas do Excel ou do Google Sheets (com a linha de cabeçalho), ou o texto de um CSV (; ou ,)"></textarea>' +
+      '<div class="bt-row"><button type="button" class="xp-btn sm" data-x="file">Abrir arquivo .csv / .tsv…</button><button type="button" class="xp-btn sm" data-x="sample">Baixar exemplo (.csv)</button><span class="bt-info" id="btInfo" role="status" aria-live="polite"></span></div>' +
+      '<div class="bt-prev" id="btPrev"></div></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Opções</legend><div class="bt-row">' +
+      '<label class="bt-opt">Linhas por slide <select id="btPer" aria-label="Linhas por slide">' + [1, 2, 3, 4, 5, 6].map(function (n) { return '<option value="' + n + '">' + n + '</option>'; }).join('') + '</select></label>' +
+      '<label class="xp-ck bt-ck"><input type="checkbox" id="btHide" checked><span>Esconder o slide modelo na apresentação</span></label></div>' +
+      '<p class="note">Com mais de uma linha por slide, use <code>{{Coluna#2}}</code>, <code>{{Coluna#3}}</code>… para as outras linhas do grupo. <code>{{#}}</code> = número do slide no lote, <code>{{##}}</code> = total. Coluna é casada sem acento e sem maiúsculas.</p></fieldset>' +
+      '</div>' +
+      '<footer class="xp-f"><button type="button" class="xp-btn" data-x="cancel">Cancelar</button><button type="submit" class="xp-btn pri" id="btGo" disabled>Gerar slides</button></footer></form>' +
+      '<input type="file" id="btFile" accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain" hidden>';
+    document.body.appendChild(dlg);
+    dlg.addEventListener('click', function (e) {
+      var x = e.target.closest('[data-x]'); if (!x || !isOpen()) return;
+      var k = x.dataset.x;
+      if (k === 'bk' || k === 'close' || k === 'cancel') { close(); return; }
+      if (k === 'file') { $('#btFile').click(); return; }
+      if (k === 'sample') { var A = S(); A.download('exemplo-slides-em-lote.csv', '﻿' + sample(), 'text/csv;charset=utf-8'); toast('Exemplo baixado: abra no Excel, preencha e cole aqui'); return; }
+      if (k === 'ph') { var A2 = S(); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(x.dataset.ph).then(function () { toast(x.dataset.ph + ' copiado: cole num texto do slide modelo'); }, function () { }); return; }
+    });
+    $('form', dlg).addEventListener('submit', function (e) { e.preventDefault(); run(); });
+    $('#btSrc').addEventListener('input', function () { st.text = this.value; update(); });
+    $('#btPer').addEventListener('change', function () { st.per = +this.value || 1; update(); });
+    $('#btFile').addEventListener('change', function () {
+      var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+      var r = new FileReader(); r.addEventListener('load', function () { $('#btSrc').value = st.text = String(r.result || ''); update(); toast('Arquivo lido: ' + f.name); }); r.addEventListener('error', function () { toast('Não deu para ler o arquivo.'); }); r.readAsText(f);
+    });
+  }
+  function focusables() { return [].slice.call(dlg.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(function (x) { return !x.disabled && !x.hidden && x.offsetParent !== null && x.tabIndex >= 0; }); }
+  function onKey(e) {
+    if (!isOpen()) return;
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+    if (e.key === 'Tab') { var f = focusables(); if (!f.length) return; var i = f.indexOf(document.activeElement); e.preventDefault(); e.stopImmediatePropagation(); (f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length] || f[0]).focus(); return; }
+    var inField = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && dlg.contains(e.target);
+    if (e.key === 'Enter' && inField && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') { e.preventDefault(); e.stopImmediatePropagation(); return; }
+    if (e.key === 'F1' || e.key === 'F5' || ((e.ctrlKey || e.metaKey) && /^[sodpzy]$/i.test(e.key) && !inField)) e.preventDefault();
+    e.stopImmediatePropagation();
+  }
+  function isOpen() { return !!(dlg && !dlg.hidden); }
+  function update() {
+    if (!isOpen()) return;
+    var A = S(), tpl = A.deck.slides[st.tplIdx], toks = tokensOf(tpl), table = parseTable(st.text || ''), heads = table.head.map(normKey);
+    st.table = table; st.toks = toks;
+    $('#btCur').textContent = String(st.tplIdx + 1);
+    var cols = toks.filter(function (t) { return !t.special; }), miss = cols.filter(function (t) { return table.head.length && heads.indexOf(t.key) < 0; });
+    $('#btPh').innerHTML = toks.length ? toks.map(function (t) { var bad = !t.special && table.head.length && heads.indexOf(t.key) < 0; return '<button type="button" class="chip' + (bad ? ' bad' : '') + '" data-x="ph" data-ph="' + esc(t.raw) + '" title="' + (bad ? 'Não há coluna com este nome na planilha' : 'Copiar') + '">' + esc(t.raw) + '</button>'; }).join('') : '<span class="bt-empty">Este slide ainda não tem {{Coluna}}. Clique numa coluna abaixo para copiar o marcador e cole-o num texto do slide.</span>';
+    var unused = table.head.filter(function (h) { return !cols.some(function (t) { return t.key === normKey(h); }); });
+    $('#btPhNote').textContent = toks.length ? (miss.length ? 'Sem coluna na planilha: ' + miss.map(function (t) { return t.raw; }).join(', ') + ' (ficam como estão). ' : '') + (unused.length ? 'Colunas sem uso no modelo: ' + unused.join(', ') + '.' : '') : '';
+    var info = $('#btInfo'), prev = $('#btPrev'), go = $('#btGo');
+    if (!table.head.length) { info.textContent = st.text && st.text.trim() ? 'Nada reconhecido: cole as células com a linha de cabeçalho.' : ''; prev.innerHTML = ''; go.disabled = true; go.textContent = 'Gerar slides'; return; }
+    var n = Math.ceil(table.rows.length / st.per);
+    info.textContent = (table.delim === '\t' ? 'Tabulação' : 'Separador “' + table.delim + '”') + ' · ' + table.head.length + (table.head.length === 1 ? ' coluna' : ' colunas') + ' · ' + table.rows.length + (table.rows.length === 1 ? ' linha' : ' linhas') + (table.over ? ' (as primeiras ' + MAXR + '; ' + table.over + ' ficaram de fora)' : '');
+    var show = table.rows.slice(0, 5);
+    prev.innerHTML = '<table><thead><tr>' + table.head.map(function (h) { return '<th>' + esc(h) + '</th>'; }).join('') + '</tr></thead><tbody>' + show.map(function (r) { return '<tr>' + table.head.map(function (h, k) { return '<td>' + esc((r[k] || '').replace(/\s+/g, ' ').slice(0, 60)) + '</td>'; }).join('') + '</tr>'; }).join('') + (table.rows.length > 5 ? '<tr><td colspan="' + table.head.length + '" class="bt-more">… e mais ' + (table.rows.length - 5) + '</td></tr>' : '') + '</tbody></table>';
+    if (!table.rows.length) { go.disabled = true; go.textContent = 'Gerar slides'; info.textContent += ' · só o cabeçalho: faltam as linhas'; return; }
+    if (!toks.length) $('#btPh').innerHTML += '<div class="bt-warn">Sem marcadores no slide modelo os slides sairiam todos iguais. Copie uma coluna (clique) e cole num texto do modelo.</div>';
+    go.disabled = !toks.length; go.textContent = 'Gerar ' + n + (n === 1 ? ' slide' : ' slides');
+    $('#btPh').querySelectorAll('.chip').forEach(function (c) { c.disabled = false; });
+    /* colunas da planilha como marcadores para copiar (quando o modelo ainda não as usa) */
+    var extra = table.head.filter(function (h) { return !toks.some(function (t) { return t.key === normKey(h); }); });
+    if (extra.length) $('#btPh').innerHTML += '<div class="bt-cols">' + extra.map(function (h) { return '<button type="button" class="chip ghost" data-x="ph" data-ph="{{' + esc(h) + '}}" title="Copiar">{{' + esc(h) + '}}</button>'; }).join('') + '</div>';
+  }
+  function run() {
+    var A = S(); if (!st || !st.table || !st.table.rows.length || !st.toks.length) return;
+    var tpl = A.deck.slides[st.tplIdx], list = build(tpl, st.table, { per: st.per }), hide = $('#btHide').checked, rows = st.table.rows.length;
+    var n = A.appendSlides(list, st.tplIdx + 1, function () { if (hide) tpl.hidden = true; }); /* ocultar o modelo entra no mesmo passo de desfazer que a inserção */
+    close();
+    toast(n + (n === 1 ? ' slide gerado' : ' slides gerados') + ' a partir de ' + rows + (rows === 1 ? ' linha' : ' linhas') + (hide ? ' · o modelo ficou oculto' : '') + ' · Ctrl+Z desfaz');
+  }
+  function open(opener) {
+    var A = S(); if (!A) return;
+    if (!dlg) build_();
+    if (A.closeMenus) A.closeMenus();
+    if (window.AMExport) { if (window.AMExport.isOpen && window.AMExport.isOpen()) window.AMExport.closeDialog(); if (window.AMExport.pptxDialog && window.AMExport.pptxDialog.isOpen()) window.AMExport.pptxDialog.close(); }
+    if (window.AMImport && window.AMImport.isOpen && window.AMImport.isOpen()) window.AMImport.close();
+    if (window.AMBrand && window.AMBrand.isOpen && window.AMBrand.isOpen()) window.AMBrand.close();
+    var ae = document.activeElement;
+    st = { tplIdx: A.cur, text: '', per: 1, prev: opener && opener.isConnected ? opener : (ae && ae !== document.body ? ae : null) };
+    $('#btSrc').value = ''; $('#btPer').value = '1'; $('#btHide').checked = true;
+    dlg.hidden = false; document.documentElement.classList.add('xp-open');
+    addEventListener('keydown', onKey, true);
+    update();
+    setTimeout(function () { if (isOpen()) $('#btSrc').focus(); }, 30);
+  }
+  function close() {
+    if (!isOpen()) return;
+    dlg.hidden = true; document.documentElement.classList.remove('xp-open');
+    removeEventListener('keydown', onKey, true);
+    var p = st && st.prev; st = null;
+    if (p && p.isConnected && p.focus) p.focus();
+  }
+  window.AMBatch = { open: open, close: close, isOpen: isOpen, parse: parseTable, tokens: tokensOf, build: build, sample: sample, setText: function (t) { if (!isOpen()) return; $('#btSrc').value = st.text = String(t || ''); update(); } };
 })();
 </script>
 <script id="am-ed-colors">/* ===== “Mais cores…” (S19): seletor de cores do painel de propriedades (só no editor; não vai para o arquivo exportado) =====
