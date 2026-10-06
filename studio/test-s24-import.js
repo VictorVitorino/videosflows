@@ -58,7 +58,7 @@ function lo(pptx){ const out=path.join(TMP,'lo'); const r=JSON.parse(execFileSyn
   const ln=s1.els.filter(e=>e.type==='line');
   check('S24-05: conectores: reta navy 3 pt com ponta no fim; cotovelo laranja tracejado', ln.length===2 && ln.some(l=>l.stroke==='#002A46'&&l.headEnd===true&&!l.headStart&&Math.abs(l.strokeW-4)<.3&&!l.dash) && ln.some(l=>l.stroke==='#F78C16'&&l.dash===true&&l.curve==='elbow'), ln.map(l=>[l.stroke,l.strokeW,l.headEnd,l.dash,l.curve]));
   const im=s1.els.find(e=>e.type==='image');
-  check('S24-06: foto com recorte à esquerda (25 %): só a parte visível vira a foto (300 px de 400)', !!im && /^data:image\/png/.test(im.src) && Math.abs(im.w-230.4)<1 && await p.evaluate(src=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth); i.src=src; }), im.src)===300, im&&{w:im.w,h:im.h});
+  check('S24-06: foto com recorte à esquerda (25 %): a foto vem inteira (400 px) com el.crop.l = 0,25 (S27b; antes era assada em 300 px)', !!im && /^data:image\/png/.test(im.src) && Math.abs(im.w-230.4)<1 && im.crop && Math.abs(im.crop.l-0.25)<.001 && await p.evaluate(src=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i.naturalWidth); i.src=src; }), im.src)===400, im&&{w:im.w,h:im.h,crop:im.crop});
   const grp=s1.els.filter(e=>(e.shape==='rect'&&e.fill==='#A3B8D6')||(e.shape==='ellipse'&&e.fill==='#002A46'));
   check('S24-07: grupo achatado: 2 formas no lugar certo (3,5" → 336 px; 5,1" → 490 px)', grp.length===2 && grp.some(e=>Math.abs(e.x-336)<1) && grp.some(e=>Math.abs(e.x-489.6)<1), grp.map(e=>[e.shape,e.x,e.y]));
   const cells=s1.els.filter(e=>e.shape==='rect'&&/Iniciativa|Prazo|Status|Compras|Q3|Em curso|Logística|Q4|Planejado/.test(e.html));
