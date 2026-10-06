@@ -198,6 +198,7 @@
   function setZone(z) { zone = z; var sd = $('#side'); if (sd) sd.classList.toggle('focus', z === 'thumbs'); }
   var draftTimer = null, draftWarned = false;
   function commit() {
+    RT.stampNums(deck); /* S27: número do slide acompanha inserções, cópias e reordenações */
     var now = JSON.stringify(deck);
     if (now === last) return;
     hist.push(last); if (hist.length > 50) hist.shift();
@@ -258,6 +259,8 @@
     if (o.zoom != null) { if (o.zoom === false || o.zoom === true) { } else delete o.zoom; } /* ampliar na apresentação: só booleano (false desliga num modelo/imagem; true liga num componente) */
     if (o.html != null) o.html = cleanHTML(String(o.html));
     if (o.ph != null && !(typeof o.ph === 'string' && PH_RE.test(o.ph))) delete o.ph; /* S21: marca do elemento original do layout (safeSlide confere com slide.base) */
+    if (o.lock !== true) delete o.lock; /* S27: bloqueado (só true) */
+    if (o.grp != null && !(typeof o.grp === 'string' && /^[\w-]{1,40}$/.test(o.grp))) delete o.grp; /* S27: grupo = id compartilhado */
     if (o.type === 'image') { o.src = safeSrc(o.src); if (!o.src) return null; }
     var a = o.anim && typeof o.anim === 'object' ? o.anim : {}; o.anim = { in: TOKEN_RE.test(a.in || '') ? a.in || 'none' : 'none' };
     ['loop', 'hover'].forEach(function (k) { if (typeof a[k] === 'string' && /^\w{1,20}$/.test(a[k])) o.anim[k] = a[k]; });
@@ -343,6 +346,7 @@
     var o = { v: 1, app: 'AM Studio', title: typeof d.title === 'string' ? d.title.slice(0, 300) : 'Apresentação', slides: sl };
     if (typeof d.id === 'string' && /^[\w-]{1,40}$/.test(d.id)) o.id = d.id;
     if (d.nav && typeof d.nav === 'object') o.nav = { chapters: d.nav.chapters !== false };
+    if (d.num && typeof d.num === 'object' && d.num.on === true) { o.num = { on: true, pos: /^(tl|tr|bl|br)$/.test(d.num.pos) ? d.num.pos : 'br' }; if (d.num.from != null && isFinite(+d.num.from)) o.num.from = Math.max(0, Math.min(999, +d.num.from | 0)); } /* S27: numeração dos slides */
     ['created', 'updated'].forEach(function (k) { if (d[k] != null && isFinite(+d[k])) o[k] = +d[k]; });
     if (Array.isArray(d.comments)) { var cm = d.comments.slice(0, 2000).map(safeComment).filter(Boolean); if (cm.length) o.comments = cm; }
     return o;
@@ -360,7 +364,7 @@
   }
 
   /* ---------------- render ---------------- */
-  function renderAll() { renderThumbs(); renderStage(); renderProps(); }
+  function renderAll() { RT.stampNums(deck); renderThumbs(); renderStage(); renderProps(); }
   function fit() {
     var cv = $('#cv'), aw = cv.clientWidth - 56, ah = cv.clientHeight - 72, w = Math.max(320, Math.min(aw, ah * 16 / 9));
     wrap.style.width = w + 'px'; wrap.style.height = (w * 9 / 16) + 'px';
@@ -398,16 +402,18 @@
     var html = '', list = sels(), el = sel(), k = wrap.clientWidth / W || 1;
     if (list.length > 1) {
       list.forEach(function (e) { var b = bbox(e); if (e.type === 'line') b = { x: b.x - 3, y: b.y - 3, w: b.w + 6, h: b.h + 6 }; html += '<div class="sbox multi" style="' + boxCss(b) + (e.rot && e.type !== 'line' ? ';transform:rotate(' + e.rot + 'deg)' : '') + '"></div>'; });
-      html += '<div class="gbox" style="' + boxCss(groupBox(list)) + '"><span><b>' + list.length + '</b> elementos</span></div>';
+      var sameG = list.every(function (e) { return e.grp && e.grp === list[0].grp; }), nLk = list.filter(isLocked).length;
+      html += '<div class="gbox' + (sameG ? ' grp' : '') + '" style="' + boxCss(groupBox(list)) + '"><span>' + (sameG ? 'Grupo · ' : '') + '<b>' + list.length + '</b> elementos' + (nLk ? ' · ' + (nLk === list.length ? 'bloqueado' : nLk + ' bloqueado' + (nLk > 1 ? 's' : '')) : '') + '</span></div>';
     }
     if (el) {
-      if (el.type === 'line') {
+      if (el.type === 'line' && isLocked(el)) { var lb = bbox(el); html += '<div class="sbox locked" style="' + boxCss({ x: lb.x - 3, y: lb.y - 3, w: lb.w + 6, h: lb.h + 6 }) + '"><i class="lockb" title="Bloqueado (Ctrl+Shift+L desbloqueia)">' + svgI('lock') + '</i></div>'; }
+      else if (el.type === 'line') {
         html += '<div class="hdl p" data-h="p1" style="left:' + pc(el.x1, W) + ';top:' + pc(el.y1, H) + '"></div><div class="hdl p" data-h="p2" style="left:' + pc(el.x2, W) + ';top:' + pc(el.y2, H) + '"></div>';
         if (el.curve === 'elbow' && RT.lineBendPt) { var bp = RT.lineBendPt(el); html += '<div class="hdl bd" data-h="bend" title="Arraste para mover a dobra do cotovelo" style="left:' + pc(bp.x, W) + ';top:' + pc(bp.y, H) + ';cursor:' + (bp.hz ? 'ew' : 'ns') + '-resize"></div>'; }
       } else {
         var box = 'left:' + pc(el.x, W) + ';top:' + pc(el.y, H) + ';width:' + pc(el.w, W) + ';height:' + pc(el.h, H);
-        html += '<div class="sbox' + (editingId === el.id ? ' edit' : '') + '" style="' + box + (el.rot ? ';transform:rotate(' + el.rot + 'deg)' : '') + '"></div>';
-        if (editingId !== el.id) {
+        html += '<div class="sbox' + (editingId === el.id ? ' edit' : '') + (isLocked(el) ? ' locked' : '') + '" style="' + box + (el.rot ? ';transform:rotate(' + el.rot + 'deg)' : '') + '">' + (isLocked(el) ? '<i class="lockb" title="Bloqueado: não move nem redimensiona (Ctrl+Shift+L desbloqueia)">' + svgI('lock') + '</i>' : '') + '</div>';
+        if (editingId !== el.id && !isLocked(el)) {
           var fr = rotFrame(el);
           /* alças nos cantos e lados do quadro girado; o cursor gira junto */
           [['nw', 0, 0], ['n', .5, 0], ['ne', 1, 0], ['e', 1, .5], ['se', 1, 1], ['s', .5, 1], ['sw', 0, 1], ['w', 0, .5]].forEach(function (h) {
@@ -634,6 +640,10 @@
   var IC = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/>',
     import: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
+    grp: '<rect x="3" y="3" width="9" height="9" rx="1.5"/><rect x="12" y="12" width="9" height="9" rx="1.5"/><path d="M3 16v5h5M21 8V3h-5" stroke-dasharray="2 2"/>', ungrp: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M13 7l3-3M7 13l-3 3"/>',
+    brush: '<path d="M14 3l7 7-9 9H5v-7z"/><path d="M5 12l7 7"/>', brushp: '<path d="M14 3l7 7-9 9H5v-7z"/><path d="M5 12l7 7"/><path d="M17 19h4M19 17v4"/>', layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/>',
+    num: '<rect x="3" y="4" width="18" height="16" rx="2"/><text x="12.5" y="17" class="tl" font-size="9">7</text>', 'num-tl': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="7" cy="8" r="1.8" fill="currentColor"/>', 'num-tr': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="17" cy="8" r="1.8" fill="currentColor"/>', 'num-bl': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="7" cy="16" r="1.8" fill="currentColor"/>', 'num-br': '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="17" cy="16" r="1.8" fill="currentColor"/>',
     bold: '<text x="6.5" y="17.5" class="tl" font-weight="800">B</text>', italic: '<text x="8.5" y="17.5" class="tl" font-style="italic">I</text>', underline: '<text x="6.5" y="16" class="tl">U</text><path d="M6 20h12"/>', strike: '<text x="7" y="17.5" class="tl">S</text><path d="M5 12h14"/>',
     sizeup: '<text x="3" y="18" class="tl" font-size="14">A</text><path d="M16 5v8M12 9h8"/>', sizedown: '<text x="3" y="18" class="tl" font-size="11">A</text><path d="M13 11h8"/>', fcolor: '<text x="6" y="15" class="tl">A</text><path d="M4 20h16" stroke-width="3"/>', hilite: '<path d="M9 15l-4 4h6l1-1"/><path d="M14 4l6 6-8 8-6-6z"/><path d="M4 21h16"/>',
     bullets: '<circle cx="5" cy="7" r="1.6" fill="currentColor"/><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="5" cy="17" r="1.6" fill="currentColor"/><path d="M10 7h10M10 12h10M10 17h10"/>', numbered: '<text x="2.5" y="9.5" class="tl" font-size="8">1</text><text x="2.5" y="19.5" class="tl" font-size="8">2</text><path d="M10 7h10M10 12h10M10 17h10"/>',
@@ -739,7 +749,9 @@
     var p = $('#props'), el = sel(), s = slide(), h = '', list = sels();
     if (list.length > 1) {
       var n3 = list.length >= 3;
-      h += '<div class="ph"><h2>' + list.length + ' elementos selecionados<small>Shift+clique soma ou retira da seleção · Esc limpa</small></h2></div>';
+      var sameGrp = list.every(function (e) { return e.grp && e.grp === list[0].grp; });
+      h += '<div class="ph"><h2>' + (sameGrp ? 'Grupo · ' : '') + list.length + ' elementos selecionados<small>Shift+clique soma ou retira da seleção · Esc limpa</small></h2></div>' +
+        '<div class="sec"><h3>Grupo e bloqueio</h3><div class="chips">' + (sameGrp ? '<button type="button" class="chip" data-act="ungroup" title="Desagrupar (Ctrl+Shift+G)">Desagrupar</button>' : '<button type="button" class="chip" data-act="group" title="Agrupar (Ctrl+G)">Agrupar</button>') + '<button type="button" class="chip" data-act="lock" title="Bloquear/desbloquear (Ctrl+Shift+L)">' + (list.every(isLocked) ? 'Desbloquear' : 'Bloquear') + '</button><button type="button" class="chip" data-act="fmtpaste" title="Colar formato (Ctrl+Alt+V)"' + (fmtClip ? '' : ' disabled') + '>Colar formato</button></div></div>';
       h += '<div class="sec"><h3>Seleção</h3><div class="msel">' + list.map(function (e) { return '<span><i></i>' + esc(elName(e)) + '</span>'; }).join('') + '</div></div>';
       h += '<div class="sec"><h3>Alinhar entre si</h3>' + alignSeg() + '<p class="note">Com vários elementos, o alinhamento usa os limites da seleção.</p></div>';
       h += '<div class="sec"><h3>Distribuir</h3><div class="row"><button class="btnw ic" data-act="dist-h"' + (n3 ? '' : ' disabled') + '>' + svgI('dist-h') + 'Horizontal</button><button class="btnw ic" data-act="dist-v"' + (n3 ? '' : ' disabled') + '>' + svgI('dist-v') + 'Vertical</button></div><p class="note">' + (n3 ? 'Deixa o mesmo espaço entre os elementos, mantendo os das pontas no lugar.' : 'Selecione 3 ou mais elementos para distribuir.') + '</p></div>';
@@ -754,6 +766,7 @@
       var nVis = deck.slides.filter(function (x) { return x.hidden !== true; }).length;
       h += '<div class="ph"><h2>Slide ' + (cur + 1) + '<small>' + plural(s.els.length, 'elemento', 'elementos') + ' · ' + (nVis === deck.slides.length ? plural(deck.slides.length, 'slide', 'slides') + ' na apresentação' : plural(deck.slides.length, 'slide', 'slides') + ' · ' + nVis + ' na apresentação') + (scn && !scn.intro ? ' · capítulo “' + esc(scn.name) + '”' : '') + '</small></h2></div>';
       h += showSec(s); /* S21: ocultar e redefinir logo no topo (cabem sem rolar a 1280×720) */
+      h += numSec(); /* S27 */
       h += '<div class="sec"><h3>Sobre este slide</h3>' +
         '<div class="row r1">' + fld('Título no índice', '<input type="text" data-p="s.title" maxlength="160" value="' + esc(s.title || '') + '" placeholder="' + esc(RT.slideTitle(s, cur)) + '">') + '</div>' +
         '<div class="row r1">' + fld('Capítulo (botão da linha do tempo)', '<input type="text" data-p="s.sec" maxlength="80" value="' + esc(s.sec || '') + '" placeholder="' + esc(scn && !scn.intro && !s.sec ? 'herda “' + scn.name + '”' : 'ex.: Contexto, Cultura, Benchmarks') + '">') + '</div>' +
@@ -764,10 +777,12 @@
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
+      h += layersSec(s); /* S27: camadas (fim do painel do slide) */
       p.innerHTML = h; return;
     }
     var name = elName(el);
-    h += '<div class="ph"><h2>' + esc(name) + '<small>' + (el.type === 'text' || el.type === 'shape' ? 'Duplo clique para escrever' : el.type === 'fx' ? 'Edite o conteúdo nos campos abaixo' : '&nbsp;') + '</small></h2><div class="ib"><button data-act="front" title="Trazer para frente">' + ICONS.front + '</button><button data-act="back" title="Enviar para trás">' + ICONS.back + '</button><button data-act="dup" title="Duplicar">' + ICONS.dup + '</button><button class="del" data-act="del" title="Apagar">' + ICONS.del + '</button></div></div>';
+    h += '<div class="ph"><h2>' + esc(name) + (isLocked(el) ? ' <span class="lkt">bloqueado</span>' : '') + '<small>' + (el.type === 'text' || el.type === 'shape' ? 'Duplo clique para escrever' : el.type === 'fx' ? 'Edite o conteúdo nos campos abaixo' : '&nbsp;') + '</small></h2><div class="ib"><button data-act="front" title="Trazer para frente">' + ICONS.front + '</button><button data-act="back" title="Enviar para trás">' + ICONS.back + '</button><button data-act="dup" title="Duplicar">' + ICONS.dup + '</button><button class="del" data-act="del" title="Apagar">' + ICONS.del + '</button></div></div>' +
+      '<div class="sec s27"><div class="chips"><button type="button" class="chip' + (isLocked(el) ? ' on' : '') + '" data-act="lock" title="' + (isLocked(el) ? 'Desbloquear (Ctrl+Shift+L)' : 'Bloquear: não move, não redimensiona, não apaga (Ctrl+Shift+L)') + '" aria-pressed="' + (isLocked(el) ? 'true' : 'false') + '">' + svgI(isLocked(el) ? 'lock' : 'unlock') + (isLocked(el) ? 'Bloqueado' : 'Bloquear') + '</button><button type="button" class="chip" data-act="fmtcopy" title="Copiar formato (Ctrl+Alt+C)">' + svgI('brush') + 'Copiar formato</button><button type="button" class="chip" data-act="fmtpaste" title="Colar formato (Ctrl+Alt+V)"' + (fmtClip ? '' : ' disabled') + '>' + svgI('brushp') + 'Colar formato</button><button type="button" class="chip" data-act="layers" title="Ver as camadas do slide">' + svgI('layers') + 'Camadas</button></div></div>';
     var FD = el.type === 'fx' ? RT.FX[el.kind] : null, h0 = h; /* ícone: Conteúdo (qual ícone) vem antes da lista de movimentos */
     if (FD && FD.variants) {
       var cv = el.variant || FD.variant, cvd = FD.variants.find(function (x) { return x[0] === cv; }) || FD.variants[0];
@@ -1139,11 +1154,74 @@
   function addEls(list, noCommit) { if (editingId) endEdit(); list.forEach(function (el) { slide().els.push(el); }); pick(list.map(function (el) { return el.id; })); renderStage(); renderProps(); if (!noCommit) commit(); return list; }
   function addEl(el) { addEls([el]); return el; }
   function delSel() {
-    var ids = selIds.slice(); if (!ids.length) return;
+    var ids = selIds.filter(function (id) { return !isLocked(getEl(id)); }), lk = selIds.length - ids.length; if (lk) toast(lk > 1 ? lk + ' elementos bloqueados não foram apagados' : 'Elemento bloqueado não foi apagado · desbloqueie para apagar');
+    if (!ids.length) return;
     if (editingId) { editingId = null; freshId = null; }
     slide().els = slide().els.filter(function (e) { return ids.indexOf(e.id) < 0; }); pick([]); renderStage(); renderProps(); commit();
   }
-  function dupSel() { var list = sels(); if (!list.length) return; addEls(list.map(function (el) { var c = clone(el); c.id = uid(); delete c.ph; shift(c, 24); return c; })); } /* cópia de um elemento do layout é do usuário (sem ph) */
+  function dupSel() { var list = sels(); if (!list.length) return; addEls(remapGrp(list.map(function (el) { var c = clone(el); c.id = uid(); delete c.ph; shift(c, 24); return c; }))); } /* cópia de um elemento do layout é do usuário (sem ph); grupo copiado vira outro grupo */
+  /* ---------------- S27: grupos, bloqueio, camadas e pincel de formato ----------------
+     grupo = el.grp (id compartilhado): clicar num membro seleciona o grupo inteiro, mover/redimensionar/girar/apagar valem para todos;
+     bloqueio = el.lock: o elemento pode ser selecionado (e o texto, editado), mas não move, não redimensiona, não gira e não é apagado */
+  function grpIds(id) { var e = getEl(id); if (!e || typeof e.grp !== 'string') return [id]; var g = e.grp; return slide().els.filter(function (x) { return x.grp === g; }).map(function (x) { return x.id; }); }
+  function withGroups(ids) { var out = []; ids.forEach(function (id) { grpIds(id).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); }); return out; }
+  function isLocked(e) { return !!e && e.lock === true; }
+  function anyLocked(list) { return (list || sels()).some(isLocked); }
+  function lockHint() { var t = Date.now(); if (lockHint._t && t - lockHint._t < 2500) return; lockHint._t = t; toast('Elemento bloqueado: não move nem redimensiona · Desbloquear: menu de contexto ou Ctrl+Shift+L'); }
+  function groupSel() { var list = sels(); if (list.length < 2) { toast('Selecione 2 ou mais elementos para agrupar (Shift+clique ou laço)'); return; } var g = 'g' + uid().slice(1); list.forEach(function (e) { e.grp = g; }); drawSel(); renderProps(); commit(); toast(list.length + ' elementos agrupados · clicar em um seleciona o grupo · Ctrl+Shift+G desagrupa'); }
+  function ungroupSel() { var list = sels().filter(function (e) { return e.grp; }); if (!list.length) { toast('A seleção não tem grupo'); return; } list.forEach(function (e) { delete e.grp; }); drawSel(); renderProps(); commit(); toast('Grupo desfeito · Ctrl+Z desfaz'); }
+  function lockSel(on) { var list = sels(); if (!list.length) return; if (on == null) on = !list.every(isLocked); list.forEach(function (e) { if (on) e.lock = true; else delete e.lock; }); renderStage(); renderProps(); commit(); toast(on ? (list.length > 1 ? list.length + ' elementos bloqueados' : 'Bloqueado') + ': não move, não redimensiona, não apaga · Ctrl+Shift+L desbloqueia' : 'Desbloqueado · Ctrl+Z desfaz'); }
+  function remapGrp(list) { var m = {}; list.forEach(function (e) { if (typeof e.grp === 'string') { if (!m[e.grp]) m[e.grp] = 'g' + uid().slice(1); e.grp = m[e.grp]; } }); return list; }
+  /* pincel de formato: copia o formato (nunca o conteúdo) de um elemento e aplica à seleção; texto e forma compartilham o formato do texto */
+  var FMT = { text: ['font', 'size', 'weight', 'color', 'align', 'valign', 'lh', 'ls', 'bg', 'italic', 'upper', 'radius', 'opacity'], shape: ['font', 'size', 'weight', 'color', 'align', 'valign', 'lh', 'ls', 'italic', 'upper', 'fill', 'stroke', 'strokeW', 'dash', 'shadow', 'look', 'radius', 'opacity'], line: ['stroke', 'strokeW', 'dash', 'dashS', 'headS', 'headE', 'headStart', 'headEnd', 'curve', 'opacity'], image: ['radius', 'shadow', 'fit', 'opacity'], fx: ['pal', 'opacity'] }, FMT_TX = ['font', 'size', 'weight', 'color', 'align', 'valign', 'lh', 'ls', 'italic', 'upper'], fmtClip = null;
+  function copyFmt() {
+    var el = sel(); if (!el) { toast('Selecione um elemento para copiar o formato'); return; }
+    var o = { type: el.type, name: elName(el) }; (FMT[el.type] || []).forEach(function (k) { if (el[k] != null) o[k] = clone(el[k]); });
+    if (el.type === 'fx' && el.data) { if (Array.isArray(el.data.colors)) o.cols = el.data.colors.slice(); if (el.data.style != null && fxStyleField(el.kind)) o.ds = el.data.style; }
+    fmtClip = o; renderProps(); toast('Formato copiado de “' + o.name + '” · selecione outro elemento e use Colar formato (Ctrl+Alt+V)');
+  }
+  function pasteFmt() {
+    if (!fmtClip) { toast('Nada copiado: use Copiar formato (Ctrl+Alt+C) primeiro'); return; }
+    var list = sels(), n = 0;
+    list.forEach(function (e) {
+      var ok = false, same = fmtClip.type === e.type, txt = /^(text|shape)$/.test(e.type) && /^(text|shape)$/.test(fmtClip.type);
+      (FMT[e.type] || []).forEach(function (k) { if (!(k in fmtClip)) return; if (same || (txt && FMT_TX.indexOf(k) >= 0)) { e[k] = clone(fmtClip[k]); ok = true; } });
+      if (same && !('bg' in fmtClip) && e.type === 'text') delete e.bg; if (same && e.type === 'shape' && !('look' in fmtClip)) delete e.look;
+      if (e.type === 'fx' && same) { e.data = e.data || {}; if (fmtClip.cols) { e.data.colors = fmtClip.cols.slice(); ok = true; } if (fmtClip.ds != null && fxStyleField(e.kind)) { e.data.style = fmtClip.ds; ok = true; } if ('pal' in fmtClip) ok = true; }
+      if (ok) { n++; rerenderEl(e); }
+    });
+    if (n) { renderProps(); commit(); toast('Formato aplicado em ' + (n > 1 ? n + ' elementos' : '1 elemento') + ' · Ctrl+Z desfaz'); } else toast('O formato copiado (' + fmtClip.name + ') não se aplica a esta seleção');
+  }
+  /* camadas: lista do slide (de cima para baixo), com subir/descer, bloquear e selecionar */
+  function layersSec(s) {
+    var els = s.els.slice().reverse(); if (!els.length) return '';
+    return '<div class="sec ly" id="secLayers"><h3>Camadas <small>' + els.length + '</small></h3><div class="lyl" role="list" aria-label="Camadas do slide">' + els.map(function (e, i) {
+      var on = selIds.indexOf(e.id) >= 0, k = s.els.length - 1 - i;
+      var pv = (e.type === 'text' || e.type === 'shape') && RT.plain ? RT.plain(e.html).replace(/\s+/g, ' ').trim().slice(0, 30) : ''; /* trecho do texto ajuda a achar a camada */
+      return '<div class="lyr' + (on ? ' on' : '') + (e.lock ? ' lk' : '') + '" role="listitem"><button type="button" class="lyn" data-act="ly-sel:' + e.id + '" title="Selecionar">' + svgI(e.type) + '<span>' + esc(elName(e)) + (pv ? ' <small>· ' + esc(pv) + '</small>' : '') + (e.grp ? ' <i>grupo</i>' : '') + '</span></button>' +
+        '<button type="button" class="lyb" data-act="ly-up:' + e.id + '" title="Subir uma camada" aria-label="Subir"' + (k === s.els.length - 1 ? ' disabled' : '') + '>' + svgI('up') + '</button><button type="button" class="lyb" data-act="ly-down:' + e.id + '" title="Descer uma camada" aria-label="Descer"' + (k === 0 ? ' disabled' : '') + '>' + svgI('down') + '</button>' +
+        '<button type="button" class="lyb lk' + (e.lock ? ' on' : '') + '" data-act="ly-lock:' + e.id + '" title="' + (e.lock ? 'Desbloquear' : 'Bloquear') + '" aria-pressed="' + (e.lock ? 'true' : 'false') + '">' + svgI(e.lock ? 'lock' : 'unlock') + '</button></div>';
+    }).join('') + '</div><p class="note">O primeiro da lista fica na frente. Clique no nome para selecionar; bloqueado = não move, não redimensiona nem apaga (o texto continua editável).</p></div>';
+  }
+  function layerAct(a) {
+    var m = /^ly-(sel|up|down|lock):(.+)$/.exec(a); if (!m) return; var s = slide(), e = getEl(m[2]); if (!e) return; var i = s.els.indexOf(e);
+    if (m[1] === 'sel') { setSel(withGroups([e.id]), e.id); return; }
+    if (m[1] === 'lock') { if (e.lock) delete e.lock; else e.lock = true; renderStage(); renderProps(); commit(); return; }
+    var j = m[1] === 'up' ? i + 1 : i - 1; if (j < 0 || j >= s.els.length) return;
+    s.els.splice(i, 1); s.els.splice(j, 0, e); renderStage(); renderProps(); commit();
+  }
+  function showLayers() { if (editingId) endEdit(); select(null); setZone('canvas'); renderProps(); var sec = $('#secLayers'); if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: 'start' }); var f = sec && sec.querySelector('.lyn'); if (f) f.focus({ preventScroll: true }); }
+  /* numeração dos slides (deck.num) */
+  function numSec() {
+    var nm = deck.num && deck.num.on === true ? deck.num : null, pos = nm ? nm.pos || 'br' : 'br';
+    return '<div class="sec"><h3>Numeração dos slides</h3><div class="row r1"><button type="button" class="swt" role="switch" aria-checked="' + !!nm + '" data-act="num-on" title="Número do slide em todos os slides — também no arquivo salvo, no PDF e no PowerPoint">' + svgI('num') + '<span class="sl">Mostrar o número do slide</span><span class="sk" aria-hidden="true"></span></button></div>' +
+      (nm ? '<span class="pf"><span>Posição</span></span><div class="seg ic numpos">' + [['tl', 'Canto superior esquerdo'], ['tr', 'Canto superior direito'], ['bl', 'Canto inferior esquerdo'], ['br', 'Canto inferior direito']].map(function (p) { return '<button type="button" class="' + (p[0] === pos ? 'on' : '') + '" data-act="num-pos-' + p[0] + '" title="' + p[1] + '" aria-label="' + p[1] + '">' + svgI('num-' + p[0]) + '</button>'; }).join('') + '</div>' : '') + '</div>';
+  }
+  function numAct(a) {
+    if (a === 'num-on') { if (deck.num && deck.num.on === true) delete deck.num; else deck.num = { on: true, pos: 'br' }; }
+    else { var m = /^num-pos-(tl|tr|bl|br)$/.exec(a); if (!m) return; deck.num = { on: true, pos: m[1] }; }
+    renderAll(); commit();
+  }
   function shift(el, d, dy) { if (dy == null) dy = d; if (el.type === 'line') { el.x1 += d; el.x2 += d; el.y1 += dy; el.y2 += dy; } else { el.x += d; el.y += dy; } }
   function bbox(el) { if (el.type === 'line') return { x: Math.min(el.x1, el.x2), y: Math.min(el.y1, el.y2), w: Math.abs(el.x2 - el.x1), h: Math.abs(el.y2 - el.y1) }; return { x: el.x, y: el.y, w: el.w, h: el.h }; }
   function groupBox(list) {
@@ -1274,7 +1352,10 @@
     var el = sel(), s = slide(), list = sels();
     if (a === 'hideslide') return toggleHidden(cur);
     if (a === 'slreset') return resetSlide(cur);
-    if (/^(rot-[lr0]|flip-[hv])$/.test(a)) return frameAct(a);
+    if (a === 'group') return groupSel(); if (a === 'ungroup') return ungroupSel(); if (a === 'lock') return lockSel(); if (a === 'unlock') return lockSel(false); /* S27 */
+    if (a === 'fmtcopy') return copyFmt(); if (a === 'fmtpaste') return pasteFmt(); if (a === 'layers') return showLayers();
+    if (a.indexOf('ly-') === 0) return layerAct(a); if (a.indexOf('num-') === 0) return numAct(a);
+    if (/^(rot-[lr0]|flip-[hv])$/.test(a)) { if (anyLocked()) return lockHint(); return frameAct(a); }
     if (a === 'del') return delSel();
     if (a === 'dup') return dupSel();
     if (a === 'copy') return doCopy(false);
@@ -1784,20 +1865,22 @@
     setZone('canvas');
     if (e.target.closest('#fxArrow')) { e.preventDefault(); openVarMenu(e.target.closest('#fxArrow')); return; }
     if (e.target.closest('#frBar,#txBar')) { e.preventDefault(); return; } /* barras do quadro e do texto: o clique age (selLayer click); a seleção e a edição ficam */
-    if (e.target.closest('.rhdl')) { e.preventDefault(); startRotate(e); return; }
+    if (e.target.closest('.rhdl')) { e.preventDefault(); if (anyLocked()) { lockHint(); return; } startRotate(e); return; }
     var hd = e.target.closest('.hdl');
-    if (hd) { e.preventDefault(); startResize(e, hd.dataset.h); return; }
+    if (hd) { e.preventDefault(); if (anyLocked()) { lockHint(); return; } startResize(e, hd.dataset.h); return; }
     var n = stageNode(e.target);
     if (editingId) { var en = stage.querySelector('.am-el[data-id="' + editingId + '"]'); if (en && en.contains(e.target) && (e.target.isContentEditable || e.target.closest('[contenteditable]'))) return; var ae = document.activeElement; if (ae && ae.dataset && ae.dataset.e) ae.blur(); else endEdit(); }
     var multi = e.shiftKey || e.ctrlKey || e.metaKey;
     if (!n) { startMarquee(e, multi); return; }
     var id = n.dataset.id; if (!getEl(id)) return;
+    var gids = withGroups([id]); /* S27: membro de grupo → o grupo inteiro; bloqueado → seleciona, não arrasta */
     if (multi) {
-      if (selIds.indexOf(id) >= 0) { setSel(selIds.filter(function (x) { return x !== id; })); return; }
-      setSel(selIds.concat([id]), id); startMove(e, sels(), null); return;
+      if (selIds.indexOf(id) >= 0) { setSel(selIds.filter(function (x) { return gids.indexOf(x) < 0; })); return; }
+      setSel(selIds.concat(gids.filter(function (x) { return selIds.indexOf(x) < 0; })), id); if (anyLocked()) { lockHint(); return; } startMove(e, sels(), null); return;
     }
-    if (selIds.length > 1 && selIds.indexOf(id) >= 0) { selId = id; startMove(e, sels(), null, id); return; }
-    var wasSel = selIds.length === 1 && selId === id; select(id); startMove(e, [getEl(id)], wasSel ? e.target.closest('[data-cyc]') : null);
+    if (selIds.length > 1 && selIds.indexOf(id) >= 0) { selId = id; if (anyLocked()) { lockHint(); return; } startMove(e, sels(), null, id); return; }
+    if (gids.length > 1) { setSel(gids, id); if (anyLocked()) { lockHint(); return; } startMove(e, sels(), null, null); return; } /* 1º clique = o grupo; clicar de novo num membro do grupo já selecionado = só ele (caminho acima) */
+    var wasSel = selIds.length === 1 && selId === id; select(id); if (isLocked(getEl(id))) { lockHint(); return; } startMove(e, [getEl(id)], wasSel ? e.target.closest('[data-cyc]') : null);
   });
   /* barra do quadro (girar 90° / inverter): o mouse não tira o foco nem a seleção; o clique age em toda a seleção */
   selLayer.addEventListener('mousedown', function (e) { if (e.target.closest('#frBar')) e.preventDefault(); });
@@ -1811,7 +1894,7 @@
       var r = { x: Math.min(p.x, p0.x), y: Math.min(p.y, p0.y), w: Math.abs(p.x - p0.x), h: Math.abs(p.y - p0.y) };
       mq.style.cssText = boxCss(r); mq.classList.add('on');
       var hit = slide().els.filter(function (el) { var b = aabb(el), pad = el.type === 'line' ? 4 : 0; return b.x - pad < r.x + r.w && b.x + b.w + pad > r.x && b.y - pad < r.y + r.h && b.y + b.h + pad > r.y; }).map(function (el) { return el.id; });
-      var ids = base.concat(hit.filter(function (id) { return base.indexOf(id) < 0; }));
+      var hg = withGroups(hit), ids = base.concat(hg.filter(function (id) { return base.indexOf(id) < 0; })); /* S27: o laço pega grupos inteiros */
       selIds = ids; selId = ids.length ? ids[ids.length - 1] : null; drawSel();
     }
     function up() {
@@ -2103,7 +2186,7 @@
       toast(ins.length > 1 ? ins.length + ' slides colados' : 'Slide colado'); return true;
     }
     if (Array.isArray(p.els) && p.els.length) {
-      var list = p.els.map(safeEl).filter(Boolean); if (!list.length) return false;
+      var list = remapGrp(p.els.map(safeEl).filter(Boolean)); if (!list.length) return false; /* S27: grupo colado é outro grupo */
       var off = pasteOffset(list), els = list.map(function (x) { var c = clone(x); c.id = uid(); delete c.ph; shift(c, off); return c; });
       addEls(els); var nd = p.els.length - list.length; if (nd) toast(nd > 1 ? nd + ' elementos não reconhecidos ficaram de fora.' : '1 elemento não reconhecido ficou de fora.');
       return true;
@@ -2223,7 +2306,7 @@
   }, true);
   function selectAll() { if (editingId) endEdit(); setZone('canvas'); setSel(slide().els.map(function (e) { return e.id; })); }
   function nudge(dx, dy) {
-    var list = sels(); if (!list.length) return;
+    var list = sels().filter(function (e) { return !isLocked(e); }); if (!list.length) { if (sels().length) lockHint(); return; }
     list.forEach(function (el) { var b = bbox(el); moveTo(el, b.x + dx, b.y + dy); posNode(el); }); drawSel();
     clearTimeout(nudge._k); nudge._k = setTimeout(function () { commit(); renderProps(); }, 400);
   }
@@ -2308,8 +2391,11 @@
       if (k === 'c' || k === 'x' || k === 'v') { cbKey(k); return; }
       if (k === 'd') { e.preventDefault(); if (zone === 'thumbs') dupSlide(cur); else dupSel(); return; }
       if (k === 'a') { e.preventDefault(); selectAll(); return; }
+      if (k === 'g') { e.preventDefault(); if (e.shiftKey) ungroupSel(); else groupSel(); return; } /* S27: Ctrl+G agrupa, Ctrl+Shift+G desagrupa */
+      if (k === 'l' && e.shiftKey) { e.preventDefault(); lockSel(); return; } /* Ctrl+Shift+L bloqueia/desbloqueia */
       return;
     }
+    if (e.ctrlKey && e.altKey && !e.metaKey && (k === 'c' || k === 'v') && !e.getModifierState('AltGraph')) { e.preventDefault(); if (k === 'c') copyFmt(); else pasteFmt(); return; } /* S27: pincel de formato (Ctrl+Alt+C copia, Ctrl+Alt+V aplica) */
     if (e.key === 'Escape') { if (gxIsOpen()) { gxClose(); return; } closeMenus(); openDrawer(false); select(null); return; }
     if (onControl(t)) return;
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); if (zone === 'thumbs') delSlide(cur); else if (list.length && zone === 'canvas') delSel(); return; }
@@ -2897,7 +2983,7 @@
   $('#mbar').addEventListener('keydown', function (e) { var b = e.target.closest('button[data-m]'); if (b && (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') && !XM.stack.length) { e.preventDefault(); e.stopPropagation(); openBar(b.dataset.m, true); } });
 
   /* listas de itens */
-  var KEY = { cut: 'Ctrl+X', copy: 'Ctrl+C', paste: 'Ctrl+V', dup: 'Ctrl+D', all: 'Ctrl+A', del: 'Delete', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S', open: 'Ctrl+O', f5: 'F5', sf5: 'Shift+F5', f1: 'F1' };
+  var KEY = { cut: 'Ctrl+X', copy: 'Ctrl+C', paste: 'Ctrl+V', dup: 'Ctrl+D', all: 'Ctrl+A', del: 'Delete', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S', open: 'Ctrl+O', f5: 'F5', sf5: 'Shift+F5', f1: 'F1', group: 'Ctrl+G', ungroup: 'Ctrl+Shift+G', lock: 'Ctrl+Shift+L', fmtc: 'Ctrl+Alt+C', fmtv: 'Ctrl+Alt+V' };
   function hasSel() { return selIds.length > 0; }
   function shapeIcon(s) { return shapeSvg(s, 'shp', '#43698F'); }
   /* Inserir › Forma ▸: os mesmos grupos da galeria, em duas colunas (cabe em 720 px); “Retângulo” é o primeiro item com esse nome */
@@ -2983,7 +3069,11 @@
       var any = hasSel();
       return [{ t: 'Trazer para frente', ic: 'front', dis: !any, fn: function () { act('front'); } }, { t: 'Enviar para trás', ic: 'back', dis: !any, fn: function () { act('back'); } },
         { t: 'Trazer ao topo', ic: 'top', dis: !any, fn: function () { act('top'); } }, { t: 'Enviar ao fundo', ic: 'bottom', dis: !any, fn: function () { act('bottom'); } }, { sep: 1 },
-        { t: 'Alinhar', ic: 'al-c', dis: !any, sub: alignItems }, { t: 'Distribuir', ic: 'dist-h', dis: sels().length < 3, sub: distItems }, { t: 'Girar e inverter', ic: 'rot-r', dis: !any, sub: rotItems }];
+        { t: 'Alinhar', ic: 'al-c', dis: !any, sub: alignItems }, { t: 'Distribuir', ic: 'dist-h', dis: sels().length < 3, sub: distItems }, { t: 'Girar e inverter', ic: 'rot-r', dis: !any, sub: rotItems }, { sep: 1 },
+        { t: 'Agrupar', ic: 'grp', k: KEY.group, dis: sels().length < 2, fn: groupSel }, { t: 'Desagrupar', ic: 'ungrp', k: KEY.ungroup, dis: !sels().some(function (e) { return e.grp; }), fn: ungroupSel },
+        { t: sels().length && sels().every(isLocked) ? 'Desbloquear' : 'Bloquear', ic: sels().length && sels().every(isLocked) ? 'unlock' : 'lock', k: KEY.lock, dis: !any, tip: 'Bloqueado: não move, não redimensiona, não apaga', fn: function () { lockSel(); } }, { sep: 1 },
+        { t: 'Copiar formato', ic: 'brush', k: KEY.fmtc, dis: !sel(), fn: copyFmt }, { t: 'Colar formato', ic: 'brushp', k: KEY.fmtv, dis: !any || !fmtClip, fn: pasteFmt }, { sep: 1 },
+        { t: 'Camadas do slide…', ic: 'layers', fn: showLayers }];
     },
     present: function () { return [{ t: 'Do início', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { t: 'Do slide atual', ic: 'playcur', k: KEY.sf5, fn: function () { present(cur); } }]; },
     help: function () { return [{ t: 'Atalhos de teclado', ic: 'keys', k: KEY.f1, fn: showHelp }, { t: 'Manual da obra', ic: 'help', fn: howTo }]; }
@@ -2997,7 +3087,10 @@
       { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null); } }, { t: 'Duplicar', ic: 'dup', k: KEY.dup, fn: dupSel },
       { t: 'Apagar', ic: 'del', k: KEY.del, fn: delSel }, { sep: 1 },
       { t: 'Trazer para frente', ic: 'front', fn: function () { act('front'); } }, { t: 'Enviar para trás', ic: 'back', fn: function () { act('back'); } }, { sep: 1 },
-      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null, { t: 'Girar e inverter', ic: 'rot-r', sub: rotItems },
+      { t: 'Alinhar', ic: 'al-c', sub: alignItems }, n >= 3 ? { t: 'Distribuir', ic: 'dist-h', sub: distItems } : null, { t: 'Girar e inverter', ic: 'rot-r', sub: rotItems }, { sep: 1 },
+      n >= 2 && !list.every(function (e) { return e.grp && e.grp === list[0].grp; }) ? { t: 'Agrupar', ic: 'grp', k: KEY.group, fn: groupSel } : null, list.some(function (e) { return e.grp; }) ? { t: 'Desagrupar', ic: 'ungrp', k: KEY.ungroup, fn: ungroupSel } : null,
+      { t: list.every(isLocked) ? 'Desbloquear' : 'Bloquear', ic: list.every(isLocked) ? 'unlock' : 'lock', k: KEY.lock, fn: function () { lockSel(); } },
+      el ? { t: 'Copiar formato', ic: 'brush', k: KEY.fmtc, fn: copyFmt } : null, fmtClip ? { t: 'Colar formato', ic: 'brushp', k: KEY.fmtv, fn: pasteFmt } : null,
       el && palOk(el) ? { sep: 1 } : null, el && palOk(el) ? { t: 'Cores do componente…', ic: 'palette', fn: function () { setTimeout(focusPal, 0); } } : null];
   }
   function ctxCanvasItems(p) {

@@ -327,6 +327,17 @@ body.am-rotating,body.am-rotating *{cursor:grabbing!important}
 .frbar button svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .frbar button.off{opacity:.38;cursor:not-allowed}
 .frbar button.off:hover{background:transparent}
+/* S27: bloqueio, grupos, camadas */
+.sbox.locked{outline-style:dashed;outline-color:#7E8FA3}.lockb{position:absolute;right:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:#43698F;display:grid;place-items:center;pointer-events:none}.lockb svg{width:11px;height:11px;fill:none;stroke:#fff;stroke-width:2}
+.gbox.grp{outline-style:solid;outline-color:rgba(67,105,143,.9)}.gbox.grp span{background:#43698F}
+.lkt{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:#EEF2F7;color:#43698F;font:600 10px/1.4 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;vertical-align:middle}
+.sec.s27 .chips .chip svg{width:13px;height:13px;margin-right:4px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:1.9}.sec.s27{padding-top:4px}
+.lyl{display:flex;flex-direction:column;gap:3px;max-height:260px;overflow:auto;padding-right:2px}
+.lyr{display:flex;align-items:center;gap:2px;border-radius:7px;background:#F4F7FA;padding:2px 4px 2px 2px}.lyr.on{background:#FEF1E2;box-shadow:inset 0 0 0 1.5px var(--orange)}.lyr.lk .lyn span{color:#7E8FA3}
+.lyn{all:unset;flex:1;min-width:0;display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:5px;cursor:pointer;font:500 12px/1.2 Inter,sans-serif;color:var(--navy)}.lyn:hover,.lyn:focus-visible{background:#fff}.lyn svg{flex:none;width:14px;height:14px;fill:none;stroke:#43698F;stroke-width:1.9}.lyn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lyn i{font-style:normal;font-size:10px;color:#43698F;margin-left:4px}.lyn small{font-size:11px;font-weight:400;color:#5B6B7F}
+.lyb{all:unset;width:22px;height:22px;display:grid;place-items:center;border-radius:5px;cursor:pointer;color:#43698F}.lyb:hover:not([disabled]),.lyb:focus-visible{background:#fff}.lyb[disabled]{opacity:.3;cursor:default}.lyb svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2}.lyb.lk.on{background:#43698F;color:#fff}
+.numpos button svg [fill="currentColor"]{fill:currentColor;stroke:none}
+.am-stage .am-num{pointer-events:none}
 /* S26: barra de formatação do texto (mesma base da barra do quadro) */
 .txbar{gap:0;padding:0 4px}.txbar button{width:24px}.txbar .sep{width:1px;height:16px;margin:0 3px;background:rgba(255,255,255,.22)}
 .txbar button svg{overflow:visible}.txbar button svg .tl{fill:#fff;stroke:none;font:700 13px/1 Inter,Arial,sans-serif}.txbar button svg [fill="currentColor"]{fill:#fff;stroke:none}

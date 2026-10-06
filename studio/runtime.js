@@ -510,6 +510,16 @@ window.AMRT = (function () {
     return n;
   }
   var FX_RAD = { fxh: '4%/7%', fxg: '5%/9%', fxcd: '3%/6%', fxq: '1cqh', 'fx-panel': '1.2cqh' }; /* mesmos cantos do runtime.css (.fxh, .fxg, .fxcd, .fxq, .fx-panel) */
+  /* S27: número do slide (deck.num = {on, pos, from}) — gravado em cada slide como _num (não enumerável: não vai para o JSON) por stampNums;
+     editor, miniaturas, player e exportações desenham a partir daí. map[i] = posição original do i-ésimo slide (player só com os visíveis) */
+  function stampNums(deck, map) {
+    var on = !!(deck && deck.num && deck.num.on === true), pos = on && /^(tl|tr|bl|br)$/.test(deck.num.pos) ? deck.num.pos : 'br', from = on && isFinite(+deck.num.from) ? Math.max(0, +deck.num.from | 0) : 1;
+    (deck && deck.slides || []).forEach(function (s, i) {
+      if (!s || typeof s !== 'object') return;
+      if (on) Object.defineProperty(s, '_num', { value: { n: (map ? map[i] : i) + from, pos: pos }, enumerable: false, configurable: true, writable: true });
+      else if (s._num) delete s._num;
+    });
+  }
   function renderSlide(slide, opts) {
     opts = opts || {};
     var st = document.createElement('div');
@@ -517,6 +527,7 @@ window.AMRT = (function () {
     st.style.background = slide.bg || '#FFFFFF';
     if (slide.bgImg) { var bi = document.createElement('div'); bi.className = 'am-bgimg'; bi.style.backgroundImage = 'url("' + slide.bgImg + '")'; bi.style.opacity = slide.bgImgOp == null ? 1 : slide.bgImgOp; st.appendChild(bi); }
     (slide.els || []).forEach(function (el, i) { st.appendChild(renderEl(el, i)); });
+    if (slide._num && slide._num.n != null) { var nm = document.createElement('div'); nm.className = 'am-num am-num-' + slide._num.pos + (isDark(slide.bg) ? ' dk' : ''); nm.setAttribute('aria-hidden', 'true'); nm.textContent = String(slide._num.n); st.appendChild(nm); }
     if (API.palSweep) API.palSweep();
     if (opts.play) st.querySelectorAll('.am-el[data-in=words] .am-tx').forEach(splitWords);
     return st;
@@ -647,6 +658,7 @@ window.AMRT = (function () {
     var all = deck.slides || [], map = [], vis = [];
     all.forEach(function (s, i) { if (opts.showHidden || !s || s.hidden !== true) { vis.push(s); map.push(i); } });
     if (!vis.length) { vis = all.slice(); map = all.map(function (s, i) { return i; }); }
+    stampNums({ num: deck.num, slides: vis }, map); /* S27: número do slide = posição original (como no PowerPoint), mesmo com ocultos */
     if (vis.length < all.length) { var dv = {}; Object.keys(deck).forEach(function (k) { dv[k] = deck[k]; }); dv.slides = vis; deck = dv; }
     /* início pedido num slide oculto: o próximo visível (senão o anterior) */
     function visIdx(i) { i = +i || 0; for (var k = 0; k < map.length; k++) if (map[k] >= i) return k; return map.length - 1; }
@@ -766,7 +778,7 @@ window.AMRT = (function () {
   function fxLabel(el) { var F = el && FX[el.kind]; return (F && (typeof F.label === 'function' ? F.label(el) : F.name)) || 'Elemento'; }
   var API = { W: W, H: H, FX: FX, FONTS: FONTS, shapeBody: shapeBody, lineSVG: lineSVG, renderEl: renderEl, renderSlide: renderSlide, runFx: runFx, lineBox: lineBox, player: player, esc: esc,
     /* título do slide (índice, resumo, “Ampliar”), elementos ampliáveis de um slide, nome de um elemento fx e texto simples de um HTML guardado */
-    slideTitle: slideTitle, zoomables: zoomables, flipOK: flipOK, fxLabel: fxLabel, plain: plain, isDark: isDark,
+    slideTitle: slideTitle, zoomables: zoomables, flipOK: flipOK, fxLabel: fxLabel, plain: plain, isDark: isDark, stampNums: stampNums,
     /* capítulos (linha do tempo e índice), divisor de um slide, resumo automático (“Sobre este slide”) e textos livres de el.data */
     sectionsOf: sectionsOf, dividerOf: dividerOf, autoNotes: autoNotes, dataStrings: dataStrings,
     /* vocabulário de animações (entrada, contínuo, mouse, transição; extensões podem acrescentar famílias, ex.: emph) e inclinação 3D por cursor */
