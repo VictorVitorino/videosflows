@@ -53,6 +53,8 @@ Localizar e substituir (S27b): **Ctrl/⌘+F** or **Ctrl+H** open the floating pa
 
 Organizar (S27a, editor, nothing selected in a field): **Ctrl/⌘+G** group the selection, **Ctrl+Shift+G** ungroup, **Ctrl+Shift+L** lock/unlock, **Ctrl+Alt+C** copy format, **Ctrl+Alt+V** paste format (Ctrl+Shift+C/V are left to the browser's DevTools). A click on a group member selects the group; a second click on a member selects only it. Locked elements ignore drag, arrows, resize, rotate, flip and Delete.
 
+Slides institucionais (S34, editor): no new keys — “+ Novo slide” › Institucional A&M, Slide › Inserir bloco pronto ▸, Inserir › Marca A&M ▸, or the panel button; one Ctrl+Z removes the block; the import report's “Usar os modelos oficiais” is one Ctrl+Z too.
+
 Slides de uma planilha (S33, editor): no new keys — Slide › Gerar slides de uma planilha (CSV)…; inside the box Esc closes, Tab cycles, Enter in the paste area adds a line (never generates), the Gerar button generates.
 
 Conectores presos (S32, editor): drag a line end near a shape to bind it (side midpoint or automatic); **Alt** while dragging = do not bind; **Shift** still snaps the angle; moving the line alone unbinds it. No new keys.

@@ -4,11 +4,11 @@
 {
 "type": "shape",
 "shape": "rect",
-"x": 985,
+"x": 1123,
 "y": 0,
-"w": 295,
+"w": 157,
 "h": 720,
-"fill": "#03213D",
+"fill": "#042140",
 "stroke": "none",
 "strokeW": 0,
 "html": "",
@@ -16,16 +16,31 @@
 "opacity": 1
 },
 {
+"type": "shape",
+"shape": "rtri",
+"x": 727,
+"y": 0,
+"w": 396,
+"h": 720,
+"fill": "#042140",
+"stroke": "none",
+"strokeW": 0,
+"html": "",
+"radius": 0,
+"opacity": 1,
+"flipH": true
+},
+{
 "type": "brand",
 "key": "wmW",
-"x": 1112,
-"y": 15,
-"h": 19
+"x": 1111.4,
+"y": 14.5,
+"h": 20.7
 },
 {
 "type": "text",
 "x": 240,
-"y": 85,
+"y": 84.5,
 "w": 800,
 "h": 30,
 "html": "Esferas de atuação da <b>Alvarez &amp; Marsal</b>",
@@ -44,13 +59,13 @@
 "y1": 131,
 "x2": 1059,
 "y2": 131,
-"stroke": "#A3B8D6",
+"stroke": "#AFC8DE",
 "strokeW": 2
 },
 {
 "type": "text",
 "x": 40,
-"y": 201,
+"y": 200.5,
 "w": 240,
 "h": 112,
 "html": "Infra &amp;<br>Capital Projects",
@@ -66,7 +81,7 @@
 {
 "type": "text",
 "x": 284,
-"y": 201,
+"y": 200.5,
 "w": 240,
 "h": 112,
 "html": "Financial Advisory<br>&amp; Special<br>Situations (FASS)",
@@ -82,7 +97,7 @@
 {
 "type": "text",
 "x": 512,
-"y": 201,
+"y": 200.5,
 "w": 240,
 "h": 112,
 "html": "TAX",
@@ -98,7 +113,7 @@
 {
 "type": "text",
 "x": 748,
-"y": 201,
+"y": 200.5,
 "w": 240,
 "h": 112,
 "html": "Transaction<br>Advisory Group<br>(TAG)",
@@ -114,9 +129,39 @@
 {
 "type": "brand",
 "key": "perfW",
-"x": 1022,
-"y": 240,
-"h": 30
+"x": 1071,
+"y": 217,
+"w": 64,
+"h": 56,
+"crop": {
+"l": 0.0633,
+"r": 0.7941,
+"t": 0.1418,
+"b": 0.1642
+}
+},
+{
+"type": "line",
+"x1": 1072,
+"y1": 280,
+"x2": 1134,
+"y2": 280,
+"stroke": "#C5D8DF",
+"strokeW": 1.4
+},
+{
+"type": "brand",
+"key": "perfW",
+"x": 1071,
+"y": 286,
+"w": 64,
+"h": 6.3,
+"crop": {
+"l": 0.2624,
+"r": 0.0565,
+"t": 0.4627,
+"b": 0.1567
+}
 },
 {
 "type": "line",
@@ -124,7 +169,7 @@
 "y1": 328,
 "x2": 1211,
 "y2": 328,
-"stroke": "#7A9CBC",
+"stroke": "#7399B8",
 "strokeW": 2
 },
 {
@@ -141,11 +186,11 @@
 "align": "left",
 "valign": "top",
 "lh": 1.255,
-"ls": 0.015
+"ls": 0.02
 },
 {
 "type": "text",
-"x": 318,
+"x": 317,
 "y": 365,
 "w": 186,
 "h": 200,
@@ -157,7 +202,7 @@
 "align": "left",
 "valign": "top",
 "lh": 1.44,
-"ls": 0.015
+"ls": 0.02
 },
 {
 "type": "text",
@@ -173,7 +218,7 @@
 "align": "left",
 "valign": "top",
 "lh": 1.44,
-"ls": 0.015
+"ls": 0.02
 },
 {
 "type": "text",
@@ -189,13 +234,13 @@
 "align": "left",
 "valign": "top",
 "lh": 1.44,
-"ls": 0.015
+"ls": 0.02
 },
 {
 "type": "text",
 "x": 1028,
 "y": 365,
-"w": 176,
+"w": 180,
 "h": 280,
 "html": "<b>Foco em gestão para ajudar empresas a aprimorarem seu planejamento e alcançarem seus objetivos</b>. Com um olhar estratégico, transformamos situações complexas em resultados positivos",
 "font": "Roboto Condensed",
@@ -205,7 +250,7 @@
 "align": "left",
 "valign": "top",
 "lh": 1.44,
-"ls": 0.015
+"ls": 0.02
 },
 {
 "type": "line",
@@ -213,25 +258,25 @@
 "y1": 224,
 "x2": 78,
 "y2": 86,
-"stroke": "#F78C16",
-"strokeW": 1
+"stroke": "#90805F",
+"strokeW": 1.1
 },
 {
 "type": "line",
-"x1": 1192,
+"x1": 1191,
 "y1": 290,
-"x2": 1280,
-"y2": 132,
-"stroke": "#FFFFFF",
+"x2": 1279,
+"y2": 133,
+"stroke": "#EBF3F9",
 "strokeW": 3
 },
 {
 "type": "line",
-"x1": 709,
+"x1": 708,
 "y1": 720,
-"x2": 807,
-"y2": 545,
-"stroke": "#F78C16",
+"x2": 808,
+"y2": 546,
+"stroke": "#F29A50",
 "strokeW": 3
 }
 ]

@@ -1,7 +1,7 @@
 /* ===== ed-45-institucional.js — Slides institucionais A&M (S34; só no editor) =====
    Os cinco slides institucionais (capa “Somos a A&M Performance”, presença global, clientes, esferas de atuação, cadeia de valor)
    nascem de specs JSON (inst/*.json, medidos contra as imagens de referência com tools/inst-check.js) que o assemble.py embute aqui
-   em /*%%INST_SPECS%%*/. Cada um vira um layout OCULTO do editor (LAYOUTS['inst-…'], hidden: fora do seletor de layouts) e os cinco
+   no lugar do marcador INST_SPECS (comentário + null, logo abaixo). Cada um vira um layout OCULTO do editor (LAYOUTS['inst-…'], hidden: fora do seletor de layouts) e os cinco
    formam o bloco “Institucional A&M” (SEQS, primeiro; também como tile no seletor “Novo slide”, em Marca A&M ▸ e no painel do slide).
    Os slides são editáveis como qualquer outro (textos, linhas, logos); mapa, clientes e cadeia de valor usam a arte oficial como
    imagem de fundo (os textos variáveis ficam por cima, editáveis). O kit de marca (S29) não mexe neles.
