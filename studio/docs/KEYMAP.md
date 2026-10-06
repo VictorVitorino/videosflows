@@ -53,6 +53,8 @@ Localizar e substituir (S27b): **Ctrl/⌘+F** or **Ctrl+H** open the floating pa
 
 Organizar (S27a, editor, nothing selected in a field): **Ctrl/⌘+G** group the selection, **Ctrl+Shift+G** ungroup, **Ctrl+Shift+L** lock/unlock, **Ctrl+Alt+C** copy format, **Ctrl+Alt+V** paste format (Ctrl+Shift+C/V are left to the browser's DevTools). A click on a group member selects the group; a second click on a member selects only it. Locked elements ignore drag, arrows, resize, rotate, flip and Delete.
 
+Formulário (S30, in the player): inside an answer box the player keys are off (typing, Space, arrows); **Enter** in a short answer moves to the next field, **Shift+Enter** / Enter in a long answer breaks the line; **Enter/Space** on a focused option, rating or button activates it (never navigates); Esc still closes layers.
+
 Kit de marca (S29): no new keys — Arquivo › **Kit de marca…** or the **Kit de marca…** button in the slide panel (Fundo) open the box; inside it **Esc** closes (with “Mais cores…” open, Esc closes only the pop), **Tab** cycles, **Enter** in the codes field adds the colours and in the name field saves it (never submits/closes); every action is one **Ctrl+Z** step once the box is closed.
 
 Text editing (S26, inside the contenteditable): **Ctrl/⌘+B / I / U** bold, italic, underline; **Ctrl+Shift+8** bulleted list, **Ctrl+Shift+7** numbered list; Esc ends the edit. The floating bar `#txBar` adds strike, A−/A+, colour, marker, alignment and clear. All other keys inside the text stay with the browser (native undo included).

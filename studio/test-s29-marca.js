@@ -60,12 +60,12 @@ async function menuItems(p, m){ await p.click('#mbar button[data-m='+m+']'); awa
   await p.selectOption('#bkFont','Montserrat'); await sleep(300); br=await BR();
   const lk=await p.evaluate(()=>{ const l=document.querySelector('link[data-gf="Montserrat"]'); return l?l.href:null; });
   check('S29-09: fonte do kit = Montserrat (Google): deck.brand.font e <link> da fonte entram sob demanda', br.font==='Montserrat' && !!lk && /family=Montserrat:wght@300;400;500;600;700/.test(lk) && /Montserrat/.test(await p.$eval('#bkFontNote',e=>e.textContent)), {font:br.font,lk});
-  const nf=await p.evaluate(()=>{ const A=AMStudio; const t=A.mk.text('body'), s=A.mk.shape('rect'), sl=A.mk.slide('content'); return {t:t.font, s:s.font, slide:sl.els.filter(e=>e.type==='text').map(e=>e.font)}; });
-  check('S29-10: textos, formas e slides novos nascem com a fonte do kit', nf.t==='Montserrat' && nf.s==='Montserrat' && nf.slide.length>0 && nf.slide.every(f=>f==='Montserrat'), nf);
+  const nf=await p.evaluate(()=>{ const A=AMStudio; const snap=JSON.stringify(A.deck); const t=A.brand.kitify(A.mk.text('body')), s=A.brand.kitify(A.mk.shape('rect')), pure=A.mk.text('body').font; A.addSlide('content'); const sl=A.deck.slides[A.cur]; const out={t:t.font, s:s.font, pure, slide:sl.els.filter(e=>e.type==='text').map(e=>e.font), base:Object.keys(sl.base.els).map(k=>sl.base.els[k].font)}; A.loadDeck(JSON.parse(snap),null,true,true); return out; });
+  check('S29-10: o que se insere (texto, forma, slide novo — e a base do Redefinir) nasce com a fonte do kit; mk.* continuam puros (modelos e outras obras)', nf.t==='Montserrat' && nf.s==='Montserrat' && nf.pure==='Inter' && nf.slide.length>0 && nf.slide.every(f=>f==='Montserrat') && nf.base.filter(Boolean).every(f=>f==='Montserrat'), nf);
   /* ---------- 4. cores dos componentes (pal) ---------- */
   await p.click('#bkP'); await sleep(250); await p.fill('.cpop .cp-hex','#1F8048'); await p.click('.cpop .cp-ok'); await sleep(250); br=await BR();
-  const nfx=await p.evaluate(()=>{ const A=AMStudio; const c=A.mk.fx('columns'), i=A.mk.fx('icon'); return {c:c.pal||null, i:i.pal||null}; });
-  check('S29-11: cor principal #1F8048 gravada no kit; componentes novos (gráfico) nascem com pal; ícones não', JSON.stringify(br.pal)==='{"p":"#1F8048"}' && JSON.stringify(nfx.c)==='{"p":"#1F8048"}' && nfx.i===null, {pal:br.pal,nfx});
+  const nfx=await p.evaluate(()=>{ const A=AMStudio; const c=A.insertFx('columns'), i=A.brand.kitify(A.mk.fx('icon')), pure=A.mk.fx('columns'); A.selectMany([]); return {c:c.pal||null, i:i.pal||null, pure:pure.pal||null}; });
+  check('S29-11: cor principal #1F8048 gravada no kit; um gráfico inserido nasce com pal; ícones não; mk.fx continua puro', JSON.stringify(br.pal)==='{"p":"#1F8048"}' && JSON.stringify(nfx.c)==='{"p":"#1F8048"}' && nfx.i===null && nfx.pure===null, {pal:br.pal,nfx});
   await p.click('#bkA'); await sleep(250); await p.click('.cpop .cp-s[data-c="#F78C16"]'); await sleep(250); br=await BR();
   check('S29-12: escolher o laranja A&M como destaque = sem troca (a chave não entra)', JSON.stringify(br.pal)==='{"p":"#1F8048"}', br.pal);
   await p.keyboard.press('Escape'); await sleep(250);
