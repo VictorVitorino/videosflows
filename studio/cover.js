@@ -359,7 +359,7 @@
         sl('#FFFFFF', head('01 · SEU CONTEÚDO', 'Comece aqui a sua apresentação', 'Os cinco slides anteriores são o bloco institucional oficial — este é o primeiro slide do seu conteúdo.').concat([
           T('subtitle', { x: 54, y: 190, w: 560, h: 30, html: 'Como usar este modelo', size: 22, anim: fade(200) }),
           T('bullets', { x: 54, y: 230, w: 580, h: 230, html: '• Textos, logos e indicadores dos 5 slides são editáveis<br>• Troque este slide pelo seu conteúdo (Novo slide, Modelos)<br>• Em outra apresentação, use o botão <b>Institucional A&amp;M</b> da barra<br>• Um Ctrl+Z desfaz a inserção do bloco', size: 18, lh: 1.65, color: '#3E4C5E', anim: rise(300) }),
-          F('card', { x: 680, y: 194, w: 546, h: 266, data: { tag: 'Padrão oficial', title: 'O institucional não quebra', text: 'Capa, presença global, clientes, esferas de atuação e cadeia de valor entram sempre no modelo oficial — também ao importar um .pptx, pelo botão “Usar os modelos oficiais”.', style: 'ice' }, anim: rise(500) }),
+          F('card', { x: 680, y: 194, w: 546, h: 266, data: { tag: 'Padrão oficial', title: 'O institucional não quebra', text: 'Capa, presença global, clientes, esferas e cadeia de valor seguem sempre o modelo oficial — também ao importar um .pptx.', style: 'ice' }, anim: rise(500) }),
           src('Modelo institucional A&M Performance · substitua este slide pelo seu conteúdo.')])),
         fim('Obrigado.', '', 'A&M Performance · nome@alvarezandmarsal.com')]) };
     } });

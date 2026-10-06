@@ -39,6 +39,7 @@
   });
   if (!A.SEQS.some(function (s) { return s[0] === 'inst'; })) A.SEQS.unshift(['inst', 'Institucional A&M', ORDER.map(KEY), true]);
   if (A.rebuildSlidePicker) A.rebuildSlidePicker();
+  if (A.renderAll) A.renderAll(); /* S34b: o editor já desenhou o painel antes deste script; redesenha para a seção “Slides institucionais A&M” existir no primeiro render (sem commit/histórico) */
   /* ---------- reconhecimento de slides importados ---------- */
   var SIG = { cover: /^somos a a ?m performance/, map: /^fazemos parte da alvarez marsal/, clients: /^clientes de diferentes portes perfis e segmentos/, spheres: /^esferas de atuacao da alvarez marsal/, chain: /melhorias especificas nas atividades primarias|evolucoes que reinventam negocios/ };
   function norm(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(); }

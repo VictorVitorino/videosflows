@@ -35,6 +35,8 @@ async function fidelity(p, idx, refFile){ return p.evaluate(async ([i,ref])=>{ c
   const ctx=await b.newContext({viewport:{width:1280,height:720},acceptDownloads:true});
   const p=await open(ctx, FILE+'?nocover', 'ed');
   const D=()=>p.evaluate(()=>JSON.parse(JSON.stringify(AMStudio.deck)));
+  const first=await p.evaluate(()=>{ const b=document.querySelector('#props [data-act="inst"]'); const r=b&&b.getBoundingClientRect(); return {btn:!!b, vis:!!r&&r.top>=0&&r.bottom<=innerHeight, bar:!document.getElementById('bInst').hidden}; });
+  check('S34-28: no primeiro render (antes de qualquer clique) o painel já traz a seção “Slides institucionais A&M” com o botão à vista e a barra mostra o botão Institucional', first.btn && first.vis && first.bar, first);
   /* ---------- 1. registro ---------- */
   const reg=await p.evaluate(()=>{ const A=AMStudio; const L=A.LAYOUTS; const inst=Object.keys(L).filter(k=>/^inst-/.test(k)); return {inst, hidden:inst.every(k=>L[k].hidden===true&&L[k].inst), vis:Object.keys(L).filter(k=>!L[k].hidden).length, seq:A.SEQS[0], api:!!(window.AMInst&&AMInst.scan&&AMInst.replace), names:inst.map(k=>L[k].name)}; });
   check('S34-01: os 5 layouts institucionais existem, ocultos do seletor (13 visíveis), o bloco “Institucional A&M” é o primeiro dos blocos prontos e a API AMInst está presente', reg.inst.join()==='inst-cover,inst-map,inst-clients,inst-spheres,inst-chain' && reg.hidden && reg.vis===13 && reg.seq && reg.seq[0]==='inst' && reg.seq[2].length===5 && reg.seq[3]===true && reg.api, reg);

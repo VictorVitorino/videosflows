@@ -177,12 +177,14 @@ async function stageCheck(p, sel){
   await p.keyboard.press('Escape'); await sleep(300); const ev2=await p.evaluate(()=>({pres:document.querySelector('#presenter').classList.contains('open'), on:!!document.querySelector('#presenter .amp-zm.on')}));
   await p.keyboard.press('Escape'); await sleep(400); const ev3=await p.evaluate(()=>document.querySelector('#presenter').classList.contains('open'));
   check('S05-21: “Ver ampliado na apresentação” abre o modo apresentação já com a cascata ampliada (cabeçalho = título do slide, 1 / 2); Esc fecha só a camada; o 2º Esc sai da apresentação', ev.pres&&ev.on&&/Cascata/.test(ev.e)&&ev.t==='Ponte de valor 2024 → 2025'&&ev.n==='1 / 2'&&ev2.pres&&!ev2.on&&ev3===false, {ev,ev2,ev3});
+  await p.setViewportSize({width:1366,height:768}); await sleep(300);
+  const ovL=await p.evaluate(()=>{const rb=document.getElementById('rib'); return {rib:rb.scrollWidth<=rb.clientWidth, lbl:getComputedStyle(document.querySelector('#bCharts .lbs')).display!=='none'};}); /* S34b: o rótulo curto de Gráficos aparece a partir de 1301 px (até 1300 só o ícone, para caber o botão Institucional) */
   await p.setViewportSize({width:1280,height:720}); await sleep(300);
-  const ov=await p.evaluate(()=>{const t=document.getElementById('top'); const r=document.getElementById('bSave').getBoundingClientRect(); const rb=document.getElementById('rib'); return {top:t.scrollWidth<=t.clientWidth, save:r.right<=innerWidth, rib:rb.scrollWidth<=rb.clientWidth, lbl:getComputedStyle(document.querySelector('#bCharts .lbs')).display!=='none'};});
+  const ov=await p.evaluate(()=>{const t=document.getElementById('top'); const r=document.getElementById('bSave').getBoundingClientRect(); const rb=document.getElementById('rib'); return {top:t.scrollWidth<=t.clientWidth, save:r.right<=innerWidth, rib:rb.scrollWidth<=rb.clientWidth, lbl:getComputedStyle(document.querySelector('#bCharts .lbs')).display==='none', title:!!document.getElementById('bCharts').title};});
   await p.setViewportSize({width:1180,height:720}); await sleep(300);
   const ov2=await p.evaluate(()=>{const rb=document.getElementById('rib'); return {rib:rb.scrollWidth<=rb.clientWidth, lbl:getComputedStyle(document.querySelector('#bCharts .lbs')).display==='none', title:!!document.getElementById('bCharts').title};});
   await p.setViewportSize({width:1440,height:900}); await sleep(300);
-  check('S05-22: com “Gráficos ▾” a barra de ferramentas cabe em 1280 (rótulo curto) e em 1180 (só o ícone, dica no title); barra superior sem estouro', ov.top&&ov.save&&ov.rib&&ov.lbl&&ov2.rib&&ov2.lbl&&ov2.title, {ov,ov2});
+  check('S05-22: com “Gráficos ▾” a barra de ferramentas cabe em 1366 (rótulo curto), em 1280 e em 1180 (só o ícone, dica no title); barra superior sem estouro', ovL.rib&&ovL.lbl&&ov.top&&ov.save&&ov.rib&&ov.lbl&&ov.title&&ov2.rib&&ov2.lbl&&ov2.title, {ovL,ov,ov2});
 
   /* ---------- 9. arquivo exportado: gráficos e “Ampliar” ---------- */
   const html=await p.evaluate(()=>AMStudio.exportHTML()); const f=path.join(TMP,'s05.html'); fs.writeFileSync(f,html);
