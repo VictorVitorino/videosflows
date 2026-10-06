@@ -136,6 +136,9 @@
       line: ['x1', 'y1', 'x2', 'y2', 'bend', 'curve', 'stroke', 'strokeW', 'dash', 'headS', 'headE', 'headStart', 'headEnd', 'dashS'] },
     SNAP_B = { flipH: 1, flipV: 1, italic: 1, upper: 1, dash: 1, shadow: 1, headStart: 1, headEnd: 1 }, /* booleanos: só true é guardado */
     SNAP_REQ = { x: 1, y: 1, w: 1, h: 1, x1: 1, y1: 1, x2: 1, y2: 1 }, PH_MAX = 200, PH_RE = /^p\d{1,3}$/;
+  /* fontes do painel; uma fonte importada (PowerPoint/PDF) que não é do Canteiro aparece como opção extra, para não sumir do seletor */
+  var FONT_OPTS = [['Roboto', 'Roboto (A&M)'], ['Roboto Condensed', 'Roboto Condensed'], ['Inter', 'Inter'], ['JetBrains Mono', 'JetBrains Mono']];
+  function fontOpts(cur) { var known = FONT_OPTS.some(function (o) { return o[0] === cur; }); return typeof cur === 'string' && cur && !known ? FONT_OPTS.concat([[cur, cur + ' (do arquivo importado)']]) : FONT_OPTS; }
   function fxStyleField(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return !!(F && Array.isArray(F.fields) && F.fields.some(function (f) { return f && f[0] === 'style'; })); }
   /* campos de escolha fechada do componente (sel:…, smartlayout): formato que “Redefinir” devolve — fonte/cor do título de impacto, cores das
      Linhas A&M, tipo do velocímetro, legenda da RACI… (os campos de texto e números ficam como estão: são conteúdo) */
@@ -572,6 +575,7 @@
   /* ícones de linha (menus, alinhamento) */
   var IC = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/>',
+    import: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
     file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/>',
     open: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     save: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
@@ -743,7 +747,7 @@
     }
     if (el.type === 'text' || el.type === 'shape') {
       h += '<div class="sec"><h3>Texto</h3>' + (el.type === 'text' ? '<div class="chips" style="margin-bottom:10px">' + ['title', 'subtitle', 'body', 'eyebrow'].map(function (k) { return '<button class="chip" data-act="preset-' + k + '">' + { title: 'Título', subtitle: 'Subtítulo', body: 'Corpo', eyebrow: 'Rótulo' }[k] + '</button>'; }).join('') + '</div>' : '') +
-        '<div class="row">' + fld('Fonte', selIn('font', el.font, [['Roboto', 'Roboto (A&M)'], ['Roboto Condensed', 'Roboto Condensed'], ['Inter', 'Inter'], ['JetBrains Mono', 'JetBrains Mono']])) + fld('Tamanho', num('size', el.size, 1, 6, 400)) + '</div>' +
+        '<div class="row">' + fld('Fonte', selIn('font', el.font, fontOpts(el.font))) + fld('Tamanho', num('size', el.size, 1, 6, 400)) + '</div>' +
         '<div class="row r1">' + seg('weight', el.weight || 400, [[300, 'Leve'], [400, 'Normal'], [500, 'Médio'], [700, 'Negrito']]) + '</div>' +
         '<div class="row">' + seg('align', el.align || 'left', [['left', svgI('ta-l'), 'Alinhar à esquerda'], ['center', svgI('ta-c'), 'Centralizar'], ['right', svgI('ta-r'), 'Alinhar à direita'], ['justify', svgI('ta-j'), 'Justificar']]) + vaSeg(el) + '</div>' +
         '<div class="chips" style="margin-bottom:10px">' + tog('italic', el.italic, 'Itálico') + tog('upper', el.upper, 'CAIXA ALTA') + '</div>' +
@@ -2703,6 +2707,7 @@
     var fs = Array.prototype.slice.call(dt.items || []).filter(function (i) { return i.kind === 'file'; }), types = Array.prototype.slice.call(dt.types || []);
     if (fs.some(function (i) { return /^image\//.test(i.type); })) return 'image';
     if (fs.some(function (i) { return /^(text\/html|application\/json)$/.test(i.type); })) return 'deck';
+    if (window.AMImport && fs.some(function (i) { return /presentationml\.presentation|application\/pdf/.test(i.type); })) return 'import'; /* S24: .pptx / .pdf */
     if (fs.length) return fs.some(function (i) { return !i.type; }) ? 'file' : 'other';
     if (types.indexOf('Files') >= 0) return 'file';
     if (types.indexOf('text/plain') >= 0) return 'text';
@@ -2714,12 +2719,13 @@
     e.preventDefault(); wrap.classList.remove('dragover'); var p = toLogical(e);
     var f = e.dataTransfer.files && e.dataTransfer.files[0];
     if (f && f.type.indexOf('image') === 0) { readImage(f, function (src, w, h) { var el = mkImage(src, w, h); el.x = Math.round(Math.max(0, Math.min(W - el.w, p.x - el.w / 2))); el.y = Math.round(Math.max(0, Math.min(H - el.h, p.y - el.h / 2))); addEl(el); }); return; }
+    if (f && window.AMImport && window.AMImport.isImportFile(f)) { if (editingId) endEdit(); flush(); window.AMImport.open(f); return; } /* S24 */
     if (f && isDeckFile(f)) {
       if (editingId) endEdit(); flush();
       if (isBlank()) openFile(f); else confirmBox({ eyebrow: 'Abrir', icon: 'open', title: 'Abrir “' + f.name + '”?', msg: 'A apresentação atual será substituída. ' + LOSE, ok: 'Abrir' }, function () { openFile(f); });
       return;
     }
-    if (f) { toast('Arquivo não suportado. Solte uma imagem ou uma apresentação .html salva.'); return; }
+    if (f) { toast('Arquivo não suportado. Solte uma imagem, uma apresentação .html salva' + (window.AMImport ? ', um PowerPoint (.pptx) ou um PDF' : '') + '.'); return; }
     var t = e.dataTransfer.getData('text/plain'), kv = t.slice(5).split(':'); if (t.indexOf('amfx:') === 0 && Object.prototype.hasOwnProperty.call(RT.FX, kv[0])) insertFx(kv[0], null, p, kv[1], dropData(kv));
   });
 
@@ -2855,7 +2861,7 @@
   var MENUS = {
     file: function () {
       return [{ t: 'Início (capa)', ic: 'home', fn: goHome }, { sep: 1 },
-        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
+        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
         { t: 'Salvar como PDF…', ic: 'pdf', fn: function () { exportAs('pdf'); } }, { t: 'Salvar como PowerPoint…', ic: 'ppt', dis: !pptxOk(), tip: pptxOk() ? '' : PPTX_SOON, fn: function () { exportAs('pptx'); } }, { sep: 1 },
         { t: 'Apresentar', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { sep: 1 },
         { t: 'Recomeçar apresentação…', ic: 'reset', fn: askReset }];
@@ -3021,6 +3027,17 @@
     if (isBlank()) { pick(); return; }
     confirmBox({ eyebrow: 'Abrir', icon: 'open', title: 'Abrir outra apresentação?', msg: 'A apresentação atual será substituída. ' + LOSE, ok: 'Escolher arquivo' }, pick);
   }
+  /* S24: importar PowerPoint/PDF (ed-42-import.js): a caixa de importação decide entre substituir e acrescentar */
+  function importPicker() { if (editingId) endEdit(); flush(); closeMenus(); if (window.AMImport) window.AMImport.pick($('#mbar button[data-m=file]')); else toast('Importação indisponível'); }
+  /* slides importados entram no fim, validados como um arquivo aberto (safeSlide), com base para “Redefinir”; um passo de Ctrl+Z */
+  function appendSlides(list) {
+    if (editingId) endEdit(); flush();
+    var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
+    if (!ins.length) return 0;
+    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); renderAll(); commit();
+    var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
+    return ins.length;
+  }
   function newPresentation() {
     function go() { loadDeck(newDeck(), 'Nova apresentação em branco'); try { localStorage.removeItem('amStudio.draft'); } catch (e) { } }
     if (editingId) endEdit(); flush();
@@ -3155,7 +3172,7 @@
     /* API estável para a capa (cover.js) e extensões */
     W: W, H: H, BRAND: BRAND, LAYOUTS: LAYOUTS, uid: uid, clone: clone, toast: toast,
     mk: { slide: mkSlide, text: mkText, shape: mkShape, line: mkLine, image: mkImage, brand: mkBrand, fx: mkFx },
-    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); },
+    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },

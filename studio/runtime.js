@@ -5,6 +5,8 @@ window.AMRT = (function () {
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function P(v, t) { return (v / t * 100).toFixed(4) + '%'; }
   function CQ(v) { return (v / W * 100).toFixed(4) + 'cqw'; }
+  /* fonte fora da lista (arquivo importado do PowerPoint/PDF): usa a fonte instalada no computador de quem vê, com a pilha padrão de reserva */
+  function fontStack(name, dflt) { if (FONTS[name]) return FONTS[name]; return typeof name === 'string' && /^[\w][\w\s.-]{0,39}$/.test(name) ? "'" + name + "'," + dflt : dflt; }
   var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace" };
   function fmt(v, dec) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
   function lines(s) { return String(s || '').split(/\n|;/).map(function (x) { return x.trim(); }).filter(Boolean); }
@@ -66,7 +68,7 @@ window.AMRT = (function () {
   }
   function textHTML(el, inShape) {
     var va = { top: 'flex-start', middle: 'center', bottom: 'flex-end' }[el.valign || (inShape ? 'middle' : 'top')];
-    var st = ['font-family:' + (FONTS[el.font] || FONTS.Inter), 'font-size:' + CQ(el.size || 24), 'font-weight:' + (el.weight || 400), 'color:' + (el.color || '#002A46'), 'text-align:' + (el.align || (inShape ? 'center' : 'left')), 'line-height:' + (el.lh || 1.2), 'letter-spacing:' + (+el.ls || 0) + 'em', 'justify-content:' + va];
+    var st = ['font-family:' + fontStack(el.font, FONTS.Inter), 'font-size:' + CQ(el.size || 24), 'font-weight:' + (el.weight || 400), 'color:' + (el.color || '#002A46'), 'text-align:' + (el.align || (inShape ? 'center' : 'left')), 'line-height:' + (el.lh || 1.2), 'letter-spacing:' + (+el.ls || 0) + 'em', 'justify-content:' + va];
     if (el.italic) st.push('font-style:italic');
     if (el.upper) st.push('text-transform:uppercase');
     if (!inShape && el.bg && el.bg !== 'none') st.push('background:' + el.bg, 'padding:' + CQ(16), 'border-radius:' + CQ(+el.radius || 0));
@@ -168,7 +170,7 @@ window.AMRT = (function () {
       html: function (d) {
         var ws = String(d.text || '').split(/\s+/).filter(Boolean), hl = String(d.hl || '').toLowerCase().replace(/[^\wÀ-ú]/g, ''), n = -1;
         var out = ws.map(function (wd, k) { var on = hl && wd.toLowerCase().replace(/[^\wÀ-ú]/g, '') === hl; if (on && n < 0) n = k; return '<span class="fxhl-w' + (on ? ' fxhl-hl' : '') + '" style="--i:' + k + '">' + esc(wd) + '</span>'; }).join(' ');
-        return '<div class="fx fxhl" style="--n:' + Math.max(0, n) + ';font-family:' + (FONTS[d.font] || FONTS.Roboto) + ';font-weight:' + (d.weight || 300) + ';font-size:' + CQ(+d.size || 60) + ';line-height:1.08;letter-spacing:-.02em;color:' + colOr(d.color, '#002A46') + '"><div>' + out + '</div></div>';
+        return '<div class="fx fxhl" style="--n:' + Math.max(0, n) + ';font-family:' + fontStack(d.font, FONTS.Roboto) + ';font-weight:' + (d.weight || 300) + ';font-size:' + CQ(+d.size || 60) + ';line-height:1.08;letter-spacing:-.02em;color:' + colOr(d.color, '#002A46') + '"><div>' + out + '</div></div>';
       }
     },
     card: {
