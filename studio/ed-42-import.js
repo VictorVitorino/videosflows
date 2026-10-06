@@ -647,6 +647,7 @@
       return (th ? pkg.xml(th) : Promise.resolve(null)).then(function (tdoc) {
         var root = doc.documentElement, cSld = kid(root, 'cSld'), tree = kid(cSld, 'spTree');
         var m = { path: p, rels: rels, theme: readTheme(tdoc), clrMap: readClrMap(kid(root, 'clrMap')), txStyles: kid(root, 'txStyles'), ph: [], tree: tree, cSld: cSld, doc: doc };
+        if (!ctx.theme0) ctx.theme0 = m.theme; /* S29: o tema do primeiro mestre vira o kit de marca da obra importada */
         kids(tree).forEach(function (n) { var ph = phInfo(n); if (ph) m.ph.push({ type: ph.type, idx: ph.idx, sp: n }); });
         return m;
       });
@@ -830,8 +831,16 @@
     var name = String(file && file.name || 'apresentacao').replace(/\.(pptx|pdf)$/i, ''), title = (res.title || name).slice(0, 160);
     var rep = report(ctx, slides);
     if (opts.mode === 'append') { var n = A.appendSlides(slides); rep.added = n; rep.replaced = false; }
-    else { var d = A.newDeck(); d.title = title; d.slides = slides; if (!A.loadDeck(d, null)) throw new Error('a apresentação lida não passou na validação'); rep.added = A.deck.slides.length; rep.replaced = true; }
+    else { var d = A.newDeck(); d.title = title; d.slides = slides; var bk = brandOf(ctx, name); if (bk) d.brand = bk; if (!A.loadDeck(d, null)) throw new Error('a apresentação lida não passou na validação'); rep.added = A.deck.slides.length; rep.replaced = true; }
     return rep;
+  }
+  /* S29: kit de marca a partir do tema do arquivo (acentos, dk2, lt2, dk1, sem o branco) e a fonte de corpo do tema; só ao substituir a obra */
+  function brandOf(ctx, name) {
+    var th = ctx.theme0; if (!th) return null; var c = th.colors || {}, cols = [], seen = {};
+    ['accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6', 'dk2', 'lt2', 'dk1'].forEach(function (k) { var h = typeof c[k] === 'string' ? c[k].toUpperCase() : ''; if (/^#[0-9A-F]{6}$/.test(h) && !seen[h] && h !== '#FFFFFF' && cols.length < 12) { seen[h] = 1; cols.push(h); } });
+    var fw = th.min ? famWeight(th.min) : null, font = fw && fw.family && /^[\w\s.%-]{1,40}$/.test(fw.family) ? fw.family : null;
+    if (!cols.length && !font) return null;
+    var b = { name: ('Tema de ' + String(name || 'arquivo')).slice(0, 60) }; if (cols.length) b.colors = cols; if (font) b.font = font; return b;
   }
   var WARN = { imgFmt: 'imagem em formato que o navegador não desenha (EMF/WMF/TIFF): ficou de fora', imgExt: 'imagem ligada a um arquivo externo: ficou de fora', chartKind: 'gráfico de tipo sem equivalente: virou um quadro “não importado”', smartNoDraw: 'SmartArt sem desenho gravado no arquivo: virou um quadro “não importado”', objUnknown: 'objeto incorporado sem imagem de reserva: virou um quadro “não importado”', slideBad: 'slide que não pôde ser lido: pulado' };
   function report(ctx, slides) {
@@ -842,7 +851,8 @@
     if (c.smart) lines.push(c.smart + ' formas de SmartArt'); if (c.notes) lines.push(c.notes + (c.notes === 1 ? ' slide com anotações' : ' slides com anotações'));
     if (c.approx) warns.push(c.approx + (c.approx === 1 ? ' forma sem equivalente virou retângulo' : ' formas sem equivalente viraram retângulos') + ' (mesmo lugar, cor e texto)');
     Object.keys(ctx.warn).forEach(function (k) { if (WARN[k]) warns.push(ctx.warn[k] + '× ' + WARN[k]); });
-    var fonts = Object.keys(ctx.fonts).filter(function (f) { return !FONTS_OK[f]; }).sort(function (a, b) { return ctx.fonts[b] - ctx.fonts[a]; });
+    var GF = S() && S().brand && S().brand.GFONTS || {}; /* S29: fontes do Google que o Canteiro carrega sob demanda não faltam */
+    var fonts = Object.keys(ctx.fonts).filter(function (f) { return !FONTS_OK[f] && !GF[f]; }).sort(function (a, b) { return ctx.fonts[b] - ctx.fonts[a]; });
     if (fonts.length) warns.push('fontes do arquivo que o Canteiro não traz: ' + fonts.slice(0, 5).join(', ') + (fonts.length > 5 ? '…' : '') + ' — usam a fonte instalada no computador; sem ela, Inter (as quebras de linha podem mudar)');
     if (c.charts) warns.push('gráficos viraram gráficos do Canteiro com os mesmos dados (o visual é o do Canteiro, editável no painel)');
     var hid = slides.filter(function (s) { return s.hidden; }).length; if (hid) lines.push(hid + (hid === 1 ? ' slide oculto' : ' slides ocultos'));

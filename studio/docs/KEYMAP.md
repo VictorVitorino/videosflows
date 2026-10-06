@@ -53,6 +53,8 @@ Localizar e substituir (S27b): **Ctrl/⌘+F** or **Ctrl+H** open the floating pa
 
 Organizar (S27a, editor, nothing selected in a field): **Ctrl/⌘+G** group the selection, **Ctrl+Shift+G** ungroup, **Ctrl+Shift+L** lock/unlock, **Ctrl+Alt+C** copy format, **Ctrl+Alt+V** paste format (Ctrl+Shift+C/V are left to the browser's DevTools). A click on a group member selects the group; a second click on a member selects only it. Locked elements ignore drag, arrows, resize, rotate, flip and Delete.
 
+Kit de marca (S29): no new keys — Arquivo › **Kit de marca…** or the **Kit de marca…** button in the slide panel (Fundo) open the box; inside it **Esc** closes (with “Mais cores…” open, Esc closes only the pop), **Tab** cycles, **Enter** in the codes field adds the colours and in the name field saves it (never submits/closes); every action is one **Ctrl+Z** step once the box is closed.
+
 Text editing (S26, inside the contenteditable): **Ctrl/⌘+B / I / U** bold, italic, underline; **Ctrl+Shift+8** bulleted list, **Ctrl+Shift+7** numbered list; Esc ends the edit. The floating bar `#txBar` adds strike, A−/A+, colour, marker, alignment and clear. All other keys inside the text stay with the browser (native undo included).
 
 Importar PowerPoint ou PDF (S24): no key; Arquivo › Importar… or drop a `.pptx`/`.pdf` on the slide. Inside the import dialog the same rules as the export dialogs apply (Esc cancels/closes, Tab stays inside, Ctrl+S/O/D/P/Z/Y and F1/F5 are swallowed).

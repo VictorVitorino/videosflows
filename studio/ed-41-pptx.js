@@ -86,11 +86,17 @@
   function rels(list) { return HDR + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + list.map(function (r) { return '<Relationship Id="' + r[0] + '" Type="' + (r[1].indexOf('http') === 0 ? r[1] : RN + r[1]) + '" Target="' + xe(r[2]) + '"/>'; }).join('') + '</Relationships>'; }
   var GRP0 = '<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>';
   var CLRMAP = '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>';
-  function theme(name) {
+  /* bk (S29, deck.brand): as cores do kit viram os acentos do tema (destaque primeiro, depois as cores da marca; o que faltar fica A&M),
+     a cor principal vira dk2 e a fonte do kit vira a fonte do tema — o seletor de cores e fontes do PowerPoint mostra a marca */
+  function theme(name, bk) {
     var c = function (k, v) { return '<a:' + k + '><a:srgbClr val="' + v + '"/></a:' + k + '>'; }, sf = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>';
-    return HDR + '<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="' + name + '"><a:themeElements><a:clrScheme name="Alvarez &amp; Marsal">' +
-      c('dk1', '002A46') + c('lt1', 'FFFFFF') + c('dk2', '13315C') + c('lt2', 'EEF2F7') + c('accent1', 'F78C16') + c('accent2', '002A46') + c('accent3', '4A6FA5') + c('accent4', '7EA1C3') + c('accent5', '43698F') + c('accent6', 'A3B8D6') + c('hlink', '4A6FA5') + c('folHlink', '7EA1C3') +
-      '</a:clrScheme><a:fontScheme name="Canteiro"><a:majorFont><a:latin typeface="Roboto"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Inter"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>' +
+    var H6 = function (x) { return typeof x === 'string' && /^#[0-9a-f]{6}$/i.test(x) ? x.slice(1).toUpperCase() : null; }, bc = bk && Array.isArray(bk.colors) ? bk.colors.map(H6).filter(Boolean) : [], pa = bk && bk.pal ? H6(bk.pal.a) : null, pp = bk && bk.pal ? H6(bk.pal.p) : null;
+    var acc = (pa ? [pa] : []).concat(bc.filter(function (x) { return x !== pa; })), dflt = ['F78C16', '002A46', '4A6FA5', '7EA1C3', '43698F', 'A3B8D6'];
+    acc = acc.concat(dflt.filter(function (x) { return acc.indexOf(x) < 0; })).slice(0, 6);
+    var fnt = bk && typeof bk.font === 'string' && bk.font.trim() ? xe(bk.font.trim()) : null;
+    return HDR + '<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="' + name + '"><a:themeElements><a:clrScheme name="' + (bk && bc.length ? xe(bk.name || 'Kit de marca') : 'Alvarez &amp; Marsal') + '">' +
+      c('dk1', '002A46') + c('lt1', 'FFFFFF') + c('dk2', pp || '13315C') + c('lt2', 'EEF2F7') + acc.map(function (x, i) { return c('accent' + (i + 1), x); }).join('') + c('hlink', '4A6FA5') + c('folHlink', '7EA1C3') +
+      '</a:clrScheme><a:fontScheme name="Canteiro"><a:majorFont><a:latin typeface="' + (fnt || 'Roboto') + '"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="' + (fnt || 'Inter') + '"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>' +
       '<a:fmtScheme name="Canteiro"><a:fillStyleLst>' + sf + sf + sf + '</a:fillStyleLst><a:lnStyleLst>' + [6350, 12700, 19050].map(function (w) { return '<a:ln w="' + w + '" cap="flat" cmpd="sng" algn="ctr">' + sf + '<a:prstDash val="solid"/><a:miter lim="800000"/></a:ln>'; }).join('') +
       '</a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst>' + sf + sf + sf + '</a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>';
   }
@@ -608,8 +614,8 @@
       files.push({ name: 'ppt/presProps.xml', data: HDR + '<p:presentationPr ' + NS + '/>' });
       files.push({ name: 'ppt/viewProps.xml', data: HDR + '<p:viewPr ' + NS + '><p:normalViewPr><p:restoredLeft sz="15620"/><p:restoredTop sz="94660"/></p:normalViewPr><p:gridSpacing cx="76200" cy="76200"/></p:viewPr>' });
       files.push({ name: 'ppt/tableStyles.xml', data: HDR + '<a:tblStyleLst xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" def="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"/>' });
-      files.push({ name: 'ppt/theme/theme1.xml', data: theme('Canteiro') });
-      files.push({ name: 'ppt/theme/theme2.xml', data: theme('Canteiro anotações') });
+      files.push({ name: 'ppt/theme/theme1.xml', data: theme('Canteiro', deck.brand) });
+      files.push({ name: 'ppt/theme/theme2.xml', data: theme('Canteiro anotações', deck.brand) });
       files.push({ name: 'ppt/slideMasters/slideMaster1.xml', data: master() });
       files.push({ name: 'ppt/slideMasters/_rels/slideMaster1.xml.rels', data: rels([['rId1', 'slideLayout', '../slideLayouts/slideLayout1.xml'], ['rId2', 'theme', '../theme/theme1.xml']]) });
       files.push({ name: 'ppt/slideLayouts/slideLayout1.xml', data: layout() });

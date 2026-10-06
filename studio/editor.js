@@ -7,6 +7,29 @@
   var BRAND_SIZE = { perfW: [743, 134], perfN: [743, 134], wmW: [262, 42], wmN: [262, 42] };
   /* paleta A&M: navy, azuis-aço, gelos, branco e um único laranja */
   var SW = ['#002A46', '#001E32', '#13315C', '#43698F', '#4A6FA5', '#7EA1C3', '#A3B8D6', '#E3EAF2', '#EBEEF1', '#FFFFFF', '#F78C16', '#3E4C5E', '#6B7A90'];
+  /* S29: kit de marca da apresentação (deck.brand = {name, colors: [#RRGGBB…], pal: {p, a}, font}). As cores do kit vêm primeiro nas
+     amostras e em “Mais cores…” (seção “Cores da marca”); a fonte vale para os textos e formas novos; pal (cores dos componentes) vale
+     para os componentes novos; “aplicar a todos” é uma ação explícita (um passo de desfazer). Fontes do Google fora das quatro do
+     Canteiro entram por <link> sob demanda (ensureFonts) e no arquivo salvo (fontLink); as do computador (Arial, Calibri…) não
+     precisam de nada. A caixa “Kit de marca” fica em ed-43-brand.js (só no editor). */
+  var GFONTS = { 'Montserrat': 'Montserrat:wght@300;400;500;600;700', 'Open Sans': 'Open+Sans:wght@300;400;500;600;700', 'Lato': 'Lato:wght@300;400;700', 'Poppins': 'Poppins:wght@300;400;500;600;700', 'Source Sans 3': 'Source+Sans+3:wght@300;400;500;600;700', 'Nunito Sans': 'Nunito+Sans:wght@300;400;500;600;700', 'Raleway': 'Raleway:wght@300;400;500;600;700', 'Work Sans': 'Work+Sans:wght@300;400;500;600;700', 'Oswald': 'Oswald:wght@300;400;500;600;700', 'PT Sans': 'PT+Sans:wght@400;700', 'Merriweather': 'Merriweather:wght@300;400;700', 'Playfair Display': 'Playfair+Display:wght@400;500;600;700' };
+  var SYS_FONTS = ['Arial', 'Calibri', 'Segoe UI', 'Verdana', 'Georgia', 'Times New Roman'];
+  var GF_BASE = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700';
+  function brand() { return deck && deck.brand ? deck.brand : null; }
+  function brandCols() { var b = brand(); return b && Array.isArray(b.colors) ? b.colors : []; }
+  function swList() { var bc = brandCols(); return bc.map(function (c) { return [c, 'Marca']; }).concat(SW.filter(function (c) { return bc.indexOf(c) < 0; }).map(function (c) { return [c, c]; })); }
+  function kitOpt() { var b = brand(), bc = brandCols(); return bc.length ? { title: 'Cores da marca' + (b.name ? ' · ' + b.name : ''), colors: bc } : null; }
+  function withBrandFont(o) { var b = brand(); if (b && b.font) o.font = b.font; return o; }
+  /* fontes que um JSON (obra, slides, elementos) usa: textos, formas, componentes com campo de fonte e a do kit */
+  function fontsIn(s) { var out = {}, re = /"font":"([^"\\]{1,40})"/g, m; while ((m = re.exec(s))) out[m[1]] = 1; return Object.keys(out); }
+  function deckFonts(d) { return fontsIn(JSON.stringify(d || deck)); }
+  function fontLink(d, json) { var ex = fontsIn(json || JSON.stringify(d || deck)).filter(function (f) { return GFONTS[f]; }); return GF_BASE + ex.map(function (f) { return '&family=' + GFONTS[f]; }).join('') + '&display=swap'; } /* json: o JSON já gerado da obra (exportHTML), para não serializar duas vezes */
+  function ensureFonts(list) {
+    (list || deckFonts()).forEach(function (f) {
+      if (!GFONTS[f] || document.querySelector('link[data-gf="' + f + '"]')) return;
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.gf = f; l.href = 'https://fonts.googleapis.com/css2?family=' + GFONTS[f] + '&display=swap'; document.head.appendChild(l);
+    });
+  }
   var esc = RT.esc;
   function uid() { return 'e' + Math.random().toString(36).slice(2, 9); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -31,7 +54,7 @@
     var e = Object.assign({ id: uid(), type: 'text', x: Math.round((W - t.w) / 2), y: Math.round((H - t.h) / 2), align: 'left', anim: { in: 'none' } }, clone(t));
     /* subtítulo: laranja só sobre fundo escuro (no branco, laranja em texto não tem contraste) */
     if (!t.color) e.color = kind === 'subtitle' ? (dark ? '#F78C16' : '#002A46') : dark ? (kind === 'body' || kind === 'bullets' ? '#DCE5F0' : '#FFFFFF') : (kind === 'body' || kind === 'bullets' ? '#3E4C5E' : '#002A46');
-    return Object.assign(e, over || {});
+    return withBrandFont(Object.assign(e, over || {})); /* S29: a fonte do kit de marca vale para os textos novos */
   }
   /* tamanho inicial por forma (quadradas 200×200; setas 280×140; o resto 300×140). Colchetes e chaves: só traço, cor no contorno.
      Anel: o texto fica no furo, sobre o fundo do slide, então leva a cor de texto do slide (navy no claro, branco no escuro).
@@ -40,7 +63,7 @@
   function isBrace(s) { return s === 'brackets' || s === 'braces'; }
   function mkShape(shape, dark) {
     var z = SQ_SHAPES.indexOf(shape) >= 0 ? [200, 200] : SHAPE_SZ[shape] || [300, 140], w = z[0], h = z[1], br = isBrace(shape);
-    return { id: uid(), type: 'shape', shape: shape, x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h, fill: br ? 'none' : shape === 'chevron' || shape === 'arrow' ? '#F78C16' : (dark ? '#43698F' : '#002A46'), stroke: br ? (dark ? '#FFFFFF' : '#002A46') : '#7EA1C3', strokeW: br ? 3 : 0, radius: 14, html: '', font: 'Inter', size: 20, weight: 600, color: (br || shape === 'ring') && !dark ? '#002A46' : '#FFFFFF', align: 'center', valign: 'middle', anim: { in: 'none' } };
+    return withBrandFont({ id: uid(), type: 'shape', shape: shape, x: Math.round((W - w) / 2), y: Math.round((H - h) / 2), w: w, h: h, fill: br ? 'none' : shape === 'chevron' || shape === 'arrow' ? '#F78C16' : (dark ? '#43698F' : '#002A46'), stroke: br ? (dark ? '#FFFFFF' : '#002A46') : '#7EA1C3', strokeW: br ? 3 : 0, radius: 14, html: '', font: 'Inter', size: 20, weight: 600, color: (br || shape === 'ring') && !dark ? '#002A46' : '#FFFFFF', align: 'center', valign: 'middle', anim: { in: 'none' } });
   }
   /* card pronto (Formas › Retângulos e cards): arredondado 320×180 com o estilo escolhido e o texto já legível sobre ele */
   function mkCard(look, dark) {
@@ -85,6 +108,7 @@
       if (kind === 'icon' || kind === 'iconmorph') e.data.color = '#FFFFFF'; /* ícones em slide escuro: traço branco, detalhe laranja */
     }
     if (kind === 'bars' && dark) e.data.style = 'dark';
+    if (brand() && brand().pal && palOk(e)) e.pal = clone(brand().pal); /* S29: cores dos componentes do kit de marca */
     return Object.assign(e, over || {});
   }
   var LAYOUTS = {
@@ -193,7 +217,15 @@
     SNAP_REQ = { x: 1, y: 1, w: 1, h: 1, x1: 1, y1: 1, x2: 1, y2: 1 }, PH_MAX = 200, PH_RE = /^p\d{1,3}$/;
   /* fontes do painel; uma fonte importada (PowerPoint/PDF) que não é do Canteiro aparece como opção extra, para não sumir do seletor */
   var FONT_OPTS = [['Roboto', 'Roboto (A&M)'], ['Roboto Condensed', 'Roboto Condensed'], ['Inter', 'Inter'], ['JetBrains Mono', 'JetBrains Mono']];
-  function fontOpts(cur) { var known = FONT_OPTS.some(function (o) { return o[0] === cur; }); return typeof cur === 'string' && cur && !known ? FONT_OPTS.concat([[cur, cur + ' (do arquivo importado)']]) : FONT_OPTS; }
+  /* S29: Canteiro + fonte do kit (primeiro, quando não é das quatro) + Google (carregadas sob demanda) + do computador + a importada */
+  function fontOpts(cur, plain) {
+    var b = brand(), out = FONT_OPTS.slice(), seen = {}; out.forEach(function (o) { seen[o[0]] = 1; });
+    if (!plain && b && b.font && !seen[b.font]) { out.unshift([b.font, b.font + ' (kit de marca)']); seen[b.font] = 1; }
+    Object.keys(GFONTS).forEach(function (f) { if (!seen[f]) { out.push([f, f + ' (Google)']); seen[f] = 1; } });
+    SYS_FONTS.forEach(function (f) { if (!seen[f]) { out.push([f, f + ' (do computador)']); seen[f] = 1; } });
+    if (typeof cur === 'string' && cur && !seen[cur]) out.push([cur, cur + ' (do arquivo importado)']);
+    return out;
+  }
   var cropOpen = null; /* S27b: id da foto com os controles de recorte abertos (sem recorte ainda) */
   function fxStyleField(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return !!(F && Array.isArray(F.fields) && F.fields.some(function (f) { return f && f[0] === 'style'; })); }
   /* campos de escolha fechada do componente (sel:…, smartlayout): formato que “Redefinir” devolve — fonte/cor do título de impacto, cores das
@@ -293,6 +325,16 @@
     if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
     var o = {}; ['p', 'a'].forEach(function (k) { if (typeof v[k] === 'string' && /^#[0-9a-f]{6}$/i.test(v[k])) o[k] = v[k].toUpperCase(); });
     return o.p || o.a ? o : null;
+  }
+  /* S29: kit de marca — nome ≤ 60, até 12 cores #RRGGBB únicas (maiúsculas), pal como safePal, fonte TOKEN_RE; vazio sai */
+  function safeBrand(b) {
+    if (!b || typeof b !== 'object' || Array.isArray(b)) return null;
+    var o = {}, seen = {};
+    if (typeof b.name === 'string' && b.name.trim()) o.name = b.name.trim().slice(0, 60);
+    if (Array.isArray(b.colors)) { var cs = []; b.colors.forEach(function (c) { var m = typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : null; if (m && !seen[m] && cs.length < 12) { seen[m] = 1; cs.push(m); } }); if (cs.length) o.colors = cs; }
+    var pl = safePal(b.pal); if (pl) o.pal = pl;
+    if (typeof b.font === 'string' && b.font.trim() && TOKEN_RE.test(b.font.trim())) o.font = b.font.trim();
+    return o.name || o.colors || o.pal || o.font ? o : null;
   }
   function safeSrc(s) { return typeof s === 'string' && /^(data:image\/[\w.+-]+[;,]|https?:|blob:)/i.test(s) && !/["\\\n\r]/.test(s) ? s : null; }
   function safeEl(e) {
@@ -404,6 +446,7 @@
     if (typeof d.id === 'string' && /^[\w-]{1,40}$/.test(d.id)) o.id = d.id;
     if (d.nav && typeof d.nav === 'object') o.nav = { chapters: d.nav.chapters !== false };
     if (d.num && typeof d.num === 'object' && d.num.on === true) { o.num = { on: true, pos: /^(tl|tr|bl|br)$/.test(d.num.pos) ? d.num.pos : 'br' }; if (d.num.from != null && isFinite(+d.num.from)) o.num.from = Math.max(0, Math.min(999, +d.num.from | 0)); } /* S27: numeração dos slides */
+    var bk = safeBrand(d.brand); if (bk) o.brand = bk; /* S29: kit de marca */
     ['created', 'updated'].forEach(function (k) { if (d[k] != null && isFinite(+d[k])) o[k] = +d[k]; });
     if (Array.isArray(d.comments)) { var cm = d.comments.slice(0, 2000).map(safeComment).filter(Boolean); if (cm.length) o.comments = cm; }
     return o;
@@ -414,6 +457,7 @@
     if (!d.id) d.id = deckId(); /* modelos prontos e arquivos antigos ganham id ao abrir */
     d.slides.forEach(function (s) { if (!s.base) stampSlide(s); }); /* S21: arquivo antigo, modelo pronto ou rascunho sem base: o estado de agora vira o original de “Redefinir slide” */
     deck = d; cur = 0; pick([]); editingId = null; freshId = null; hist.length = 0; fut.length = 0; rev++; last = JSON.stringify(deck);
+    ensureFonts(fontsIn(last)); /* S29: fontes do Google que a obra usa */
     $('#title').value = deck.title || ''; renderAll(); $('#thumbs').scrollTop = 0; /* outra obra: a lista começa no slide 1, não na rolagem da anterior */
     updUndo(); if (msg) toast(msg);
     if (!noHist) histCall('put', JSON.parse(last)); /* arquivo aberto, projeto pronto ou rascunho entram em Minhas obras */
@@ -658,7 +702,7 @@
      próprias opções [[cor, nome]]) + “Mais cores…” (abre o seletor AMColorPop: paleta ampliada, recentes, hex, conta-gotas) */
   var HEXC = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
   function swatches(p, v, none, list) {
-    var cur = String(v || '').toUpperCase(), L = list || SW.map(function (c) { return [c, c]; }), inL = L.some(function (o) { return String(o[0]).toUpperCase() === cur; });
+    var cur = String(v || '').toUpperCase(), L = list || swList(), inL = L.some(function (o) { return String(o[0]).toUpperCase() === cur; });
     var cust = HEXC.test(cur) && !inL ? '<button class="cust on" style="background:' + cur + '" data-set="' + p + '" data-v="' + cur + '" title="Cor atual: ' + cur + '" aria-label="Cor atual ' + cur + '"></button>' : '';
     return '<div class="sw">' + cust + (none ? '<button class="none' + (!v || v === 'none' ? ' on' : '') + '" data-set="' + p + '" data-v="none" title="Sem cor"></button>' : '') + L.map(function (o) { var c = String(o[0]); return '<button style="background:' + c + '" class="' + (cur === c.toUpperCase() ? 'on' : '') + '" data-set="' + p + '" data-v="' + c + '" title="' + esc(o[1] === c ? c : o[1] + ' · ' + c) + '"></button>'; }).join('') +
       '<button type="button" class="more" data-cpick="' + p + '" data-cv="' + (HEXC.test(cur) ? cur : '') + '" title="Mais cores…" aria-label="Mais cores…" aria-haspopup="dialog"></button></div>';
@@ -831,7 +875,7 @@
         '<div class="row r1">' + fld('Resumo do slide', '<textarea data-p="s.notes" maxlength="4000" style="min-height:96px" placeholder="O que o público precisa saber sobre este slide">' + esc(s.notes || '') + '</textarea>') + '</div>' +
         '<div class="row r1"><button class="btnw ic" data-act="autonotes">' + svgI('fx') + 'Gerar resumo automático</button></div><div class="row r1"><button class="btnw ic" data-act="viewnotes">' + svgI('zoom') + 'Ver na apresentação</button></div>' +
         '<p class="note">Na apresentação e no arquivo salvo, <b>Sobre este slide</b> (tecla <b>I</b>) mostra este resumo' + (s.notes ? '' : ' — sem texto, o apresentador gera um automático') + '; <b>G</b> abre o índice com todos os slides; o capítulo vira um botão da linha do tempo e vale até o próximo capítulo.</p></div>';
-      h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row r1" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
+      h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button><button class="btnw ic" data-act="brandkit" title="Cores e fonte desta apresentação">' + svgI('palette') + 'Kit de marca…</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
@@ -914,6 +958,28 @@
   /* “Cores do componente” (S20): el.pal = {p, a}; o runtime (rt-05-pal.js) troca o azul-marinho/azuis pela cor principal e o laranja
      pela de destaque, só neste elemento. Não vale para a Marca A&M nem para ícones (que já têm cores próprias) */
   function palOk(el) { var F = el && el.type === 'fx' && RT.FX[el.kind]; return !!(F && RT.palTag && F.cat !== 'Marca A&M' && !isIcon(el)); }
+  /* S29: kit de marca — cada chamada é um passo de desfazer; devolvem o que ficou gravado / quantos elementos mudaram */
+  function setBrand(b, msg) { var nb = safeBrand(b); if (editingId) endEdit(); flush(); if (nb) deck.brand = nb; else delete deck.brand; ensureFonts(); renderAll(); commit(); if (msg) toast(msg); return nb; }
+  function fxHasFont(e) { var F = e.type === 'fx' && RT.FX[e.kind]; return !!(F && F.fields && F.fields.some(function (f) { return f[0] === 'font'; })); }
+  function brandApplyFont(font) {
+    font = typeof font === 'string' ? font.trim() : ''; if (!font || !TOKEN_RE.test(font)) return 0;
+    if (editingId) endEdit(); flush(); var n = 0;
+    deck.slides.forEach(function (s) { s.els.forEach(function (e) {
+      if (e.type === 'text' || e.type === 'shape') {
+        var h = typeof e.html === 'string' && /font-family/i.test(e.html) ? e.html.replace(/font-family\s*:[^;"']*;?/gi, '') : e.html; /* fontes de trechos (arquivo importado) saem: a fonte vale para o texto inteiro */
+        if (e.font !== font || h !== e.html) { e.font = font; if (h !== e.html) e.html = h; n++; }
+      } else if (fxHasFont(e)) { e.data = e.data || {}; if (e.data.font !== font) { e.data.font = font; n++; } }
+    }); });
+    if (n) { ensureFonts([font]); renderAll(); commit(); }
+    return n;
+  }
+  function brandApplyPal(pal) {
+    var nb = pal ? safePal(pal) : null, want = JSON.stringify(nb), n = 0; if (editingId) endEdit(); flush();
+    deck.slides.forEach(function (s) { s.els.forEach(function (e) { if (!palOk(e) || JSON.stringify(e.pal || null) === want) return; if (nb) e.pal = clone(nb); else delete e.pal; n++; }); });
+    if (n) { renderAll(); commit(); }
+    return n;
+  }
+  function openBrandKit(opener) { if (window.AMBrand && window.AMBrand.open) window.AMBrand.open(opener && opener.isConnected ? opener : null); else toast('A caixa do kit de marca não está disponível nesta versão.'); }
   /* contraste dos textos DESTE componente com as cores escolhidas × com as cores A&M: desenha as duas versões fora da tela (sem
      animação) e compara texto a texto; devolve o pior texto que ficou abaixo de 3:1 e pior que no A&M ({t, c}) ou null. Guardado por
      tipo/dados/paleta: o painel redesenha muitas vezes */
@@ -951,7 +1017,7 @@
   function palSec(el) {
     var pl = el.pal || {}, bad = el.pal && RT.pal ? palProbe(el) : null;
     /* sem cor própria, a amostra marcada é a cor A&M da linha (navy / laranja); clicá-la volta só aquela cor (applyProp apaga a chave) */
-    var row = function (def) { return SW.map(function (c) { return [c, c === def ? 'Cor A&M (sem troca)' : c]; }); };
+    var row = function (def) { return swList().map(function (o) { return [o[0], o[0] === def ? 'Cor A&M (sem troca)' : o[1]]; }); };
     return '<div class="sec" id="palSec"><h3>Cores do componente</h3>' +
       '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p || '#002A46', false, row('#002A46')) +
       '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a || '#F78C16', false, row('#F78C16')) +
@@ -1056,6 +1122,7 @@
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    if (/(^|\.)font$/.test(path) && typeof val === 'string') ensureFonts([val]); /* S29 */
     if (/^pal\.[pa]$/.test(path)) { /* cores do componente: a cor A&M da linha (navy / laranja) ou nenhuma = sem troca, apaga só essa chave */
       var pk = path.slice(4), pv = typeof val === 'string' ? val.toUpperCase() : '';
       if (!/^#[0-9A-F]{6}$/.test(pv) || pv === (pk === 'p' ? '#002A46' : '#F78C16')) { if (el.pal) { delete el.pal[pk]; if (!el.pal.p && !el.pal.a) delete el.pal; } rerenderEl(el); if (!live) commit(); return; }
@@ -1147,7 +1214,7 @@
     flush(); /* pendências viram um passo próprio antes: a prévia do seletor do sistema volta exatamente ao que estava (onCancel) */
     var refocus = function () { var nb = $$('#props [data-cpick]').filter(function (x) { return x.dataset.cpick === path; })[0]; if (nb) nb.focus(); };
     window.AMColorPop.open(b, {
-      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
+      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, kit: kitOpt(), row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
       onLive: function (c) { applyProp(path, c, true); },
       onPick: function (c, viaKey) { applyProp(path, c); renderProps(); if (viaKey) refocus(); },
       onCancel: function (live) { if (live) { if (JSON.stringify(deck) !== last) restore(last); renderProps(); } }, /* Esc / clique fora depois da prévia: desfaz a prévia, sem gravar */
@@ -1219,7 +1286,7 @@
     var e = { shape: 'round', radius: 5, look: k, fill: k === 'accent' || k === 'topbar' ? '#EEF2F7' : k === 'header' ? '#FFFFFF' : '#002A46', strokeW: k === 'header' ? 1 : 0, stroke: '#DCE5F0' };
     return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="-2 -1 42 28" aria-hidden="true">' + RT.shapeBody(e, 38, 24) + '</svg>';
   }
-  function addEls(list, noCommit) { if (editingId) endEdit(); list.forEach(function (el) { slide().els.push(el); }); pick(list.map(function (el) { return el.id; })); renderStage(); renderProps(); if (!noCommit) commit(); return list; }
+  function addEls(list, noCommit) { if (editingId) endEdit(); ensureFonts(fontsIn(JSON.stringify(list))); list.forEach(function (el) { slide().els.push(el); }); pick(list.map(function (el) { return el.id; })); renderStage(); renderProps(); if (!noCommit) commit(); return list; }
   function addEl(el) { addEls([el]); return el; }
   function delSel() {
     var ids = selIds.filter(function (id) { return !isLocked(getEl(id)); }), lk = selIds.length - ids.length; if (lk) toast(lk > 1 ? lk + ' elementos bloqueados não foram apagados' : 'Elemento bloqueado não foi apagado · desbloqueie para apagar');
@@ -1454,6 +1521,7 @@
     if (a === 'preview') return present(cur);
     if (a === 'zoomview') { if (!el) return; present(cur, s.hidden === true); if (player && player.zoom) player.zoom.open(el.id); return; }
     if (a === 'pvel') return previewEl(el);
+    if (a === 'brandkit') { openBrandKit(document.activeElement); return; } /* S29 */
     if (a === 'palreset') { if (!el || !el.pal) return; delete el.pal; rerenderEl(el); renderProps(); commit(); toast('Cores A&M restauradas neste elemento · Ctrl+Z desfaz'); return; }
     if (a === 'gallery') return openGallery('in');
     if (a === 'gallery-tr') return openGallery('tr');
@@ -3106,7 +3174,7 @@
   var MENUS = {
     file: function () {
       return [{ t: 'Início (capa)', ic: 'home', fn: goHome }, { sep: 1 },
-        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
+        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Kit de marca…', ic: 'palette', fn: function () { openBrandKit(XM.prev); }, dis: !window.AMBrand, tip: 'Cores e fonte desta apresentação: vêm primeiro nas amostras, valem para o que você inserir e podem ser aplicadas a tudo' }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
         { t: 'Salvar como PDF…', ic: 'pdf', fn: function () { exportAs('pdf'); } }, { t: 'Salvar como PowerPoint…', ic: 'ppt', dis: !pptxOk(), tip: pptxOk() ? '' : PPTX_SOON, fn: function () { exportAs('pptx'); } }, { sep: 1 },
         { t: 'Apresentar', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { sep: 1 },
         { t: 'Recomeçar apresentação…', ic: 'reset', fn: askReset }];
@@ -3366,7 +3434,7 @@
     if (editingId) endEdit(); flush();
     var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
     if (!ins.length) return 0;
-    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); renderAll(); commit();
+    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
     return ins.length;
   }
@@ -3443,7 +3511,7 @@
     var data = JSON.stringify(d).replace(/</g, '\\u003c');
     var css = $('#am-runtime-css').textContent, js = $('#am-runtime').textContent;
     var S = 'script';
-    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">\n<style id="am-runtime-css">' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
+    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="' + fontLink(d, data) + '" rel="stylesheet">\n<style id="am-runtime-css">' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
   }
   function download(name, text, type) {
     var blob = new Blob([text], { type: type || 'text/html;charset=utf-8' }), a = document.createElement('a');
@@ -3505,6 +3573,9 @@
     W: W, H: H, BRAND: BRAND, LAYOUTS: LAYOUTS, uid: uid, clone: clone, toast: toast,
     mk: { slide: mkSlide, text: mkText, shape: mkShape, line: mkLine, image: mkImage, brand: mkBrand, fx: mkFx },
     newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind, insertSeq: insertSeq, SEQS: SEQS,
+    /* S29: kit de marca (ed-43-brand.js usa) */
+    brand: { get: brand, set: setBrand, safe: safeBrand, applyFont: brandApplyFont, applyPal: brandApplyPal, fonts: fontOpts, GFONTS: GFONTS, SYS_FONTS: SYS_FONTS, ensureFonts: ensureFonts, fontLink: fontLink, open: openBrandKit, palOk: palOk, SW: SW },
+    pickImage: pickImage, confirmBox: confirmBox,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },

@@ -26,10 +26,10 @@ window.AMExport = (function () {
   function frame() { return new Promise(function (r) { requestAnimationFrame(function () { r(); }); }); }
 
   /* ---------------- fontes: o CSS do Google Fonts da própria página, cada woff2 vira data: (cache da sessão) ---------------- */
-  var faces = null, failAt = 0, fontData = {}, warned = false;
+  var facesBy = {}, fontData = {}, warned = false; /* S29: uma lista de @font-face por <link> do Google (o base do editor + os das fontes do kit) */
   function warnFonts() { if (warned) return; warned = true; toast('Sem acesso às fontes da internet: o arquivo pode sair com outra fonte'); }
   function withTimeout(p, ms) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('tempo esgotado')); }, ms); })]); }
-  function gfHref() { var l = document.querySelector('link[rel=stylesheet][href^="https://fonts.googleapis.com/"]'); return l ? l.href : null; }
+  function gfHrefs() { return [].map.call(document.querySelectorAll('link[rel=stylesheet][href^="https://fonts.googleapis.com/"]'), function (l) { return l.href; }); }
   /* unicode-range "U+0000-00FF, U+0131" → [[0,255],[305,305]] */
   function ranges(s) {
     if (!s) return [[0, 0x10FFFF]];
@@ -37,11 +37,15 @@ window.AMExport = (function () {
       .filter(function (r) { return isFinite(r[0]) && isFinite(r[1]); });
   }
   function loadFaces() {
-    if (faces && failAt && Date.now() - failAt > 60000) { faces = null; failAt = 0; } /* sem internet: tenta de novo depois de 1 min, não a cada slide */
-    if (faces) return faces;
-    var href = gfHref();
-    if (!href) { faces = Promise.resolve([]); return faces; }
-    faces = withTimeout(fetch(href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }), 10000).then(function (css) {
+    var hs = gfHrefs(); if (!hs.length) return Promise.resolve([]);
+    return Promise.all(hs.map(facesOf)).then(function (r) { return [].concat.apply([], r); });
+  }
+  function facesOf(href) {
+    var o = facesBy[href];
+    if (o && o.failAt && Date.now() - o.failAt > 60000) o = null; /* sem internet: tenta de novo depois de 1 min, não a cada slide */
+    if (o) return o.p;
+    o = facesBy[href] = { failAt: 0 };
+    o.p = withTimeout(fetch(href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }), 10000).then(function (css) {
       var out = {}, re = /(?:\/\*\s*([\w-]+)\s*\*\/\s*)?@font-face\s*\{([^}]*)\}/g, m;
       while ((m = re.exec(css))) {
         var b = m[2], g = function (k) { var x = new RegExp(k + '\\s*:\\s*([^;]+);?', 'i').exec(b); return x ? x[1].trim() : ''; };
@@ -53,8 +57,8 @@ window.AMExport = (function () {
         f.w0 = Math.min(f.w0, w[0]); f.w1 = Math.max(f.w1, w[w.length - 1]);
       }
       return Object.keys(out).map(function (k) { return out[k]; });
-    }).catch(function () { warnFonts(); failAt = Date.now(); return []; });
-    return faces;
+    }).catch(function () { warnFonts(); o.failAt = Date.now(); return []; });
+    return o.p;
   }
   function dataOf(url) {
     if (!fontData[url]) {

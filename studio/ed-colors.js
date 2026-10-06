@@ -46,6 +46,8 @@ window.AMColorPop = (function () {
   function build(o) {
     var cur = norm(o.value), brand = (o.brand || BRAND).map(norm).filter(Boolean), rec = recent();
     var h = '<div class="cp-hd"><b>Mais cores</b>' + (o.title ? '<span>' + esc(o.title) + '</span>' : '') + '<button type="button" class="cp-x" title="Fechar (Esc)" aria-label="Fechar">×</button></div>';
+    var kit = o.kit && Array.isArray(o.kit.colors) ? o.kit.colors.map(norm).filter(Boolean) : []; /* S29: cores do kit de marca da obra */
+    if (kit.length) h += '<div class="cp-sec cp-kit"><h4>' + esc(o.kit.title || 'Cores da marca') + '</h4><div class="cp-g">' + kit.map(function (c) { return sw(c, cur); }).join('') + '</div></div>';
     h += '<div class="cp-sec"><h4>Cores A&amp;M</h4><div class="cp-g">' + brand.map(function (c) { return sw(c, cur); }).join('') + '</div></div>';
     h += '<div class="cp-sec"><h4>Mais cores</h4><div class="cp-g cp-ext">' + EXT.map(function (r) { return r[1].map(function (c) { return sw(c, cur, r[0]); }).join(''); }).join('') + '</div></div>';
     h += '<div class="cp-sec cp-rec"><h4>Recentes</h4>' + (rec.length ? '<div class="cp-g">' + rec.map(function (c) { return sw(c, cur); }).join('') + '</div>' : '<p class="cp-empty">As cores personalizadas que você usar aparecem aqui.</p>') + '</div>';
@@ -94,7 +96,7 @@ window.AMColorPop = (function () {
   }
   function pick(c, viaKey) {
     c = norm(c); if (!c || !st) return;
-    var o = st.o; pushRecent(c, (o.brand || BRAND).map(norm)); teardown();
+    var o = st.o; pushRecent(c, (o.brand || BRAND).map(norm).concat(o.kit && Array.isArray(o.kit.colors) ? o.kit.colors.map(norm) : [])); teardown();
     if (o.onPick) o.onPick(c, !!viaKey);
   }
   function close(viaKey) {

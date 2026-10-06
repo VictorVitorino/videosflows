@@ -7,7 +7,9 @@ window.AMRT = (function () {
   function CQ(v) { return (v / W * 100).toFixed(4) + 'cqw'; }
   /* fonte fora da lista (arquivo importado do PowerPoint/PDF): usa a fonte instalada no computador de quem vê, com a pilha padrão de reserva */
   function fontStack(name, dflt) { if (FONTS[name]) return FONTS[name]; return typeof name === 'string' && /^[\w][\w\s.-]{0,39}$/.test(name) ? "'" + name + "'," + dflt : dflt; }
-  var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace" };
+  var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace",
+    /* S29 (kit de marca): fontes do computador e serifadas do Google com reserva do mesmo tipo (Calibri → Carlito no Linux) */
+    'Calibri': "Calibri,Carlito,'Segoe UI',Arial,sans-serif", 'Segoe UI': "'Segoe UI',Roboto,Arial,sans-serif", 'Georgia': "Georgia,'Times New Roman',serif", 'Times New Roman': "'Times New Roman',Times,serif", 'Merriweather': "Merriweather,Georgia,serif", 'Playfair Display': "'Playfair Display',Georgia,serif" };
   function fmt(v, dec) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
   function lines(s) { return String(s || '').split(/\n|;/).map(function (x) { return x.trim(); }).filter(Boolean); }
   /* cores vindas dos dados (campos de cor dos componentes e data.colors dos gráficos): só valores seguros chegam ao markup.

@@ -141,8 +141,8 @@ function lo(pptx){ const out=path.join(TMP,'lo'); const r=JSON.parse(execFileSyn
   d=await D();
   check('S24-23: Concluir fecha; 3 slides; título da obra = título do arquivo (core.xml); miniatura do oculto marcada; painel mostra as anotações', await p.evaluate(()=>document.getElementById('xmDlg').hidden) && d.slides.length===3 && d.title==='Cobertura importação A' && await p.evaluate(()=>!!document.querySelector('#thumbs .th:nth-child(3).hid')) && await p.evaluate(()=>{ AMStudio.goSlide(0); return (document.querySelector('#props textarea[data-p="s.notes"]')||{}).value; })==='Abertura: falar da receita.\nSegunda linha das anotações.', {n:d.slides.length,title:d.title});
   /* fonte importada no painel */
-  const fsel=await p.evaluate(()=>{ const A=AMStudio; const t=A.deck.slides[0].els.find(e=>e.type==='text'); A.select(t.id); const s=document.querySelector('#props select[data-p="font"]'); return s?{v:s.value, opt:[].map.call(s.options,o=>o.textContent).filter(t=>/importado/.test(t))}:null; });
-  check('S24-24: painel: a fonte do arquivo (Calibri) aparece selecionada como “Calibri (do arquivo importado)”', !!fsel && fsel.v==='Calibri' && fsel.opt.length===1, fsel);
+  const fsel=await p.evaluate(()=>{ const A=AMStudio; const t=A.deck.slides[0].els.find(e=>e.type==='text'); A.select(t.id); const s=document.querySelector('#props select[data-p="font"]'); return s?{v:s.value, opt:[].map.call(s.options,o=>o.textContent).filter(t=>/^Calibri \((do arquivo importado|do computador)\)$/.test(t))}:null; });
+  check('S24-24: painel: a fonte do arquivo (Calibri) aparece selecionada como “Calibri (do computador)” (S29: fonte do computador conhecida; outras saem como “do arquivo importado”)', !!fsel && fsel.v==='Calibri' && fsel.opt.length===1, fsel);
   /* adicionar ao final + Ctrl+Z */
   await p.evaluate(()=>AMImport.pick()); await sleep(100); await p.setInputFiles('#fImport', path.join(FX,'fx-b.pptx')); await sleep(400);
   const dl2=await p.evaluate(()=>({mode:(document.querySelector('input[name=xmMode]:checked')||{}).value, app:document.getElementById('xmAppL').textContent, rep:document.getElementById('xmRepL').textContent}));
