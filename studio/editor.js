@@ -433,11 +433,69 @@
     /* barra do quadro (girar 90° e inverter): some ao editar texto e enquanto arrasta, redimensiona ou gira */
     var bar = !busy && list.length && !editingId && (list.length > 1 || canFlip(el));
     if (bar) html += '<div class="frbar" id="frBar" role="toolbar" aria-label="Girar e inverter">' + barBtns(list) + '</div>';
+    /* S26: barra de formatação do texto enquanto se edita (negrito, itálico, sublinhado, riscado, tamanho, cor, marcador, listas, alinhamento, limpar) */
+    var ted = editingId && el && el.id === editingId && (el.type === 'text' || el.type === 'shape') ? el : null;
+    if (ted) html += '<div class="frbar txbar" id="txBar" role="toolbar" aria-label="Formatar o texto">' + txBtns() + '</div>';
     (guides || []).forEach(function (g) { html += g.v != null ? '<div class="guide v" style="left:' + pc(g.v, W) + '"></div>' : '<div class="guide h" style="top:' + pc(g.h, H) + '"></div>'; });
     selLayer.innerHTML = html;
     fitArrow();
     if (bar) placeBar(list, el);
+    if (ted) { placeTxBar(ted); syncTxBar(); }
   }
+  /* ---------------- S26: formatação do texto na edição ---------------- */
+  var TXB = [['bold', 'Negrito (Ctrl+B)'], ['italic', 'Itálico (Ctrl+I)'], ['underline', 'Sublinhado (Ctrl+U)'], ['strike', 'Riscado'], null,
+    ['sizedown', 'Diminuir o texto selecionado'], ['sizeup', 'Aumentar o texto selecionado'], ['fcolor', 'Cor do texto selecionado'], ['hilite', 'Marcador (fundo laranja)'], null,
+    ['bullets', 'Lista com marcadores (Ctrl+Shift+8)'], ['numbered', 'Lista numerada (Ctrl+Shift+7)'], null, ['alignl', 'Alinhar à esquerda'], ['alignc', 'Centralizar'], ['alignr', 'Alinhar à direita'], null, ['clearfmt', 'Limpar formatação do trecho']];
+  function txBtns() { return TXB.map(function (b) { return b ? '<button type="button" data-tx="' + b[0] + '" title="' + esc(b[1]) + '" aria-label="' + esc(b[1]) + '"' + (b[0] === 'fcolor' ? ' data-cpick="tx"' : '') + '>' + svgI(b[0]) + '</button>' : '<i class="sep" aria-hidden="true"></i>'; }).join(''); }
+  /* no alto à esquerda do quadro; sem espaço em cima (topo do slide), embaixo; nunca fora do palco */
+  function placeTxBar(el) {
+    var bar = $('#txBar'); if (!bar) return;
+    var wr = wrap.getBoundingClientRect(), k = wr.width / W, g = aabb(el), bw = bar.offsetWidth, bh = bar.offsetHeight;
+    var x = Math.max(4, Math.min(g.x * k, wr.width - bw - 4)), y = g.y * k - bh - 8; if (y < 4) y = Math.min((g.y + g.h) * k + 8, wr.height - bh - 4);
+    bar.style.left = (x / wr.width * 100) + '%'; bar.style.top = (y / wr.height * 100) + '%';
+  }
+  var TX_STATE = { bold: 'bold', italic: 'italic', underline: 'underline', strike: 'strikeThrough', bullets: 'insertUnorderedList', numbered: 'insertOrderedList', alignl: 'justifyLeft', alignc: 'justifyCenter', alignr: 'justifyRight' };
+  function syncTxBar() {
+    var bar = $('#txBar'); if (!bar || !editingId) return;
+    Object.keys(TX_STATE).forEach(function (k) { var b = bar.querySelector('button[data-tx="' + k + '"]'); if (!b) return; var on = false; try { on = document.queryCommandState(TX_STATE[k]); } catch (e) { } b.classList.toggle('on', !!on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  }
+  document.addEventListener('selectionchange', function () { if (editingId) syncTxBar(); });
+  function editingTx() { if (!editingId) return null; var n = stage.querySelector('.am-el[data-id="' + editingId + '"]'); return n && n.querySelector('.am-tx'); }
+  /* css=false → o navegador grava <b>/<i>/<u>/<strike> (compactos, os mesmos da importação); css=true → <span style> (cor, marcador) */
+  function cmd(c, v, css) { try { document.execCommand('styleWithCSS', false, !!css); } catch (e) { } try { return document.execCommand(c, false, v == null ? null : v); } catch (e) { return false; } }
+  /* tamanho do trecho: um <span style="font-size:1.15em"> (ou 0.87em) em volta da seleção — em, para acompanhar o slide e as miniaturas;
+     repetir aninha outro span (×1,15 de novo). Sem execCommand('fontSize'): ele grava <font size> em tamanhos fixos e funde spans */
+  function sizeSel(up) {
+    var tx = editingTx(); if (!tx) return;
+    var sl = getSelection(); if (!sl || !sl.rangeCount || sl.isCollapsed) return;
+    var rg = sl.getRangeAt(0); if (!tx.contains(rg.commonAncestorContainer)) return;
+    var sp = document.createElement('span'); sp.style.fontSize = up ? '1.15em' : '0.87em';
+    sp.appendChild(rg.extractContents()); rg.insertNode(sp);
+    var r2 = document.createRange(); r2.selectNodeContents(sp); sl.removeAllRanges(); sl.addRange(r2); /* o trecho continua selecionado: dá para clicar A+ de novo */
+    tx.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  function txFmt(k) {
+    var tx = editingTx(); if (!tx) return;
+    if (document.activeElement !== tx) tx.focus();
+    if (k === 'sizeup' || k === 'sizedown') return sizeSel(k === 'sizeup');
+    if (k === 'hilite') { var on = false; try { var bg = document.queryCommandValue('hiliteColor'); on = /247, 140, 22|F78C16/i.test(bg || ''); } catch (e) { } cmd('hiliteColor', on ? 'transparent' : '#F78C16', true); }
+    else if (k === 'clearfmt') { cmd('removeFormat'); cmd('unlink'); }
+    else if (TX_STATE[k]) cmd(TX_STATE[k], null, /^justify/.test(TX_STATE[k]));
+    syncTxBar();
+  }
+  var txHold = false; /* seletor de cores aberto a partir da barra: perder o foco não encerra a edição */
+  function txColor(b, kb) {
+    var tx = editingTx(); if (!tx || !window.AMColorPop) return;
+    txHold = true;
+    var sel = getSelection(), saved = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null, cur = '#002A46';
+    try { var v = document.queryCommandValue('foreColor'); var m = /(\d+),\s*(\d+),\s*(\d+)/.exec(v || ''); if (m) cur = '#' + [m[1], m[2], m[3]].map(function (x) { x = (+x).toString(16); return x.length < 2 ? '0' + x : x; }).join('').toUpperCase(); } catch (e) { }
+    function restore() { if (!saved) return; var s2 = getSelection(); s2.removeAllRanges(); s2.addRange(saved); }
+    AMColorPop.open(b, { value: cur, title: 'Cor do texto selecionado', keyboard: !!kb,
+      onPick: function (c) { tx.focus(); restore(); cmd('foreColor', c, true); tx.dispatchEvent(new Event('input', { bubbles: true })); },
+      onClose: function () { txHold = false; if (editingId && document.contains(tx) && document.activeElement !== tx) { tx.focus(); restore(); } } });
+  }
+  selLayer.addEventListener('mousedown', function (e) { if (e.target.closest('#txBar')) e.preventDefault(); });
+  selLayer.addEventListener('click', function (e) { var b = e.target.closest('#txBar button[data-tx]'); if (!b) return; e.stopPropagation(); if (b.dataset.tx === 'fcolor') txColor(b, !e.detail); else txFmt(b.dataset.tx); });
   /* quadro estreito: o “Animação” (#fxArrow, ancorado no canto de cima à direita) cobriria a alça de girar; ele passa para o lado
      direito da alça (ou para o esquerdo, se faltar palco) */
   function fitArrow() {
@@ -576,6 +634,10 @@
   var IC = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/>',
     import: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+    bold: '<text x="6.5" y="17.5" class="tl" font-weight="800">B</text>', italic: '<text x="8.5" y="17.5" class="tl" font-style="italic">I</text>', underline: '<text x="6.5" y="16" class="tl">U</text><path d="M6 20h12"/>', strike: '<text x="7" y="17.5" class="tl">S</text><path d="M5 12h14"/>',
+    sizeup: '<text x="3" y="18" class="tl" font-size="14">A</text><path d="M16 5v8M12 9h8"/>', sizedown: '<text x="3" y="18" class="tl" font-size="11">A</text><path d="M13 11h8"/>', fcolor: '<text x="6" y="15" class="tl">A</text><path d="M4 20h16" stroke-width="3"/>', hilite: '<path d="M9 15l-4 4h6l1-1"/><path d="M14 4l6 6-8 8-6-6z"/><path d="M4 21h16"/>',
+    bullets: '<circle cx="5" cy="7" r="1.6" fill="currentColor"/><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="5" cy="17" r="1.6" fill="currentColor"/><path d="M10 7h10M10 12h10M10 17h10"/>', numbered: '<text x="2.5" y="9.5" class="tl" font-size="8">1</text><text x="2.5" y="19.5" class="tl" font-size="8">2</text><path d="M10 7h10M10 12h10M10 17h10"/>',
+    alignl: '<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>', alignc: '<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>', alignr: '<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>', clearfmt: '<text x="4" y="17" class="tl">T</text><path d="M14 14l6 6M20 14l-6 6"/>',
     file: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 12v6M9 15h6"/>',
     open: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     save: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/>',
@@ -743,7 +805,7 @@
       h += '<div class="sec"><h3>Forma</h3><div class="row r1">' + fld('Tipo', shapeSel(el.shape)) + '</div>' +
         (cardOk ? '<span class="pf"><span>Estilo do card</span></span><div class="lkg" role="group" aria-label="Estilo do card">' + LOOKS.map(function (l) { return '<button type="button" class="' + (l[0] === lk ? 'on' : '') + '" data-act="look-' + l[0] + '" title="' + esc(l[1] + ': ' + l[3]) + '" aria-pressed="' + (l[0] === lk) + '">' + lookSvg(l[0]) + '<span>' + esc(l[2]) + '</span></button>'; }).join('') + '</div>' + (lk === 'header' ? '<p class="note" style="margin:0 0 10px">O texto da forma vai na faixa azul-marinho, que cresce com o título. Para o corpo do card, use uma caixa de texto por cima.</p>' : '') : '') +
         (isBrace(el.shape) ? '<span class="pf"><span>Cor do traço</span></span>' + swatches('stroke', el.stroke) + '<div class="row" style="margin-top:10px">' + fld('Espessura do traço', num('strokeW', Math.max(3, +el.strokeW || 0), 1, 3, 40)) + '</div><div class="chips">' + tog('shadow', el.shadow, 'Sombra') + tog('dash', el.dash, 'Tracejado') + '</div></div>'
-          : '<span class="pf"><span>Preenchimento</span></span>' + (cardOk && LOOK_FILL[lk] ? '<p class="note lk-fill" style="margin:0">Definido pelo estilo “' + esc(LOOKS.filter(function (l) { return l[0] === lk; }).map(function (l) { return l[2]; })[0] || lk) + '”. Para escolher a cor, use Chapado, Barra lateral, Barra no topo ou Cabeçalho.</p>' : swatches('fill', el.fill, true)) + '<span class="pf" style="margin-top:10px"><span>Contorno</span></span>' + swatches('stroke', el.stroke) + '<div class="row" style="margin-top:10px">' + fld('Espessura do contorno', num('strokeW', el.strokeW, 1, 0, 40)) + fld('Arredondamento', num('radius', el.radius, 1, 0, 400)) + '</div><div class="chips">' + tog('shadow', el.shadow, 'Sombra') + tog('dash', el.dash, 'Contorno tracejado') + '</div></div>');
+          : '<span class="pf"><span>Preenchimento</span></span>' + (cardOk && LOOK_FILL[lk] ? '<p class="note lk-fill" style="margin:0">Definido pelo estilo “' + esc(LOOKS.filter(function (l) { return l[0] === lk; }).map(function (l) { return l[2]; })[0] || lk) + '”. Para escolher a cor, use Chapado, Barra lateral, Barra no topo ou Cabeçalho.</p>' : swatches('fill', el.fill, true)) + '<span class="pf" style="margin-top:10px"><span>Contorno</span></span>' + swatches('stroke', el.stroke) + '<div class="row" style="margin-top:10px">' + fld('Espessura do contorno', num('strokeW', el.strokeW, 1, 0, 40)) + fld('Arredondamento', num('radius', el.radius, 1, 0, 400)) + '</div>' + wSeg(el.strokeW, 'sw-') + '<div class="chips">' + tog('shadow', el.shadow, 'Sombra') + tog('dash', el.dash, 'Contorno tracejado') + '</div></div>');
     }
     if (el.type === 'text' || el.type === 'shape') {
       h += '<div class="sec"><h3>Texto</h3>' + (el.type === 'text' ? '<div class="chips" style="margin-bottom:10px">' + ['title', 'subtitle', 'body', 'eyebrow'].map(function (k) { return '<button class="chip" data-act="preset-' + k + '">' + { title: 'Título', subtitle: 'Subtítulo', body: 'Corpo', eyebrow: 'Rótulo' }[k] + '</button>'; }).join('') + '</div>' : '') +
@@ -844,12 +906,15 @@
   var LN_RT = [['straight', 'Reta'], ['elbow', 'Cotovelo'], ['curve', 'Curva']], LN_DASH = [['none', 'Contínua'], ['dash', 'Tracejada'], ['dot', 'Pontilhada'], ['dashdot', 'Traço e ponto'], ['long', 'Traço longo']],
     LN_HEAD = [['none', 'Sem ponta'], ['arrow', 'Seta'], ['open', 'Seta aberta'], ['dot', 'Bola'], ['diamond', 'Losango'], ['bar', 'Barra']];
   function lnIco(o) { return lineThumb(Object.assign({ x1: 0, y1: 0, x2: 64, y2: 0, stroke: 'currentColor', strokeW: 4 }, o), 'lni'); }
+  /* S26: espessuras prontas (px do slide) — o campo numérico continua para qualquer valor */
+  var LN_W = [[1, 'Fina'], [2, 'Normal'], [3, 'Média'], [4, 'Grossa'], [6, 'Extra'], [8, 'Máxima']];
+  function wSeg(cur, pre) { return '<div class="seg lnseg ln-w" role="group" aria-label="Espessura"><span class="pf" style="margin:0 6px 0 0"><span>Rápido</span></span>' + LN_W.map(function (o) { return '<button type="button" class="' + (Math.abs(+cur - o[0]) < .01 ? 'on' : '') + '" data-act="' + pre + o[0] + '" title="' + o[1] + ' (' + o[0] + ' px)" aria-label="' + o[1] + ' (' + o[0] + ' px)"><svg viewBox="0 0 48 24"><path d="M6 12h36" stroke-width="' + Math.min(10, o[0] * 1.5) + '"/></svg></button>'; }).join('') + '</div>'; }
   function lnSeg(kind, cur, opts, ico) { return '<div class="seg lnseg ln-' + kind + '">' + opts.map(function (o) { return '<button type="button" class="' + (o[0] === cur ? 'on' : '') + '" data-act="ln-' + kind + '-' + o[0] + '" title="' + o[1] + '" aria-label="' + o[1] + '" aria-pressed="' + (o[0] === cur) + '">' + ico(o[0]) + (kind === 'rt' ? '<span>' + o[1] + '</span>' : '') + '</button>'; }).join('') + '</div>'; }
   function headCur(el, k, b) { return RT.LINE_HEADS.indexOf(el[k]) >= 0 ? el[k] : el[b] ? 'arrow' : 'none'; }
   function lineSec(el) {
     var rt = RT.LINE_ROUTES.indexOf(el.curve) > 0 ? el.curve : 'straight', ds = el.dash ? (RT.LINE_DASHES.indexOf(el.dashS) >= 0 ? el.dashS : 'dash') : 'none';
     return '<div class="sec"><h3>Linha</h3>' + swatches('stroke', el.stroke) +
-      '<div class="row" style="margin-top:10px">' + fld('Espessura', num('strokeW', el.strokeW, 1, 1, 40)) + '<label class="pf"><span>&nbsp;</span><button type="button" class="btnw ic" data-act="ln-flip" title="Troca o início e o fim; as pontas vão junto">' + svgI('flip') + 'Inverter</button></label></div>' +
+      '<div class="row" style="margin-top:10px">' + fld('Espessura', num('strokeW', el.strokeW, 1, 1, 40)) + '<label class="pf"><span>&nbsp;</span><button type="button" class="btnw ic" data-act="ln-flip" title="Troca o início e o fim; as pontas vão junto">' + svgI('flip') + 'Inverter</button></label></div>' + wSeg(el.strokeW, 'sw-') +
       '<span class="pf"><span>Traçado</span></span>' + lnSeg('rt', rt, LN_RT, function (k) { return lnIco({ curve: k, x2: 44, y1: 30, strokeW: 4.5 }); }) +
       (rt === 'elbow' ? '<div class="row r1" style="margin:10px 0 0">' + fld('Dobra do cotovelo', '<input type="range" data-p="bend" data-n="1" min="0.1" max="0.9" step="0.05" value="' + (el.bend == null ? .5 : el.bend) + '">') + '</div><p class="note" style="margin:0">Ou arraste o ponto laranja da dobra, no slide.</p>' : '') +
       '<span class="pf" style="margin-top:10px"><span>Tracejado</span></span>' + lnSeg('dash', ds, LN_DASH, function (k) { return lnIco(k === 'none' ? {} : { dash: true, dashS: k }); }) +
@@ -1243,6 +1308,7 @@
     if (a === 'gallery-icon') return openGallery('icon');
     if (a === 'icons') return openIcons($('#props [data-act=icons]'), { right: true });
     if (a.indexOf('ln-') === 0 && el && el.type === 'line') return lineAct(el, a);
+    if (a.indexOf('sw-') === 0 && el && (el.type === 'line' || el.type === 'shape')) { el.strokeW = +a.slice(3); if (el.type === 'shape' && (!el.stroke || el.stroke === 'none')) el.stroke = dark() ? '#FFFFFF' : '#002A46'; rerenderEl(el); renderProps(); commit(); return; } /* S26 */
     if (a.indexOf('look-') === 0 && el && el.type === 'shape') { applyLook(el, a.slice(5)); rerenderEl(el); renderProps(); commit(); return; }
   }
   function pickImage(cb) {
@@ -1717,7 +1783,7 @@
     stopPreview(); if (e.button !== 0) return;
     setZone('canvas');
     if (e.target.closest('#fxArrow')) { e.preventDefault(); openVarMenu(e.target.closest('#fxArrow')); return; }
-    if (e.target.closest('#frBar')) { e.preventDefault(); return; } /* barra do quadro: o clique age (selLayer click); a seleção fica */
+    if (e.target.closest('#frBar,#txBar')) { e.preventDefault(); return; } /* barras do quadro e do texto: o clique age (selLayer click); a seleção e a edição ficam */
     if (e.target.closest('.rhdl')) { e.preventDefault(); startRotate(e); return; }
     var hd = e.target.closest('.hdl');
     if (hd) { e.preventDefault(); startResize(e, hd.dataset.h); return; }
@@ -1862,7 +1928,7 @@
   }
   wrap.addEventListener('dblclick', function (e) {
     stopPreview(); var n = stageNode(e.target);
-    if (!n) { if (!e.target.closest('.hdl,#fxArrow,.gbox,.rhdl,#frBar')) createTextAt(toLogical(e)); return; }
+    if (!n) { if (!e.target.closest('.hdl,#fxArrow,.gbox,.rhdl,#frBar,#txBar')) createTextAt(toLogical(e)); return; }
     var el = getEl(n.dataset.id); if (!el) return;
     if (el.type === 'text' || el.type === 'shape') { startEdit(el, false); selectWordAt(e.clientX, e.clientY, stage.querySelector('.am-el[data-id="' + el.id + '"] .am-tx')); }
     else if (el.type === 'image') act('replace');
@@ -1899,7 +1965,7 @@
       drawSel();
     };
     tx.onpaste = function (ev) { ev.preventDefault(); document.execCommand('insertText', false, clipPlain((ev.clipboardData || window.clipboardData).getData('text/plain'))); };
-    tx.onblur = function () { setTimeout(function () { if (editingId === el.id) endEdit(); }, 0); };
+    tx.onblur = function () { if (txHold) { txHold = false; return; } setTimeout(function () { if (editingId === el.id && !txHold) endEdit(); }, 0); }; /* S26: o 1º blur ao abrir o seletor de cores não encerra */
     drawSel();
   }
   /* HTML de texto: só marcação simples (lista de permissão); <template> é inerte, nada carrega nem executa ao analisar */
@@ -2224,7 +2290,14 @@
     if (mod && !e.altKey && k === 'p') { e.preventDefault(); if (editingId) endEdit(); exportAs('pdf'); return; } /* Ctrl+P: Salvar como PDF (imprimir o editor não serve para nada) */
     if (mod && !e.altKey && k === 'o') { e.preventDefault(); openPicker(); return; }
     if (mod && !e.altKey && k === 'd' && (typing || t.isContentEditable)) { e.preventDefault(); return; } /* nunca abre o "favoritos" do navegador */
-    if (t.isContentEditable) { if (e.key === 'Escape') { e.preventDefault(); t.blur(); } return; }
+    if (t.isContentEditable) {
+      if (e.key === 'Escape') { e.preventDefault(); t.blur(); return; }
+      if (editingId && mod && !e.altKey) { /* S26: formatação do trecho (as mesmas teclas do PowerPoint/Word) */
+        if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) { e.preventDefault(); txFmt(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline'); return; }
+        if (e.shiftKey && (e.code === 'Digit8' || e.code === 'Digit7')) { e.preventDefault(); txFmt(e.code === 'Digit8' ? 'bullets' : 'numbered'); return; }
+      }
+      return;
+    }
     if (typing) return;
     /* provador aberto e foco nele (ou no corpo da página depois de um clique na gaveta): as teclas não chegam ao slide por trás */
     if (gxIsOpen() && !(mod && !e.altKey) && (t === document.body ? gx.pin : $('#drawer').contains(t)) && gxKeys(e)) return;
@@ -2953,7 +3026,7 @@
     if (!inCv) return;
     if (editingId) { var en = stage.querySelector('.am-el[data-id="' + editingId + '"]'); if (en && en.contains(e.target)) return; endEdit(); }
     e.preventDefault(); setZone('canvas');
-    var n = stageNode(e.target), onSel = e.target.closest('#sel .hdl,#fxArrow,#sel .rhdl,#frBar');
+    var n = stageNode(e.target), onSel = e.target.closest('#sel .hdl,#fxArrow,#sel .rhdl,#frBar,#txBar');
     if (n && selIds.indexOf(n.dataset.id) < 0) select(n.dataset.id);
     if (n || (onSel && selIds.length)) { openX(ctxElItems, { x: e.clientX + 2, y: e.clientY + 2, ctx: 1 }); return; }
     var p = toLogical(e); p = { x: Math.max(0, Math.min(W - 20, p.x)), y: Math.max(0, Math.min(H - 20, p.y)) };

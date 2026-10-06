@@ -49,6 +49,8 @@ Status: **today** = shipped; **F0** = shipped in step S0 (Fundação); **Fn** = 
 
 Editor present mode only: **F5** (start from the beginning) and **Shift+F5** (from the current slide) are handled by the editor before the player sees them (editor.js keydown). The player never binds F-keys other than F.
 
+Text editing (S26, inside the contenteditable): **Ctrl/⌘+B / I / U** bold, italic, underline; **Ctrl+Shift+8** bulleted list, **Ctrl+Shift+7** numbered list; Esc ends the edit. The floating bar `#txBar` adds strike, A−/A+, colour, marker, alignment and clear. All other keys inside the text stay with the browser (native undo included).
+
 Importar PowerPoint ou PDF (S24): no key; Arquivo › Importar… or drop a `.pptx`/`.pdf` on the slide. Inside the import dialog the same rules as the export dialogs apply (Esc cancels/closes, Tab stays inside, Ctrl+S/O/D/P/Z/Y and F1/F5 are swallowed).
 
 Editor only (S21b): **Ctrl/⌘+P** opens “Salvar como PDF” (never the browser's print of the editor UI; the browser menu's Imprimir prints the slides via `beforeprint` → `AMExport.preparePrint`). Ctrl+S and Ctrl+P also work while the ▾ “Salvar como…” menu is open (the menu closes first). Inside the export dialogs Ctrl+S/O/D/P/Z/Y and F1/F5 are swallowed (they never reach the editor or the browser).
