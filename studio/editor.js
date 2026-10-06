@@ -214,7 +214,7 @@
   var SNAP_GEO = ['x', 'y', 'w', 'h', 'rot', 'flipH', 'flipV', 'opacity', 'radius'],
     SNAP_TXT = ['font', 'size', 'weight', 'color', 'align', 'valign', 'lh', 'ls', 'bg', 'italic', 'upper', 'fill', 'stroke', 'strokeW', 'dash', 'shadow', 'look', 'shape'],
     SNAP_K = { text: SNAP_GEO.concat(SNAP_TXT), shape: SNAP_GEO.concat(SNAP_TXT), image: SNAP_GEO.concat(['fit', 'shadow']), fx: SNAP_GEO.concat(['variant', 'pal']),
-      line: ['x1', 'y1', 'x2', 'y2', 'bend', 'curve', 'stroke', 'strokeW', 'dash', 'headS', 'headE', 'headStart', 'headEnd', 'dashS'] },
+      line: ['x1', 'y1', 'x2', 'y2', 'bend', 'curve', 'stroke', 'strokeW', 'dash', 'headS', 'headE', 'headStart', 'headEnd', 'dashS', 'a1', 'a2'] },
     SNAP_B = { flipH: 1, flipV: 1, italic: 1, upper: 1, dash: 1, shadow: 1, headStart: 1, headEnd: 1 }, /* booleanos: só true é guardado */
     SNAP_REQ = { x: 1, y: 1, w: 1, h: 1, x1: 1, y1: 1, x2: 1, y2: 1 }, PH_MAX = 200, PH_RE = /^p\d{1,3}$/;
   /* fontes do painel; uma fonte importada (PowerPoint/PDF) que não é do Canteiro aparece como opção extra, para não sumir do seletor */
@@ -237,7 +237,7 @@
     var o = { t: e.type === 'fx' ? 'fx:' + e.kind : e.type };
     (SNAP_K[e.type] || []).forEach(function (k) {
       var v = e[k]; if (v == null) return;
-      if (SNAP_B[k]) { if (v === true) o[k] = true; } else if (k === 'pal') { if (typeof v === 'object') o.pal = clone(v); } else o[k] = v;
+      if (SNAP_B[k]) { if (v === true) o[k] = true; } else if (k === 'pal' || k === 'a1' || k === 'a2') { if (v && typeof v === 'object') o[k] = clone(v); } else o[k] = v;
     });
     if (e.type === 'fx' && e.data) {
       if (Array.isArray(e.data.colors) && e.data.colors.length) o.cols = e.data.colors.slice(); if (e.data.style != null && fxStyleField(e.kind)) o.ds = e.data.style;
@@ -259,7 +259,7 @@
     (SNAP_K[e.type] || []).forEach(function (k) {
       if (sn[k] == null) { if (!SNAP_REQ[k]) delete e[k]; } /* sem x/y/w/h na base (arquivo editado à mão): a medida atual fica */
       else if (k === 'variant' && !(e.type === 'fx' && RT.FX[e.kind] && RT.FX[e.kind].variants && RT.FX[e.kind].variants.some(function (x) { return x[0] === sn[k]; }))) delete e[k];
-      else e[k] = k === 'pal' ? clone(sn[k]) : sn[k];
+      else e[k] = (k === 'pal' || k === 'a1' || k === 'a2') ? clone(sn[k]) : sn[k];
     });
     if (e.type === 'fx') {
       if (!e.data || typeof e.data !== 'object') e.data = {}; if (sn.cols) e.data.colors = sn.cols.slice(); else delete e.data.colors; if (sn.ds != null && fxStyleField(e.kind)) e.data.style = sn.ds;
@@ -289,6 +289,7 @@
   var draftTimer = null, draftWarned = false;
   function commit() {
     RT.stampNums(deck); /* S27: número do slide acompanha inserções, cópias e reordenações */
+    deck.slides.forEach(syncLinks); /* S32: o que vai para o arquivo já tem as pontas presas no lugar */
     var now = JSON.stringify(deck);
     if (now === last) return;
     hist.push(last); if (hist.length > 50) hist.shift();
@@ -344,7 +345,10 @@
     if (e.type === 'fx' && !(typeof e.kind === 'string' && RT.FX.hasOwnProperty(e.kind))) return null;
     var o = clone(e), F = e.type === 'fx' ? RT.FX[e.kind] : null;
     o.id = typeof o.id === 'string' && /^[\w-]{1,40}$/.test(o.id) ? o.id : uid();
-    if (o.type === 'line') { ['x1', 'y1', 'x2', 'y2'].forEach(function (k, i) { o[k] = numOr(o[k], [440, 380, 840, 300][i]); }); }
+    if (o.type === 'line') {
+      ['x1', 'y1', 'x2', 'y2'].forEach(function (k, i) { o[k] = numOr(o[k], [440, 380, 840, 300][i]); });
+      ['a1', 'a2'].forEach(function (k) { var a = o[k]; if (a && typeof a === 'object' && !Array.isArray(a) && typeof a.id === 'string' && /^[\w-]{1,40}$/.test(a.id)) o[k] = { id: a.id, s: /^[nesw]$/.test(a.s) ? a.s : 'c' }; else delete o[k]; }); /* S32: ponta presa a um elemento */
+    }
     else if (o.type === 'image' && !(e.w > 0 && e.h > 0)) { o.w = 520; o.h = 360; o.x = (W - 520) / 2; o.y = (H - 360) / 2; } /* imagem gravada sem medidas (inserção antiga com NaN → null): volta visível, no centro */
     else { o.x = numOr(o.x, 0); o.y = numOr(o.y, 0); o.w = Math.max(8, numOr(o.w, F ? F.w : 300)); o.h = Math.max(8, numOr(o.h, F ? F.h : 140)); }
     ['fill', 'stroke', 'color', 'bg'].forEach(function (k) { if (o[k] != null && !(typeof o[k] === 'string' && COLOR_RE.test(o[k]))) delete o[k]; });
@@ -474,6 +478,7 @@
   }
   function renderStage() {
     stopPreview(); if (stage) stage.remove();
+    syncLinks(slide()); /* S32: pontas presas acompanham as formas */
     stage = RT.renderSlide(slide(), { play: false });
     wrap.insertBefore(stage, wrap.firstChild);
     stageHidden(); fit(); drawSel();
@@ -481,7 +486,55 @@
   function rerenderEl(el) {
     stopPreview(); var i = slide().els.indexOf(el), old = stage.querySelector('.am-el[data-id="' + el.id + '"]'), n = RT.renderEl(el, i);
     if (old) old.replaceWith(n); else stage.appendChild(n);
+    if (el.type !== 'line') refreshLinks(el); /* S32: tamanho/posição nova → as linhas presas se redesenham */
     drawSel();
+  }
+  /* ---------- S32: conectores presos (el.a1 / el.a2 = {id, s}) ----------
+     s = n/e/s/w: meio daquele lado; c = automático: onde a reta até a outra ponta (ou até o centro da outra forma presa) cruza a caixa.
+     As coordenadas x1/y1/x2/y2 continuam gravadas (o player e as exportações não precisam saber de nada): syncLinks recalcula
+     antes de desenhar e ao gravar; mover a forma (posNode) e redimensionar (rerenderEl) redesenham as linhas presas ao vivo */
+  var SIDE_N = { c: 'Lado automático', n: 'Em cima', e: 'À direita', s: 'Embaixo', w: 'À esquerda' };
+  function anchorPt(t, side, ox, oy) {
+    var b = aabb(t), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    if (side === 'n') return [Math.round(cx), Math.round(b.y)]; if (side === 's') return [Math.round(cx), Math.round(b.y + b.h)];
+    if (side === 'w') return [Math.round(b.x), Math.round(cy)]; if (side === 'e') return [Math.round(b.x + b.w), Math.round(cy)];
+    var dx = ox - cx, dy = oy - cy; if (!dx && !dy) return [Math.round(cx), Math.round(b.y)];
+    var k = Math.min(Math.abs(dx) > 1e-6 ? (b.w / 2) / Math.abs(dx) : 1e9, Math.abs(dy) > 1e-6 ? (b.h / 2) / Math.abs(dy) : 1e9);
+    return [Math.round(cx + dx * k), Math.round(cy + dy * k)];
+  }
+  function syncLine(s, ln) {
+    var ch = false, byId = function (id) { return (s.els || []).find(function (e) { return e.id === id && e.type !== 'line'; }); };
+    ['a1', 'a2'].forEach(function (k) {
+      var a = ln[k]; if (!a) return; var t = byId(a.id); if (!t) { delete ln[k]; ch = true; return; }
+      var oa = ln[k === 'a1' ? 'a2' : 'a1'], ot = oa && byId(oa.id), o = ot ? (function () { var b = aabb(ot); return [b.x + b.w / 2, b.y + b.h / 2]; })() : (k === 'a1' ? [ln.x2, ln.y2] : [ln.x1, ln.y1]);
+      var p = anchorPt(t, a.s, o[0], o[1]), kx = k === 'a1' ? 'x1' : 'x2', ky = k === 'a1' ? 'y1' : 'y2';
+      if (ln[kx] !== p[0] || ln[ky] !== p[1]) { ln[kx] = p[0]; ln[ky] = p[1]; ch = true; }
+    });
+    return ch;
+  }
+  function syncLinks(s) { var ch = []; ((s && s.els) || []).forEach(function (e) { if (e.type === 'line' && (e.a1 || e.a2) && syncLine(s, e)) ch.push(e); }); return ch; }
+  function linkedLines(s, id) { return ((s && s.els) || []).filter(function (e) { return e.type === 'line' && ((e.a1 && e.a1.id === id) || (e.a2 && e.a2.id === id)); }); }
+  function refreshLinks(el) { var s = slide(); linkedLines(s, el.id).forEach(function (ln) { syncLine(s, ln); if (stage && stage.querySelector('.am-el[data-id="' + ln.id + '"]')) rerenderEl(ln); }); }
+  function detachMoved(list) { var ids = list.map(function (e) { return e.id; }); list.forEach(function (e) { if (e.type !== 'line') return; ['a1', 'a2'].forEach(function (k) { if (e[k] && ids.indexOf(e[k].id) < 0) delete e[k]; }); }); } /* mover a linha sozinha solta as pontas; mover junto com a forma mantém */
+  function remapLinks(list, map) { list.forEach(function (e) { if (e.type !== 'line') return; ['a1', 'a2'].forEach(function (k) { if (!e[k]) return; if (map[e[k].id]) e[k] = { id: map[e[k].id], s: e[k].s }; else delete e[k]; }); }); return list; }
+  /* alvo para prender a ponta arrastada: elemento (não linha) sob o ponteiro (até 12 px fora da caixa); a 22 px do meio de um lado = esse lado, senão automático; o menor elemento ganha */
+  function snapTarget(x, y, selfId) {
+    var best = null;
+    slide().els.forEach(function (t) {
+      if (t.id === selfId || t.type === 'line') return; var b = aabb(t); if (x < b.x - 12 || x > b.x + b.w + 12 || y < b.y - 12 || y > b.y + b.h + 12) return;
+      var cx = b.x + b.w / 2, cy = b.y + b.h / 2, side = 'c', dm = 22;
+      [['n', cx, b.y], ['e', b.x + b.w, cy], ['s', cx, b.y + b.h], ['w', b.x, cy]].forEach(function (c) { var d = Math.hypot(c[1] - x, c[2] - y); if (d < dm) { dm = d; side = c[0]; } });
+      var area = b.w * b.h; if (!best || area < best.area) best = { el: t, s: side, area: area };
+    });
+    return best;
+  }
+  function markTarget(t) { if (!stage) return; $$('.am-el.lnk-t', stage).forEach(function (n) { n.classList.remove('lnk-t'); }); if (t) { var n = stage.querySelector('.am-el[data-id="' + t.id + '"]'); if (n) n.classList.add('lnk-t'); } }
+  function linkSec(el) {
+    var s = slide(), row = function (k, label) {
+      var a = el[k], t = a && s.els.find(function (e) { return e.id === a.id; });
+      return '<div class="row r1"><label class="pf"><span>' + label + (t ? ' <small>presa a ' + esc(elName(t)) + '</small>' : '') + '</span>' + (t ? '<div class="row lnk">' + selIn(k + '.s', a.s || 'c', Object.keys(SIDE_N).map(function (q) { return [q, SIDE_N[q]]; })) + '<button type="button" class="btnw ic" data-act="unlink-' + k + '" title="Soltar esta ponta da forma">' + svgI('unlink') + 'Soltar</button></div>' : '<span class="note" style="margin:0">Solta. Arraste esta ponta até uma forma para prender.</span>') + '</label></div>';
+    };
+    return '<div class="sec"><h3>Pontas presas</h3>' + row('a1', 'Início') + row('a2', 'Fim') + '<p class="note">Uma ponta presa acompanha a forma quando ela se move ou muda de tamanho. Ao arrastar a ponta, <b>Alt</b> = não prender.</p></div>';
   }
   function pc(v, t) { return (v / t * 100) + '%'; }
   function boxCss(b) { return 'left:' + pc(b.x, W) + ';top:' + pc(b.y, H) + ';width:' + pc(b.w, W) + ';height:' + pc(b.h, H); }
@@ -814,6 +867,7 @@
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     note: '<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/>',
+    unlink: '<path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.3-1.3"/><path d="M4 4l16 16"/>',
     vote: '<path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
     timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
@@ -920,6 +974,7 @@
     if (FD && FD.gal === 'icon') { var hv = h.slice(h0.length), ci = hv.indexOf('<div class="sec"><h3>Conteúdo</h3>'); if (ci > 0) h = h0 + hv.slice(ci) + hv.slice(0, ci); }
     if (el.type === 'line') {
       h += '<div class="sec"><h3>Posição</h3><div class="row r4">' + fld('X1', num('x1', el.x1)) + fld('Y1', num('y1', el.y1)) + fld('X2', num('x2', el.x2)) + fld('Y2', num('y2', el.y2)) + '</div>' + frRow([el], false) + '</div>';
+      h += linkSec(el); /* S32 */
       h += RT.LINE_ROUTES ? lineSec(el) : '<div class="sec"><h3>Linha</h3>' + swatches('stroke', el.stroke) + '<div class="row" style="margin-top:10px">' + fld('Espessura', num('strokeW', el.strokeW, 1, 1, 40)) + '<label class="pf"><span>&nbsp;</span>' + tog('dash', el.dash, 'Tracejada') + '</label></div><div class="chips">' + tog('headStart', el.headStart, '← Seta no início') + tog('headEnd', el.headEnd, 'Seta no fim →') + '</div></div>';
     } else {
       h += '<div class="sec"><h3>Posição e tamanho</h3><div class="row r4">' + fld('X', num('x', el.x)) + fld('Y', num('y', el.y)) + fld('Largura', num('w', el.w, 1, 8)) + fld('Altura', num('h', el.h, 1, 8)) + '</div><div class="row">' + fld('Rotação (°)', num('rot', el.rot || 0, 1, -360, 360)) + fld('Opacidade', num('opacity', el.opacity == null ? 1 : el.opacity, .05, 0, 1)) + '</div>' + frRow([el], true) + '<h3 style="margin-top:6px">Alinhar no slide</h3>' + alignSeg() + '</div>';
@@ -1129,6 +1184,7 @@
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    if (/^a[12]\.s$/.test(path)) { var ak = path.slice(0, 2); if (!el[ak]) return; el[ak].s = /^[nesw]$/.test(val) ? val : 'c'; syncLine(slide(), el); rerenderEl(el); if (!live) { commit(); renderProps(); } return; } /* S32 */
     if (/(^|\.)font$/.test(path) && typeof val === 'string') ensureFonts([val]); /* S29 */
     if (/^pal\.[pa]$/.test(path)) { /* cores do componente: a cor A&M da linha (navy / laranja) ou nenhuma = sem troca, apaga só essa chave */
       var pk = path.slice(4), pv = typeof val === 'string' ? val.toUpperCase() : '';
@@ -1301,7 +1357,7 @@
     if (editingId) { editingId = null; freshId = null; }
     slide().els = slide().els.filter(function (e) { return ids.indexOf(e.id) < 0; }); pick([]); renderStage(); renderProps(); commit();
   }
-  function dupSel() { var list = sels(); if (!list.length) return; addEls(remapGrp(list.map(function (el) { var c = clone(el); c.id = uid(); delete c.ph; shift(c, 24); return c; }))); } /* cópia de um elemento do layout é do usuário (sem ph); grupo copiado vira outro grupo */
+  function dupSel() { var list = sels(); if (!list.length) return; var map = {}; addEls(remapLinks(remapGrp(list.map(function (el) { var c = clone(el); map[el.id] = c.id = uid(); delete c.ph; shift(c, 24); return c; })), map)); } /* cópia de um elemento do layout é do usuário (sem ph); grupo copiado vira outro grupo */
   /* ---------------- S27: grupos, bloqueio, camadas e pincel de formato ----------------
      grupo = el.grp (id compartilhado): clicar num membro seleciona o grupo inteiro, mover/redimensionar/girar/apagar valem para todos;
      bloqueio = el.lock: o elemento pode ser selecionado (e o texto, editado), mas não move, não redimensiona, não gira e não é apagado */
@@ -1374,7 +1430,7 @@
   function moveTo(el, nx, ny) { if (el.type === 'line') { var b = bbox(el), dx = nx - b.x, dy = ny - b.y; el.x1 += dx; el.x2 += dx; el.y1 += dy; el.y2 += dy; } else { el.x = nx; el.y = ny; } }
   function posNode(el) {
     var node = stage && stage.querySelector('.am-el[data-id="' + el.id + '"]'); if (!node) return;
-    if (el.type === 'line') { var lb = RT.lineBox(el); node.style.left = pc(lb.x, W); node.style.top = pc(lb.y, H); } else { node.style.left = pc(el.x, W); node.style.top = pc(el.y, H); }
+    if (el.type === 'line') { var lb = RT.lineBox(el); node.style.left = pc(lb.x, W); node.style.top = pc(lb.y, H); } else { node.style.left = pc(el.x, W); node.style.top = pc(el.y, H); refreshLinks(el); }
   }
   /* ordem de empilhamento: um passo (front/back) ou extremos (top/bottom), para um ou vários elementos */
   function reorder(a) {
@@ -1529,6 +1585,7 @@
     if (a === 'zoomview') { if (!el) return; present(cur, s.hidden === true); if (player && player.zoom) player.zoom.open(el.id); return; }
     if (a === 'pvel') return previewEl(el);
     if (a === 'brandkit') { openBrandKit(document.activeElement); return; } /* S29 */
+    if (a === 'unlink-a1' || a === 'unlink-a2') { if (!el || !el[a.slice(7)]) return; delete el[a.slice(7)]; commit(); renderProps(); toast('Ponta solta · Ctrl+Z desfaz'); return; } /* S32 */
     if (a === 'palreset') { if (!el || !el.pal) return; delete el.pal; rerenderEl(el); renderProps(); commit(); toast('Cores A&M restauradas neste elemento · Ctrl+Z desfaz'); return; }
     if (a === 'gallery') return openGallery('in');
     if (a === 'gallery-tr') return openGallery('tr');
@@ -1691,8 +1748,9 @@
     setTimeout(function () { previewEl(ne); }, 250); return ne;
   }
   function smartItems() {
-    var out = [], last = null;
-    smartLayouts().forEach(function (l) { if (l[2] !== last) { out.push({ hd: l[2] }); last = l[2]; } out.push({ t: l[1], raw: RT.smartIcon(l[0], 'shp sa'), fn: function () { insertSmart(l[0]); } }); });
+    var out = [], groups = [], by = {};
+    smartLayouts().forEach(function (l) { if (!by[l[2]]) { by[l[2]] = []; groups.push(l[2]); } by[l[2]].push(l); }); /* por grupo, na ordem em que cada grupo aparece (um layout novo no fim do registro entra no seu grupo) */
+    groups.forEach(function (g) { out.push({ hd: g }); by[g].forEach(function (l) { out.push({ t: l[1], raw: RT.smartIcon(l[0], 'shp sa'), fn: function () { insertSmart(l[0]); } }); }); });
     out.cls = 'xcols xsa'; return out; /* xsa: mais largo, para “Processo em chevrons” não cortar */
   }
   function buildSmartMenu() {
@@ -1854,7 +1912,7 @@
   }
 
   /* ---------------- slides (lateral) ---------------- */
-  function freshSlide(s) { var c = clone(s); c.id = uid(); c.els = (c.els || []).map(function (x) { x.id = uid(); return x; }); return c; }
+  function freshSlide(s) { var c = clone(s), map = {}; c.id = uid(); c.els = (c.els || []).map(function (x) { map[x.id] = uid(); x.id = map[x.id]; return x; }); remapLinks(c.els, map); return c; }
   function dupSlide(i) { if (i == null) i = cur; if (editingId) endEdit(); deck.slides.splice(i + 1, 0, freshSlide(deck.slides[i])); cur = i + 1; pick([]); renderAll(); commit(); }
   function delSlide(i) {
     if (i == null) i = cur; if (editingId) endEdit();
@@ -2067,7 +2125,7 @@
     var others = slide().els.filter(function (o) { return ids.indexOf(o.id) < 0; }).map(aabb); /* guias pelo desenho girado (a caixa que o contém), não pela caixa sem giro */
     function mv(ev) {
       var p = toLogical(ev), dx = p.x - p0.x, dy = p.y - p0.y;
-      if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return; moved = true; busy = 'move';
+      if (!moved && Math.abs(dx) < 2 && Math.abs(dy) < 2) return; if (!moved) detachMoved(list); moved = true; busy = 'move';
       var nx = b0.x + dx, ny = b0.y + dy, g = [];
       if (!ev.altKey) {
         var xs = [0, W / 2, W], ys = [0, H / 2, H]; others.forEach(function (o) { xs.push(o.x, o.x + o.w / 2, o.x + o.w); ys.push(o.y, o.y + o.h / 2, o.y + o.h); });
@@ -2134,6 +2192,7 @@
     addEventListener('pointermove', mv); addEventListener('pointerup', up);
   }
   function startResize(e, h) {
+    var pend; /* S32: alvo da ponta arrastada */
     var el = sel(); if (!el) return;
     var p0 = toLogical(e), o = clone(el), keep = el.type === 'image';
     /* elemento girado: o arraste vira coordenada local (gira −θ); a caixa nova volta ao mundo pelo centro, então a alça oposta fica parada na tela */
@@ -2148,6 +2207,9 @@
       } else if (h === 'p1' || h === 'p2') {
         var k = h === 'p1' ? ['x1', 'y1', 'x2', 'y2'] : ['x2', 'y2', 'x1', 'y1'], x = Math.round(p.x), y = Math.round(p.y);
         if (ev.shiftKey) { var ax = el[k[2]], ay = el[k[3]], ang = Math.round(Math.atan2(y - ay, x - ax) / (Math.PI / 4)) * Math.PI / 4, len = Math.hypot(x - ax, y - ay); x = Math.round(ax + Math.cos(ang) * len); y = Math.round(ay + Math.sin(ang) * len); }
+        var tg = ev.altKey ? null : snapTarget(x, y, el.id); /* S32: perto de uma forma, a ponta prende nela (Alt = não) */
+        if (tg) { var ap = anchorPt(tg.el, tg.s, el[k[2]], el[k[3]]); x = ap[0]; y = ap[1]; pend = { id: tg.el.id, s: tg.s }; } else pend = null;
+        markTarget(tg && tg.el);
         el[k[0]] = x; el[k[1]] = y;
       } else {
         var x0 = o.x, y0 = o.y, x1 = o.x + o.w, y1 = o.y + o.h;
@@ -2162,7 +2224,11 @@
       }
       rerenderEl(el);
     }
-    function up() { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); busy = null; drawSel(); commit(); renderProps(); }
+    function up() {
+      removeEventListener('pointermove', mv); removeEventListener('pointerup', up); busy = null;
+      if (h === 'p1' || h === 'p2') { var ak = h === 'p1' ? 'a1' : 'a2'; if (pend) el[ak] = pend; else if (pend === null) delete el[ak]; markTarget(null); if (el[ak]) toast('Ponta presa ' + (SIDE_N[el[ak].s] === 'Lado automático' ? '(lado automático)' : SIDE_N[el[ak].s].toLowerCase()) + ' · Alt ao arrastar = não prender'); }
+      drawSel(); commit(); renderProps();
+    }
     addEventListener('pointermove', mv); addEventListener('pointerup', up);
   }
   wrap.addEventListener('dblclick', function (e) {
@@ -2343,7 +2409,7 @@
     }
     if (Array.isArray(p.els) && p.els.length) {
       var list = remapGrp(p.els.map(safeEl).filter(Boolean)); if (!list.length) return false; /* S27: grupo colado é outro grupo */
-      var off = pasteOffset(list), els = list.map(function (x) { var c = clone(x); c.id = uid(); delete c.ph; shift(c, off); return c; });
+      var off = pasteOffset(list), map = {}, els = remapLinks(list.map(function (x) { var c = clone(x); map[x.id] = c.id = uid(); delete c.ph; shift(c, off); return c; }), map);
       addEls(els); var nd = p.els.length - list.length; if (nd) toast(nd > 1 ? nd + ' elementos não reconhecidos ficaram de fora.' : '1 elemento não reconhecido ficou de fora.');
       return true;
     }
@@ -3588,7 +3654,7 @@
     newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind, insertSeq: insertSeq, SEQS: SEQS,
     /* S29: kit de marca (ed-43-brand.js usa) */
     brand: { get: brand, set: setBrand, safe: safeBrand, kitify: kitify, applyFont: brandApplyFont, applyPal: brandApplyPal, fonts: fontOpts, GFONTS: GFONTS, SYS_FONTS: SYS_FONTS, ensureFonts: ensureFonts, fontLink: fontLink, open: openBrandKit, palOk: palOk, SW: SW },
-    pickImage: pickImage, confirmBox: confirmBox, insertText: insertText,
+    pickImage: pickImage, confirmBox: confirmBox, insertText: insertText, dupSlide: dupSlide,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },

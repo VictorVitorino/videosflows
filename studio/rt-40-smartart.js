@@ -20,7 +20,10 @@
     ['matrix', 'Matriz 2×2', 'Hierarquia e listas', 'Quatro quadrantes, nesta ordem: superior esquerdo, superior direito, inferior esquerdo, inferior direito.', 4, 4],
     ['pyramid', 'Pirâmide', 'Camadas', 'Camadas do topo para a base; os detalhes (Tab) ficam à direita de cada uma.', 2, 8],
     ['funnel', 'Funil', 'Camadas', 'Camadas da mais larga para a mais estreita; os detalhes (Tab) ficam à direita.', 2, 8],
-    ['target', 'Alvo (camadas)', 'Camadas', 'A primeira linha é o núcleo; as seguintes, os anéis em volta, com rótulos à direita.', 2, 6]
+    ['target', 'Alvo (camadas)', 'Camadas', 'A primeira linha é o núcleo; as seguintes, os anéis em volta, com rótulos à direita.', 2, 6],
+    /* S32 */
+    ['flow', 'Fluxograma', 'Processos', 'Etapas em serpentina (até 4 por linha), ligadas por setas; “?” no início = decisão (losango); Início/Fim viram pílulas; os detalhes (Tab) ficam dentro da caixa.', 2, 16],
+    ['mindmap', 'Mapa mental', 'Ciclos e relações', 'A primeira linha é o tema central; as seguintes, os ramos (alternam direita e esquerda); os detalhes (Tab) são os sub-ramos.', 2, 12]
   ];
   var RAMP = ['#002A46', '#13406A', '#43698F', '#7EA1C3', '#A3B8D6', '#C9D6E8'], SETS = ['#002A46', '#4A6FA5', '#7EA1C3'], RINGS = ['#F78C16', '#002A46', '#43698F', '#7EA1C3', '#A3B8D6', '#C9D6E8'];
   function find(k) { for (var i = 0; i < LAYOUTS.length; i++) if (LAYOUTS[i][0] === k) return LAYOUTS[i]; return null; }
@@ -70,7 +73,9 @@
     matrix: '<rect x="4" y="2" width="19" height="13" rx="1.5" fill="#002A46"/><rect x="25" y="2" width="19" height="13" rx="1.5" fill="#4A6FA5"/><rect x="4" y="17" width="19" height="13" rx="1.5" fill="#DCE5F0"/><rect x="25" y="17" width="19" height="13" rx="1.5" fill="#DCE5F0"/><rect x="25" y="17" width="2.5" height="13" fill="#F78C16"/>',
     pyramid: '<path d="M24 2l5 9H19z" fill="#002A46"/><path d="M18 12.5h12l5 8.5H13z" fill="#43698F"/><path d="M12.5 22.5h23l5 8.5H7.5z" fill="#A3B8D6"/>',
     funnel: '<path d="M7 2h34l-5.5 8.5h-23z" fill="#002A46"/><path d="M13 12h22l-5 8.5H18z" fill="#43698F"/><path d="M18.5 22h11L24 30.5z" fill="#A3B8D6"/>',
-    target: '<circle cx="15" cy="16" r="14" fill="#7EA1C3"/><circle cx="15" cy="16" r="9.5" fill="#43698F"/><circle cx="15" cy="16" r="5" fill="#F78C16"/><path d="M17 16h14M22 10h9M24 22h7" stroke="#A3B8D6" stroke-width="1.5"/>'
+    target: '<circle cx="15" cy="16" r="14" fill="#7EA1C3"/><circle cx="15" cy="16" r="9.5" fill="#43698F"/><circle cx="15" cy="16" r="5" fill="#F78C16"/><path d="M17 16h14M22 10h9M24 22h7" stroke="#A3B8D6" stroke-width="1.5"/>',
+    flow: '<rect x="2" y="3" width="12" height="8" rx="4" fill="#F78C16"/><rect x="18" y="3" width="12" height="8" rx="1.5" fill="#002A46"/><path d="M41 2l6 6-6 6-6-6z" fill="#4A6FA5"/><rect x="34" y="21" width="12" height="8" rx="1.5" fill="#002A46"/><rect x="18" y="21" width="12" height="8" rx="1.5" fill="#002A46"/><rect x="2" y="21" width="12" height="8" rx="4" fill="#F78C16"/><path d="M14 7h4M30 7h5M41 14v7M34 25h-4M18 25h-4" stroke="#7EA1C3" stroke-width="1.5" fill="none"/>',
+    mindmap: '<rect x="17" y="12" width="14" height="8" rx="4" fill="#002A46"/><rect x="34" y="3" width="12" height="7" rx="2" fill="#F78C16"/><rect x="34" y="22" width="12" height="7" rx="2" fill="#4A6FA5"/><rect x="2" y="3" width="12" height="7" rx="2" fill="#43698F"/><rect x="2" y="22" width="12" height="7" rx="2" fill="#7EA1C3"/><path d="M31 15c3 0 2-8 3-8M31 17c3 0 2 8 3 8M17 15c-3 0-2-8-3-8M17 17c-3 0-2 8-3 8" stroke="#A3B8D6" stroke-width="1.5" fill="none"/>'
   };
   /* itens de exemplo por layout (inserção pelo seletor / Inserir › SmartArt ▸ e arrastar); o painel de texto substitui tudo */
   var SAMPLE = {
@@ -82,7 +87,9 @@
     matrix: 'Manter\n  Processos estáveis\nInvestir\n  Alto potencial\nRevisar\n  Baixo retorno\nDescontinuar\n  Sem aderência',
     pyramid: 'Propósito\n  Por que existimos\nEstratégia\n  Onde jogar e como vencer\nCapacidades\n  O que precisamos dominar\nOperação\n  Processos, sistemas e pessoas',
     funnel: 'Ideias\n  120 propostas\nTriagem\n  45 viáveis\nPilotos\n  12 testes\nEscala\n  4 iniciativas',
-    target: 'Núcleo: propósito\n  O que nunca muda\nValores\n  Como decidimos\nComportamentos\n  O que se vê no dia a dia\nSímbolos\n  Rituais, espaços e marcas'
+    target: 'Núcleo: propósito\n  O que nunca muda\nValores\n  Como decidimos\nComportamentos\n  O que se vê no dia a dia\nSímbolos\n  Rituais, espaços e marcas',
+    flow: 'Início\nReceber pedido\n  Portal ou e-mail\n? Dados completos\nValidar crédito\nSeparar e faturar\n? Entrega no prazo\nNotificar cliente\nFim',
+    mindmap: 'Transformação digital\nClientes\n  Portal único\n  Autoatendimento\nOperações\n  Automação\n  Painéis de status\nPessoas\n  Capacitação\n  Novos papéis\nDados\n  Dados mestres\n  Governança'
   };
   function sample(k) { return parse(Object.prototype.hasOwnProperty.call(SAMPLE, k) ? SAMPLE[k] : R.FX.smart.data.items).map(function (o) { return { t: o.t, lv: o.lv }; }); }
   function icon(k, cls) { return '<svg viewBox="0 0 48 32"' + (cls ? ' class="' + esc(cls) + '"' : '') + ' aria-hidden="true">' + (ICO[k] || ICO.process) + '</svg>'; }
@@ -110,7 +117,7 @@
       function node(o, x, y, ww, hh, cls, g, extra, noKids, oi) {
         N += '<div class="sa-n lv' + o.lv + ' ' + cls + '" data-g="' + g + '" style="' + box(x, y, ww, hh) + ';--i:' + (oi != null ? oi : ord++) + ';--lv:' + o.lv + (extra || '') + '"><b>' + lab(o) + '</b>' + (noKids ? '' : li(o.kids)) + '</div>';
       }
-      function ln(dd, i, cls) { S += '<path class="sa-ln' + (cls ? ' ' + cls : '') + '" pathLength="1" style="--i:' + i + '" d="' + dd + '"/>'; }
+      function ln(dd, i, cls, extra) { S += '<path class="sa-ln' + (cls ? ' ' + cls : '') + '" pathLength="1" style="--i:' + i + (extra || '') + '" d="' + dd + '"/>'; }
       function head(x, y, a, s, i) { S += '<path class="sa-hd" style="--i:' + i + '" d="M' + f1(x) + ' ' + f1(y) + 'L' + f1(x - s * Math.cos(a - .5)) + ' ' + f1(y - s * Math.sin(a - .5)) + 'L' + f1(x - s * Math.cos(a + .5)) + ' ' + f1(y - s * Math.sin(a + .5)) + 'Z"/>'; }
       var gap, bw, kidsN = maxKids(nodes), tt = titles(nodes);
       if (L === 'process') {
@@ -159,6 +166,47 @@
           ln('M' + f1(cx2 + ux * s0 * 1.04) + ' ' + f1(cy2 + uy * s0 * 1.04) + 'L' + f1(x - ux * t * 1.03) + ' ' + f1(y - uy * t * 1.03), k);
           node({ t: o.t, lv: 0, i: o.i, kids: [] }, x - sw / 2, y - sh / 2, sw, sh, 'sa-spk', k, '', true);
         });
+      } else if (L === 'flow') {
+        /* serpentina: até 4 caixas por linha, a linha seguinte volta no sentido contrário; setas entre vizinhas; “?” = decisão (losango);
+           Início/Fim = pílulas; os detalhes (Tab) ficam dentro da caixa */
+        var cols = Math.min(4, n), rows = Math.ceil(n / cols), gx = w * .05, gy = h * .09, fw = (w - gx * (cols - 1)) / cols, fh = Math.min((h - gy * (rows - 1)) / rows, h * .42);
+        var fy0 = (h - (fh * rows + gy * (rows - 1))) / 2, isQ = function (o) { return /^\?/.test(o.t); }, isEnd = function (o) { return /^(in[ií]cio|come[çc]o|start|fim|end|t[ée]rmino|final)\b/i.test(o.t); };
+        fs = fitW(fs, fw * .82, 2.2, tt.map(function (t) { return t.replace(/^\?\s*/, ''); })); fs = fitH(fs, fh * .9, kidsN + 1);
+        var pos = nodes.map(function (o, k) { var r = Math.floor(k / cols), c = k % cols; if (r % 2) c = cols - 1 - c; return { x: c * (fw + gx), y: fy0 + r * (fh + gy), r: r, c: c }; });
+        nodes.forEach(function (o, k) {
+          var p = pos[k], q = isQ(o), t = q ? o.t.replace(/^\?\s*/, '') : o.t, cls = q ? 'sa-dia' : isEnd(o) ? 'sa-pill sa-flowend' : 'sa-box sa-flowbox';
+          node({ t: t, lv: 0, i: o.i, kids: o.kids, ep: q ? '? ' : '' }, p.x, p.y, fw, fh, cls, k, q ? ';padding:0 ' + f1(fw * .18 / fs) + 'em' : '', q);
+          if (k < n - 1) {
+            var nx = pos[k + 1], ax, ay, dir;
+            if (nx.r === p.r) { dir = nx.c > p.c ? 1 : -1; ax = dir > 0 ? p.x + fw : p.x; ay = p.y + fh / 2; ln('M' + f1(ax) + ' ' + f1(ay) + 'H' + f1(ax + dir * gx * .62), k, 'sa-arw'); head(ax + dir * gx * .72, ay, dir > 0 ? 0 : Math.PI, gx * .3, k); }
+            else { ax = p.x + fw / 2; ay = p.y + fh; ln('M' + f1(ax) + ' ' + f1(ay) + 'V' + f1(ay + gy * .62), k, 'sa-arw'); head(ax, ay + gy * .72, Math.PI / 2, gy * .3, k); }
+          }
+        });
+      } else if (L === 'mindmap') {
+        /* centro + ramos alternando direita/esquerda, empilhados por lado; sub-ramos (Tab) mais para fora; curvas da cor do ramo */
+        var mmC = nodes[0] || { t: '', i: 0, lv: 0, kids: [] }, br = nodes.length > 1 ? nodes.slice(1) : mmC.kids.slice(0, def[5] - 1), MMC = ['#F78C16', '#4A6FA5', '#13406A', '#43698F', '#7EA1C3', '#002A46', '#A3B8D6']; /* só a paleta A&M (laranja e azuis), em ciclo */
+        var right = br.filter(function (o, k) { return k % 2 === 0; }), left = br.filter(function (o, k) { return k % 2 === 1; });
+        var cw = Math.min(w * .22, h * .5), chh = Math.min(h * .18, cw * .5), bw2 = w * .19, bh2 = h * .1, sw2 = w * .16, sh2 = h * .075, cxm = w / 2, cym = h / 2;
+        fs = fitW(fs, bw2, 1.4, titles(br).concat([mmC.t])); fs = fitH(fs, bh2, 1);
+        node({ t: mmC.t, lv: 0, i: mmC.i, kids: [] }, cxm - cw / 2, cym - chh / 2, cw, chh, 'sa-mm-c', 'c', '', true);
+        var side = function (list, sgn) {
+          /* altura de cada ramo = seu bloco (ramo + sub-ramos), distribuídos na altura toda */
+          var blocks = list.map(function (o) { return Math.max(bh2, o.kids.length * (sh2 + h * .018) - h * .018); }), tot = blocks.reduce(function (a, b) { return a + b; }, 0), free = Math.max(0, h - tot), gapB = list.length > 1 ? free / (list.length + 1) : free / 2, y = gapB;
+          list.forEach(function (o, j) {
+            var bi = br.indexOf(o), col = MMC[bi % MMC.length], bx = sgn > 0 ? cxm + cw / 2 + w * .05 : cxm - cw / 2 - w * .05 - bw2, by = y + blocks[j] / 2 - bh2 / 2;
+            var sx0 = sgn > 0 ? cxm + cw / 2 : cxm - cw / 2, ex0 = sgn > 0 ? bx : bx + bw2, midx = (sx0 + ex0) / 2;
+            ln('M' + f1(sx0) + ' ' + f1(cym) + 'C' + f1(midx) + ' ' + f1(cym) + ' ' + f1(midx) + ' ' + f1(by + bh2 / 2) + ' ' + f1(ex0) + ' ' + f1(by + bh2 / 2), bi, 'sa-mm-l', ';--c:' + col);
+            node({ t: o.t, lv: 0, i: o.i, kids: [] }, bx, by, bw2, bh2, 'sa-mm-b', bi, ';--c:' + col, true);
+            var ky = y + (blocks[j] - (o.kids.length * (sh2 + h * .018) - h * .018)) / 2;
+            o.kids.forEach(function (c2, q) {
+              var kx = sgn > 0 ? bx + bw2 + w * .035 : bx - w * .035 - sw2, kyy = ky + q * (sh2 + h * .018), s1 = sgn > 0 ? bx + bw2 : bx, e1 = sgn > 0 ? kx : kx + sw2, m1 = (s1 + e1) / 2;
+              ln('M' + f1(s1) + ' ' + f1(by + bh2 / 2) + 'C' + f1(m1) + ' ' + f1(by + bh2 / 2) + ' ' + f1(m1) + ' ' + f1(kyy + sh2 / 2) + ' ' + f1(e1) + ' ' + f1(kyy + sh2 / 2), bi, 'sa-mm-l sa-mm-l2', ';--c:' + col);
+              node({ t: c2.t, lv: 1, i: c2.i, kids: [] }, kx, kyy, sw2, sh2, 'sa-mm-s', bi, ';--c:' + col, true);
+            });
+            y += blocks[j] + gapB;
+          });
+        };
+        side(right, 1); side(left, -1);
       } else if (L === 'org') {
         var cnt = 0, roots2 = [], leaves = 0, depth = 0;
         (function take(a, out) { a.forEach(function (o) { if (cnt >= def[5]) return; var c = { t: o.t, lv: o.lv, i: o.i, kids: [] }; cnt++; out.push(c); take(o.kids, c.kids); }); })(all, roots2);

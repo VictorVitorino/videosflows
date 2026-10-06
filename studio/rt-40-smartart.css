@@ -65,3 +65,17 @@
 .fxsa.cy-active [data-g]:not(.cy-on){opacity:.3;transition:opacity .4s}
 .fxsa.cy-active .sa-n.cy-on{transform:scale(1.04);box-shadow:0 .6em 1.4em rgba(0,30,50,.2);transition:transform .4s,box-shadow .4s}
 .fxsa.cy-active .sa-chev.cy-on,.fxsa.cy-active .sa-step.cy-on,.fxsa.cy-active .sa-bk.cy-on{transform:none;box-shadow:none}
+/* S32: fluxograma e mapa mental */
+.sa-dia{background:#002A46;color:#fff;align-items:center;text-align:center;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);justify-content:center}
+.sa-dia b{font-size:.98em}
+.sa-flowbox{padding:.7em .9em}
+.sa-flowend{background:#F78C16;color:#002A46}
+.sa-flowend.sa-pill{border-radius:2em}
+.sa-mm-c{background:#002A46;color:#fff;border-radius:2em;align-items:center;text-align:center;padding:0 .9em}
+.sa-mm-c b{font-size:1.15em}
+.sa-mm-b{background:var(--c,#4A6FA5);color:#fff;border-radius:.5em;align-items:center;text-align:center;padding:0 .6em}
+.sa-mm-b b{font-size:1em}
+.sa-mm-s{background:#fff;color:#002A46;border:.12em solid var(--c,#4A6FA5);border-radius:.45em;align-items:center;text-align:center;padding:0 .5em}
+.sa-mm-s b{font-size:.82em;font-weight:600}
+.sa-ln.sa-mm-l{stroke:var(--c,#7EA1C3);stroke-width:2.4}
+.sa-ln.sa-mm-l2{stroke-width:1.6}
