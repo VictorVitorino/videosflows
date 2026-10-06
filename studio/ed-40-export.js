@@ -95,6 +95,7 @@ window.AMExport = (function () {
   }
   function mountStage(slide) {
     var st = RT.renderSlide(slide, { play: false });
+    st.classList.remove('am-edit'); st.classList.add('am-export'); /* dicas só do editor (SmartArt vazio, árvore vazia…) não saem no PDF/PowerPoint */
     st.style.width = W + 'px'; st.style.height = H + 'px'; st.style.aspectRatio = 'auto';
     getHost().appendChild(st); return st;
   }
@@ -120,7 +121,8 @@ window.AMExport = (function () {
     return Promise.all(jobs);
   }
   function waitImages(st) {
-    return Promise.all([].slice.call(st.querySelectorAll('img')).map(function (im) { return im.decode ? im.decode().catch(function () { }) : null; }));
+    /* 8 s por imagem: uma foto que nunca termina de carregar não trava a exportação (ela sai sem essa foto) */
+    return Promise.all([].slice.call(st.querySelectorAll('img')).map(function (im) { return im.decode ? withTimeout(im.decode(), 8000).catch(function () { }) : null; }));
   }
   /* CSS do palco: runtime (com os rt-*.css), cores de componente, e o que o editor aplica a todo o documento */
   var rtCSS = { src: null, out: '' };
@@ -136,8 +138,14 @@ window.AMExport = (function () {
     var cs = getComputedStyle(getHost());
     return 'font-family:' + cs.fontFamily.replace(/"/g, "'") + ';font-size:' + cs.fontSize + ';line-height:' + cs.lineHeight + ';color:' + cs.color + ';letter-spacing:' + cs.letterSpacing + ';text-rendering:' + cs.textRendering;
   }
+  /* texto que o XML não aceita (controle C0 como o U+000B do Shift+Enter do PowerPoint, U+FFFE/FFFF) some; surrogate sem par vira U+FFFD —
+     sem isso o <img> recusa o SVG inteiro (e encodeURIComponent lança URIError), e a exportação toda falhava por um caractere colado */
+  function xmlSafe(s) {
+    return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/g, ' ')
+      .replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/g, '\uFFFD').replace(/(^|[^\uD800-\uDBFF])([\uDC00-\uDFFF])/g, '$1\uFFFD');
+  }
   function svgFor(st, fonts, box, outW, outH) {
-    var body = new XMLSerializer().serializeToString(st);
+    var body = xmlSafe(new XMLSerializer().serializeToString(st)); fonts = xmlSafe(fonts || '');
     return '<svg xmlns="http://www.w3.org/2000/svg" width="' + outW + '" height="' + outH + '" viewBox="' + box.x + ' ' + box.y + ' ' + box.w + ' ' + box.h + '">' +
       '<foreignObject x="0" y="0" width="' + W + '" height="' + H + '"><div xmlns="' + XHTML + '" style="width:' + W + 'px;height:' + H + 'px;margin:0;' + inherited() + '">' +
       '<style>' + xmlText(fonts) + '\n' + sheetCSS() + '</style>' + body + '</div></foreignObject></svg>';
@@ -146,7 +154,7 @@ window.AMExport = (function () {
     return new Promise(function (res, rej) {
       var im = new Image();
       im.addEventListener('load', function () { res(im); });
-      im.addEventListener('error', function () { rej(new Error('Não foi possível desenhar o slide')); });
+      im.addEventListener('error', function () { rej(new Error('não foi possível desenhar o slide')); });
       im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     });
   }
@@ -226,15 +234,20 @@ window.AMExport = (function () {
   /* larguras da Helvetica (AFM, /1000) de 32 a 126; letras acentuadas usam a letra base */
   var HW = [278, 278, 355, 556, 556, 889, 667, 191, 333, 333, 389, 584, 278, 333, 278, 278, 556, 556, 556, 556, 556, 556, 556, 556, 556, 556, 278, 278, 584, 584, 584, 556, 1015, 667, 667, 722, 722, 667, 611, 778, 722, 278, 500, 667, 556, 833, 722, 778, 667, 778, 722, 667, 611, 722, 667, 944, 667, 667, 611, 278, 278, 278, 469, 556, 333, 556, 556, 500, 556, 556, 278, 556, 556, 222, 222, 500, 222, 833, 556, 556, 556, 556, 333, 500, 278, 556, 500, 722, 500, 500, 500, 334, 260, 334, 584];
   var CP = { 8364: 128, 8218: 130, 402: 131, 8222: 132, 8230: 133, 8224: 134, 8225: 135, 710: 136, 8240: 137, 352: 138, 8249: 139, 338: 140, 381: 142, 8216: 145, 8217: 146, 8220: 147, 8221: 148, 8226: 149, 8211: 150, 8212: 151, 732: 152, 8482: 153, 353: 154, 8250: 155, 339: 156, 382: 158, 376: 159 };
+  /* símbolos fora do cp1252 que a busca/cópia do PDF ainda deve achar (o sinal de menos nunca vira '?', ≠ nunca vira '=') */
+  var SYM = { 0x2212: '-', 0x2010: '-', 0x2011: '-', 0x2012: '-', 0x2015: '-', 0x2192: '->', 0x2190: '<-', 0x2191: '^', 0x2193: 'v', 0x2194: '<->', 0x21D2: '=>', 0x2260: '!=', 0x2264: '<=', 0x2265: '>=', 0x2248: '~', 0x00D7: 'x', 0x2022: '-', 0x2023: '>', 0x25CF: '*', 0x2713: 'v', 0x2714: 'v', 0x2717: 'x', 0x2718: 'x', 0x2605: '*', 0x2606: '*', 0x2026: '...', 0x2039: '<', 0x203A: '>', 0x00AB: '<<', 0x00BB: '>>' };
   /* texto → bytes WinAnsi (cp1252): acentos do português são os mesmos códigos do Latin-1 */
   function winAnsi(s) {
     var out = [];
     for (var ch of String(s)) {
       var c = ch.codePointAt(0);
-      if (c === 160 || c === 9 || c === 10) c = 32;
+      if (c === 160 || c === 9 || c === 10 || c === 11 || c === 12 || c === 13 || c === 0x2028 || c === 0x2029) c = 32;
+      if (c < 32 || c === 0xAD || c === 0x200B || c === 0x200C || c === 0x200D || c === 0xFEFF || c === 0x2060) continue; /* controle e invisíveis: fora */
       if ((c >= 32 && c <= 126) || (c >= 161 && c <= 255)) out.push(c);
       else if (CP[c]) out.push(CP[c]);
-      else { var b = ch.normalize('NFD').charAt(0), bc = b.charCodeAt(0); out.push(bc >= 32 && bc <= 126 ? bc : 63); }
+      else if (SYM[c]) for (var j = 0; j < SYM[c].length; j++) out.push(SYM[c].charCodeAt(j));
+      else if (/\p{L}/u.test(ch)) { var b = ch.normalize('NFD').charAt(0), bc = b.charCodeAt(0); out.push(bc >= 32 && bc <= 126 ? bc : 63); } /* letra acentuada fora do Latin-1: a letra base */
+      else out.push(63);
     }
     return out;
   }
@@ -283,7 +296,9 @@ window.AMExport = (function () {
       if (o.onProgress) o.onProgress(i, n);
       var it = list[i];
       /* setTimeout (não requestAnimationFrame): com a aba em segundo plano a exportação continua, só mais devagar */
-      return tick().then(function () { return rasterSlide(it.slide, { scale: scale, type: 'jpeg', quality: q, bg: '#FFFFFF' }); }).then(function (r) {
+      return tick().then(function () { return rasterSlide(it.slide, { scale: scale, type: 'jpeg', quality: q, bg: '#FFFFFF' }); }).catch(function (err) {
+        throw new Error('slide ' + ((it.index | 0) + 1) + ' não pôde ser desenhado' + (err && err.message && !/desenhar o slide/.test(err.message) ? ' (' + err.message + ')' : ''));
+      }).then(function (r) {
         if (sig.cancelled) return null;
         return r.blob.arrayBuffer().then(function (buf) {
           var pn = 5 + i * 3, cn = pn + 1, im = pn + 2, cs = 'q 960 0 0 540 0 0 cm /Im0 Do Q\n' + textLayer(r.texts);
@@ -322,9 +337,11 @@ window.AMExport = (function () {
     if (printing) printing.cleanup();
     var list = (o && o.list) || pick(deck, o || {}), box = document.createElement('div'), css = document.createElement('style');
     box.id = 'amPrint'; box.setAttribute('aria-hidden', 'true'); css.id = 'am-print-css'; css.textContent = PRINT_CSS;
-    list.forEach(function (it) { var pg = document.createElement('div'); pg.className = 'amx-pg'; var st = RT.renderSlide(it.slide, { play: false }); pg.appendChild(st); box.appendChild(pg); });
+    list.forEach(function (it) { var pg = document.createElement('div'); pg.className = 'amx-pg'; var st = RT.renderSlide(it.slide, { play: false }); st.classList.remove('am-edit'); st.classList.add('am-export'); pg.appendChild(st); box.appendChild(pg); });
     document.head.appendChild(css); document.body.appendChild(box); document.body.classList.add('am-printing');
-    var done = false, me = { count: list.length, el: box, cleanup: function () { if (done) return; done = true; box.remove(); css.remove(); document.body.classList.remove('am-printing'); removeEventListener('afterprint', me.cleanup); if (printing === me) printing = null; } };
+    /* o PDF da impressão recebe o nome da apresentação (título da página), não o do editor */
+    var t0 = document.title, tt = String((deck && deck.title) || '').trim(); if (tt) document.title = tt.slice(0, 200);
+    var done = false, me = { count: list.length, el: box, cleanup: function () { if (done) return; done = true; box.remove(); css.remove(); document.body.classList.remove('am-printing'); if (tt && document.title === tt.slice(0, 200)) document.title = t0; removeEventListener('afterprint', me.cleanup); if (printing === me) printing = null; } };
     addEventListener('afterprint', me.cleanup);
     printing = me; return me;
   }
@@ -362,8 +379,8 @@ window.AMExport = (function () {
       '<fieldset class="xp-sec"><legend class="xp-lg">Slides</legend>' +
       '<label class="xp-rd"><input type="radio" name="xpRange" value="all" checked><span id="xpAllL">Todos</span></label>' +
       '<label class="xp-rd"><input type="radio" name="xpRange" value="cur"><span id="xpCurL">Slide atual</span></label>' +
-      '<div class="xp-rd xp-span"><label><input type="radio" name="xpRange" value="span"><span>De</span></label>' +
-      '<input type="number" id="xpFrom" min="1" step="1" inputmode="numeric" aria-label="Do slide"><span>a</span><input type="number" id="xpTo" min="1" step="1" inputmode="numeric" aria-label="Até o slide"></div>' +
+      '<div class="xp-rd xp-span"><label><input type="radio" name="xpRange" value="span" aria-label="Intervalo de slides"><span>De</span></label>' +
+      '<input type="number" id="xpFrom" min="1" step="1" inputmode="numeric" aria-label="Do slide nº"><span>a</span><input type="number" id="xpTo" min="1" step="1" inputmode="numeric" aria-label="Até o slide nº"></div>' +
       '<label class="xp-ck"><input type="checkbox" id="xpHid"><span id="xpHidL">Incluir slides ocultos</span></label></fieldset>' +
       '<fieldset class="xp-sec xp-q" role="radiogroup"><legend class="xp-lg">Qualidade</legend>' +
       '<label class="xp-seg"><input type="radio" name="xpQ" value="2" checked><span>Padrão <em>2×</em></span></label><label class="xp-seg"><input type="radio" name="xpQ" value="3"><span>Máxima <em>3×</em></span></label></fieldset>' +
@@ -374,7 +391,8 @@ window.AMExport = (function () {
     document.body.appendChild(dlg);
     dlg.addEventListener('click', function (e) {
       var x = e.target.closest('[data-x]'); if (!x) return;
-      if (x.dataset.x === 'bk' || x.dataset.x === 'close') { if (st && st.busy) return; closeDialog(); }
+      if (x.dataset.x === 'bk') { if (st && st.busy) return; closeDialog(); }
+      else if (x.dataset.x === 'close') { if (st && st.busy) cancelRun(); else closeDialog(); }
       else if (x.dataset.x === 'cancel') { if (st && st.busy) cancelRun(); else closeDialog(); }
     });
     dlg.addEventListener('change', function (e) {
@@ -392,6 +410,7 @@ window.AMExport = (function () {
   function clampSpan() {
     var n = counts().n, f = $('#xpFrom'), t = $('#xpTo');
     [f, t].forEach(function (x) { var v = Math.round(+x.value); x.value = String(Math.max(1, Math.min(n, isFinite(v) && v ? v : 1))); });
+    if (+f.value > +t.value) { var a = f.value; f.value = t.value; t.value = a; } /* “de 7 a 3” vira “de 3 a 7”: o que se vê é o que sai */
   }
   function setMode(m) {
     st.mode = m === 'print' ? 'print' : 'pdf';
@@ -466,14 +485,18 @@ window.AMExport = (function () {
     dlg.querySelectorAll('.xp-b input').forEach(function (x) { x.disabled = b; });
     $('#xpProg').hidden = !b && !st.keepProg; $('#xpGo').disabled = b;
     $('#xpCancel').textContent = b ? 'Cancelar exportação' : 'Cancelar';
+    $('.xp-x', dlg).setAttribute('aria-disabled', b ? 'true' : 'false');
     if (!b) update();
+    /* durante a exportação o foco fica em “Cancelar exportação” (o único controle útil); ao terminar sem baixar, volta a “Exportar” */
+    if (isOpen()) { var fc = b ? $('#xpCancel') : $('#xpGo'); if (fc && !fc.disabled) fc.focus({ preventScroll: true }); }
   }
   function progress(i, n) {
     var pc = n ? Math.round(i / n * 100) : 0;
     $('#xpPl').textContent = i < n ? 'Gerando slide ' + (i + 1) + ' de ' + n + '…' : 'Montando o arquivo…';
     $('#xpPp').textContent = pc + '%'; $('#xpPb').style.width = pc + '%'; $('.xp-bar', dlg).setAttribute('aria-valuenow', String(pc));
   }
-  function cancelRun() { if (st && st.sig) st.sig.cancelled = true; }
+  /* cancelar vale na hora: a caixa volta ao normal e a promessa atrasada é ignorada (st.sig !== sig) — antes, uma imagem presa segurava tudo */
+  function cancelRun() { if (!(st && st.sig)) return; st.sig.cancelled = true; st.sig = null; st.keepProg = false; setBusy(false); $('#xpProg').hidden = true; toast('Exportação cancelada'); }
   function run() {
     if (st.busy) return;
     var o = opts(), d = deckNow(), list = pick(d, o); if (!list.length) return;
@@ -484,7 +507,7 @@ window.AMExport = (function () {
     pdf(d, { list: list, scale: o.scale, quality: o.quality, signal: sig, onProgress: function (i, n) { if (st.sig === sig) progress(i, n); } }).then(function (blob) {
       if (st.sig !== sig) return;
       st.sig = null; setBusy(false);
-      if (!blob || sig.cancelled) { $('#xpProg').hidden = true; toast('Exportação cancelada'); return; }
+      if (!blob || sig.cancelled) { $('#xpProg').hidden = true; return; }
       A.download(name, blob, 'application/pdf');
       AMExport.last = { name: name, size: blob.size, pages: list.length, ms: Date.now() - t0 };
       closeDialog(); toast('PDF salvo: ' + name + ' · ' + list.length + (list.length === 1 ? ' página · ' : ' páginas · ') + fmtMB(blob.size));
@@ -498,7 +521,7 @@ window.AMExport = (function () {
   var AMExport = {
     rasterSlide: rasterSlide, rasterEls: rasterEls, fontsCSS: fontsCSS, visibleSlides: visibleSlides, pick: pick, boxOf: boxOf, textRuns: textRuns,
     pdf: pdf, preparePrint: preparePrint, print: print, openDialog: openDialog, closeDialog: closeDialog, isOpen: isOpen,
-    winAnsi: winAnsi, last: null
+    winAnsi: winAnsi, xmlSafe: xmlSafe, last: null
   };
   return AMExport;
 })();

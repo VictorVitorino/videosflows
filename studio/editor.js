@@ -137,19 +137,29 @@
     SNAP_B = { flipH: 1, flipV: 1, italic: 1, upper: 1, dash: 1, shadow: 1, headStart: 1, headEnd: 1 }, /* booleanos: só true é guardado */
     SNAP_REQ = { x: 1, y: 1, w: 1, h: 1, x1: 1, y1: 1, x2: 1, y2: 1 }, PH_MAX = 200, PH_RE = /^p\d{1,3}$/;
   function fxStyleField(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return !!(F && Array.isArray(F.fields) && F.fields.some(function (f) { return f && f[0] === 'style'; })); }
+  /* campos de escolha fechada do componente (sel:…, smartlayout): formato que “Redefinir” devolve — fonte/cor do título de impacto, cores das
+     Linhas A&M, tipo do velocímetro, legenda da RACI… (os campos de texto e números ficam como estão: são conteúdo) */
+  function fxSelFields(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return F && Array.isArray(F.fields) ? F.fields.filter(function (f) { return f && typeof f[0] === 'string' && typeof f[2] === 'string' && (f[2].indexOf('sel') === 0 || f[2] === 'smartlayout'); }).map(function (f) { return f[0]; }) : []; }
   function snapOf(e) {
-    var o = {};
+    var o = { t: e.type === 'fx' ? 'fx:' + e.kind : e.type };
     (SNAP_K[e.type] || []).forEach(function (k) {
       var v = e[k]; if (v == null) return;
       if (SNAP_B[k]) { if (v === true) o[k] = true; } else if (k === 'pal') { if (typeof v === 'object') o.pal = clone(v); } else o[k] = v;
     });
-    if (e.type === 'fx' && e.data) { if (Array.isArray(e.data.colors) && e.data.colors.length) o.cols = e.data.colors.slice(); if (e.data.style != null && fxStyleField(e.kind)) o.ds = e.data.style; }
+    if (e.type === 'fx' && e.data) {
+      if (Array.isArray(e.data.colors) && e.data.colors.length) o.cols = e.data.colors.slice(); if (e.data.style != null && fxStyleField(e.kind)) o.ds = e.data.style;
+      var ds = {}; fxSelFields(e.kind).forEach(function (k) { var v = e.data[k]; if ((typeof v === 'string' && (TOKEN_RE.test(v) || COLOR_RE.test(v))) || (typeof v === 'number' && isFinite(v))) ds[k] = v; }); o.dsel = ds; /* sempre presente (mesmo vazio): campo ausente = valor padrão, e “Redefinir” apaga o que foi escolhido depois */
+    }
     return o;
   }
+  /* cópia do elemento para “Redefinir” trazer de volta um original apagado num slide sem layout (modelo pronto, arquivo aberto);
+     fotos não entram (dobrariam o arquivo): essas só voltam com Ctrl+Z */
+  function tplOf(e) { if (!e || e.type === 'image') return null; var c = clone(e); delete c.ph; return c; }
   function stampSlide(s) {
-    var b = { bg: s.bg || '#FFFFFF', els: {} };
+    var b = { bg: s.bg || '#FFFFFF', els: {} }, L = typeof s.layout === 'string' && LAYOUTS.hasOwnProperty(s.layout), tpl = {}, nt = 0;
     if (s.bgImg && s.bgImgOp != null) b.bgImgOp = s.bgImgOp;
-    (s.els || []).forEach(function (e, i) { if (i < PH_MAX) { e.ph = 'p' + i; b.els[e.ph] = snapOf(e); } else delete e.ph; });
+    (s.els || []).forEach(function (e, i) { if (i < PH_MAX) { e.ph = 'p' + i; b.els[e.ph] = snapOf(e); if (!L) { var t = tplOf(e); if (t) { tpl[e.ph] = t; nt++; } } } else delete e.ph; });
+    if (nt) b.tpl = tpl;
     s.base = b; return s;
   }
   function applySnap(e, sn) {
@@ -158,7 +168,10 @@
       else if (k === 'variant' && !(e.type === 'fx' && RT.FX[e.kind] && RT.FX[e.kind].variants && RT.FX[e.kind].variants.some(function (x) { return x[0] === sn[k]; }))) delete e[k];
       else e[k] = k === 'pal' ? clone(sn[k]) : sn[k];
     });
-    if (e.type === 'fx') { if (!e.data || typeof e.data !== 'object') e.data = {}; if (sn.cols) e.data.colors = sn.cols.slice(); else delete e.data.colors; if (sn.ds != null && fxStyleField(e.kind)) e.data.style = sn.ds; }
+    if (e.type === 'fx') {
+      if (!e.data || typeof e.data !== 'object') e.data = {}; if (sn.cols) e.data.colors = sn.cols.slice(); else delete e.data.colors; if (sn.ds != null && fxStyleField(e.kind)) e.data.style = sn.ds;
+      if (sn.dsel) fxSelFields(e.kind).forEach(function (k) { if (Object.prototype.hasOwnProperty.call(sn.dsel, k)) e.data[k] = sn.dsel[k]; else delete e.data[k]; }); /* base antiga (sem dsel): as escolhas ficam como estão */
+    }
   }
   /* id estável da apresentação: histórico (Minhas obras), notas e edições locais do arquivo exportado usam esta chave */
   function deckId() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -273,7 +286,7 @@
     if (!s || typeof s !== 'object') return null;
     var o = { id: typeof s.id === 'string' && /^[\w-]{1,40}$/.test(s.id) && !/^__proto__$|^constructor$|^prototype$/.test(s.id) ? s.id : uid(), bg: typeof s.bg === 'string' && COLOR_RE.test(s.bg) ? s.bg : '#FFFFFF', tr: typeof s.tr === 'string' && /^\w{1,12}$/.test(s.tr) ? s.tr : 'fade', els: (Array.isArray(s.els) ? s.els : []).map(safeEl).filter(Boolean) };
     var bi = safeSrc(s.bgImg); if (bi) { o.bgImg = bi; if (s.bgImgOp != null) o.bgImgOp = Math.max(0, Math.min(1, numOr(s.bgImgOp, 1))); }
-    [['notes', 4000], ['sec', 80], ['secSub', 160], ['title', 160]].forEach(function (f) { var v = safeStr(s[f[0]], f[1]); if (v) o[f[0]] = v; });
+    [['notes', 4000], ['sec', 80], ['secSub', 160], ['title', 160]].forEach(function (f) { var v = safeStr(s[f[0]], f[1]); if (v) v = cleanText(v).replace(/\u000B/g, '\n'); if (v) o[f[0]] = v; });
     if (s.kind === 'section') o.kind = 'section';
     var ids = {}; o.els.forEach(function (e) { if (ids[e.id]) e.id = uid(); ids[e.id] = 1; });
     if (s.hidden === true) o.hidden = true; /* S21: oculto na apresentação */
@@ -290,11 +303,13 @@
     var o = {};
     Object.keys(SNAP_NUM).forEach(function (k) { if (v[k] != null) { var n = clampN(v[k], SNAP_NUM[k][0], SNAP_NUM[k][1]); if (n != null) o[k] = n; } });
     if (v.rot != null) { var r = normRot(v.rot); if (r) o.rot = r; }
+    if (typeof v.t === 'string' && /^(text|shape|line|image|fx:[\w-]{1,40})$/.test(v.t)) o.t = v.t;
     Object.keys(SNAP_B).forEach(function (k) { if (v[k] === true) o[k] = true; });
     ['color', 'fill', 'stroke', 'bg'].forEach(function (k) { if (typeof v[k] === 'string' && COLOR_RE.test(v[k])) o[k] = v[k]; });
     ['font', 'align', 'valign', 'fit', 'shape', 'variant', 'ds'].forEach(function (k) { if (typeof v[k] === 'string' && TOKEN_RE.test(v[k])) o[k] = v[k]; });
     Object.keys(EL_TOKENS).forEach(function (k) { if (EL_TOKENS[k].indexOf(v[k]) >= 0) o[k] = v[k]; });
     var pl = safePal(v.pal); if (pl) o.pal = pl;
+    if (v.dsel && typeof v.dsel === 'object' && !Array.isArray(v.dsel)) { var dd = {}; Object.keys(v.dsel).slice(0, 12).forEach(function (k) { var x = v.dsel[k]; if (/^[a-z][\w-]{0,30}$/i.test(k) && !/^(__proto__|constructor|prototype)$/.test(k) && ((typeof x === 'string' && (TOKEN_RE.test(x) || COLOR_RE.test(x))) || (typeof x === 'number' && isFinite(x)))) dd[k] = x; }); o.dsel = dd; }
     if (Array.isArray(v.cols)) { var dc = v.cols.slice(0, 6).map(function (c) { return typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : ''; }); while (dc.length && !dc[dc.length - 1]) dc.pop(); if (dc.length) o.cols = dc; }
     return o;
   }
@@ -303,6 +318,9 @@
     var o = { bg: typeof b.bg === 'string' && COLOR_RE.test(b.bg) ? b.bg : '#FFFFFF', els: {} }, src = b.els && typeof b.els === 'object' && !Array.isArray(b.els) ? b.els : {};
     if (b.bgImgOp != null) { var op = clampN(b.bgImgOp, 0, 1); if (op != null) o.bgImgOp = op; }
     Object.keys(src).filter(function (k) { return PH_RE.test(k) && src[k] && typeof src[k] === 'object' && !Array.isArray(src[k]); }).slice(0, PH_MAX).forEach(function (k) { o.els[k] = safeSnap(src[k]); });
+    var tp = b.tpl && typeof b.tpl === 'object' && !Array.isArray(b.tpl) ? b.tpl : null, tpl = {}, nt = 0;
+    if (tp) Object.keys(tp).filter(function (k) { return PH_RE.test(k) && o.els[k]; }).slice(0, PH_MAX).forEach(function (k) { var e = safeEl(tp[k]); if (e && e.type !== 'image') { delete e.ph; tpl[k] = e; nt++; } });
+    if (nt) o.tpl = tpl;
     return o;
   }
   function safeComment(c) {
@@ -667,7 +685,8 @@
     }
     if (!el) {
       var SC = RT.sectionsOf(deck), scn = SC.secOf[cur] != null ? SC.list[SC.secOf[cur]] : null;
-      h += '<div class="ph"><h2>Slide ' + (cur + 1) + '<small>' + plural(s.els.length, 'elemento', 'elementos') + ' · ' + plural(deck.slides.length, 'slide', 'slides') + ' na apresentação' + (scn && !scn.intro ? ' · capítulo “' + esc(scn.name) + '”' : '') + '</small></h2></div>';
+      var nVis = deck.slides.filter(function (x) { return x.hidden !== true; }).length;
+      h += '<div class="ph"><h2>Slide ' + (cur + 1) + '<small>' + plural(s.els.length, 'elemento', 'elementos') + ' · ' + (nVis === deck.slides.length ? plural(deck.slides.length, 'slide', 'slides') + ' na apresentação' : plural(deck.slides.length, 'slide', 'slides') + ' · ' + nVis + ' na apresentação') + (scn && !scn.intro ? ' · capítulo “' + esc(scn.name) + '”' : '') + '</small></h2></div>';
       h += showSec(s); /* S21: ocultar e redefinir logo no topo (cabem sem rolar a 1280×720) */
       h += '<div class="sec"><h3>Sobre este slide</h3>' +
         '<div class="row r1">' + fld('Título no índice', '<input type="text" data-p="s.title" maxlength="160" value="' + esc(s.title || '') + '" placeholder="' + esc(RT.slideTitle(s, cur)) + '">') + '</div>' +
@@ -1156,19 +1175,31 @@
     if (editingId) endEdit(); flush(); stopPreview();
     var B = s.base.els || {}, have = {};
     s.els.forEach(function (e) { if (e.ph && B.hasOwnProperty(e.ph) && !have[e.ph]) { applySnap(e, B[e.ph]); have[e.ph] = 1; } });
-    var L = typeof s.layout === 'string' && LAYOUTS.hasOwnProperty(s.layout) ? LAYOUTS[s.layout] : null, back = 0;
-    if (L) L.els().forEach(function (g, k) { /* original apagado: volta do layout, no mesmo lugar da pilha (antes do próximo original) */
-      var ph = 'p' + k; if (!B.hasOwnProperty(ph) || have[ph]) return;
-      g.ph = ph; applySnap(g, B[ph]);
+    var L = typeof s.layout === 'string' && LAYOUTS.hasOwnProperty(s.layout) ? LAYOUTS[s.layout] : null, back = 0, lost = 0, ids = {};
+    s.els.forEach(function (e) { ids[e.id] = 1; });
+    function putBack(g, k) { /* original apagado volta no mesmo lugar da pilha (antes do próximo original) */
       var at = -1; s.els.forEach(function (e, j) { if (at < 0 && phN(e) > k) at = j; });
       if (at < 0) { at = 0; s.els.forEach(function (e, j) { var n = phN(e); if (n >= 0 && n < k) at = j + 1; }); }
-      s.els.splice(at, 0, g); have[ph] = 1; back++;
+      s.els.splice(at, 0, g); have[g.ph] = 1; back++;
+    }
+    var lay = L ? L.els() : null, T = s.base.tpl || {};
+    Object.keys(B).sort(function (a, b) { return +a.slice(1) - +b.slice(1); }).forEach(function (ph) {
+      if (have[ph]) return;
+      var k = +ph.slice(1), g = lay && lay[k] ? lay[k] : null, snap = B[ph];
+      if (g && snap.t && snap.t !== (g.type === 'fx' ? 'fx:' + g.kind : g.type)) g = null; /* o layout mudou de versão: não é mais o mesmo elemento */
+      if (!g && T[ph]) { g = safeEl(clone(T[ph])); if (g && ids[g.id]) g.id = uid(); } /* modelo pronto/arquivo aberto: volta da cópia guardada */
+      if (!g) { lost++; return; } /* foto apagada (ou arquivo antigo sem cópia): só com Ctrl+Z */
+      g.ph = ph; applySnap(g, snap); ids[g.id] = 1; putBack(g, k);
     });
+    /* ordem da pilha: os originais voltam à ordem original; o que foi acrescentado fica logo depois do original que seguia */
+    var buckets = { '-1': [] }, order = [], lastPh = -1;
+    s.els.forEach(function (e) { var n = phN(e); if (n >= 0) { order.push(n); buckets[n] = [e]; lastPh = n; } else buckets[lastPh].push(e); });
+    s.els = buckets['-1'].concat.apply(buckets['-1'], order.sort(function (a, b) { return a - b; }).map(function (n) { return buckets[n]; }));
     s.bg = s.base.bg; if (s.bgImg && s.base.bgImgOp != null) s.bgImgOp = s.base.bgImgOp;
     pick(selIds, selId); renderStage();
     s.els.forEach(function (e) { if (e.type === 'text' && e.ph) fitTextEl(e); }); /* texto mais longo que o original: a caixa cresce para baixo (como ao digitar), nada fica cortado */
     renderProps(); renderThumb(i); commit();
-    toast('Slide redefinido: posições e formatos originais, textos mantidos' + (back ? ' · ' + (back > 1 ? back + ' elementos do layout voltaram' : '1 elemento do layout voltou') : '') + ' · Ctrl+Z desfaz');
+    toast('Slide redefinido: posições e formatos originais, textos mantidos' + (back ? ' · ' + (back > 1 ? back + ' elementos apagados voltaram' : '1 elemento apagado voltou') : '') + (lost ? ' · ' + (lost > 1 ? lost + ' fotos apagadas não voltam' : '1 foto apagada não volta') + ' (use Ctrl+Z)' : '') + ' · Ctrl+Z desfaz');
   }
   function act(a) {
     var el = sel(), s = slide(), list = sels();
@@ -1191,7 +1222,7 @@
     if (a === 'bgimg') { pickImage(function (src) { s.bgImg = src; renderStage(); renderProps(); commit(); }); return; }
     if (a === 'bgimgdel') { delete s.bgImg; renderStage(); renderProps(); commit(); return; }
     if (a === 'colors-reset') { if (el && el.data && el.data.colors) { delete el.data.colors; rerenderEl(el); renderProps(); commit(); toast('Cores A&M de volta.'); } return; }
-    if (a === 'autonotes') { s.notes = RT.autoNotes(s, cur, deck); commit(); renderProps(); var nta = $('#props textarea[data-p="s.notes"]'); if (nta) nta.focus(); toast('Resumo gerado a partir do conteúdo do slide · edite à vontade · Ctrl+Z desfaz'); return; }
+    if (a === 'autonotes') { var vs = deck.slides.filter(function (x) { return x.hidden !== true; }), vi = vs.indexOf(s); s.notes = vi >= 0 ? RT.autoNotes(s, vi, { slides: vs }) : RT.autoNotes(s, cur, deck); commit(); renderProps(); var nta = $('#props textarea[data-p="s.notes"]'); if (nta) nta.focus(); toast('Resumo gerado a partir do conteúdo do slide · edite à vontade · Ctrl+Z desfaz'); return; }
     if (a === 'viewnotes') { closeMenus(); present(cur, s.hidden === true); if (player && player.nav) player.nav.notes(true); return; }
     if (a === 'seq') {
       var order = s.els.slice().sort(function (p, q) { var bp = bbox(p), bq = bbox(q); return (Math.round(bp.y / 40) - Math.round(bq.y / 40)) || (bp.x - bq.x); });
@@ -1214,19 +1245,23 @@
     var f = $('#fImg'); f.value = ''; f.onchange = function () { if (f.files[0]) readImage(f.files[0], cb); }; f.click(); /* cb(src, largura, altura): sem as medidas a imagem entrava com x/y/w/h NaN, invisível e sem poder mover */
   }
   function readImage(file, cb) {
-    var r = new FileReader();
+    var r = new FileReader(), turned = false;
+    /* JPEG com orientação EXIF (foto de celular): o navegador já mostra em pé, mas o arquivo bruto está deitado — o PowerPoint exportado e
+       leitores antigos o mostrariam assim. A foto passa pelo canvas (que “assa” a orientação) antes de entrar na obra */
+    var JO = window.AMExport && window.AMExport.jpegOrient, head = /jpe?g/i.test(file.type) && JO && file.slice ? file.slice(0, 262144).arrayBuffer().then(function (b) { turned = JO(new Uint8Array(b)) !== 1; }).catch(function () { }) : Promise.resolve();
     r.onload = function () {
       var img = new Image();
-      img.onload = function () {
+      img.onload = function () { head.then(go); };
+      function go() {
         var max = 1920, k = Math.min(1, max / Math.max(img.width, img.height)), src = r.result;
-        if (k < 1 || file.size > 900000) {
+        if (k < 1 || file.size > 900000 || turned) {
           var c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
           c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
           src = /png|gif|webp/.test(file.type) ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', .86);
-          if (src.length > r.result.length && k === 1) src = r.result;
+          if (src.length > r.result.length && k === 1 && !turned) src = r.result;
         }
         cb(src, img.width, img.height);
-      };
+      }
       img.src = r.result;
     };
     r.readAsDataURL(file);
@@ -1573,7 +1608,7 @@
   function sidePos() {
     var n = deck.slides.length, c = $('#sideCount'), ps = $('#sidePos');
     if (c) c.textContent = n;
-    if (ps) { ps.innerHTML = '<b></b><span></span>'; ps.firstChild.textContent = cur + 1; ps.lastChild.textContent = '/' + n; ps.title = 'Slide ' + (cur + 1) + ' de ' + n; }
+    if (ps) { var hid = deck.slides[cur] && deck.slides[cur].hidden === true; ps.innerHTML = '<b></b><span></span>'; ps.firstChild.textContent = cur + 1; ps.lastChild.textContent = '/' + n; ps.title = 'Slide ' + (cur + 1) + ' de ' + n + (hid ? ' · oculto na apresentação' : ''); ps.classList.toggle('hid', hid); }
   }
   /* aplica a largura (sem salvar); a mesma largura vale para o recolhido voltar */
   function drawerOpen() { var d = $('#drawer'); return !!(d && d.classList.contains('open')); }
@@ -1865,11 +1900,23 @@
   }
   /* HTML de texto: só marcação simples (lista de permissão); <template> é inerte, nada carrega nem executa ao analisar */
   var KEEP_TAGS = /^(B|STRONG|I|EM|U|S|STRIKE|SUB|SUP|BR|SPAN|DIV|P|FONT|UL|OL|LI|SMALL|MARK)$/, DROP_TAGS = /^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|SVG|MATH|TEMPLATE|NOSCRIPT|LINK|META|BASE|FORM|INPUT|TEXTAREA|SELECT|BUTTON|IMG|VIDEO|AUDIO|CANVAS|FRAME|FRAMESET|TITLE|HEAD)$/;
+  /* caracteres que o XML não aceita (controle C0, U+FFFE/FFFF) e surrogates sem par: vindos de colagens do PowerPoint/Word, quebravam o PDF e o
+     PowerPoint inteiros (S22/S23). O U+000B é a quebra de linha “Shift+Enter” do Office: vira <br>; os outros somem; surrogate solto vira U+FFFD */
+  var BAD_CH = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/;
+  function cleanText(t) {
+    return String(t == null ? '' : t).replace(/[\u0000-\u0008\u000C\u000E-\u001F\uFFFE\uFFFF]/g, '').replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\uD800-\uDFFF]/g, function (m) { return m.length === 2 ? m : '\uFFFD'; });
+  }
+  function fixTextNode(x) {
+    var v = x.nodeValue; if (!BAD_CH.test(v)) return;
+    var parts = cleanText(v).split('\u000B'), pn = x.parentNode;
+    parts.forEach(function (pt, i) { if (i) pn.insertBefore(document.createElement('br'), x); if (pt) pn.insertBefore(document.createTextNode(pt), x); });
+    x.remove();
+  }
   function cleanHTML(h) {
     var t = document.createElement('template'); t.innerHTML = String(h == null ? '' : h);
     (function walk(node) {
       Array.prototype.slice.call(node.childNodes).forEach(function (x) {
-        if (x.nodeType === 3) return;
+        if (x.nodeType === 3) { fixTextNode(x); return; }
         if (x.nodeType !== 1) { x.remove(); return; }
         var tag = x.tagName.toUpperCase();
         if (DROP_TAGS.test(tag)) { x.remove(); return; }
@@ -2011,7 +2058,7 @@
     if (t && dh) { el.x = r2(el.x - dh / 2 * Math.sin(t)); el.y = r2(el.y + dh / 2 * (Math.cos(t) - 1)); }
   }
   function pastePlain(txt, at) {
-    var t = String(txt).replace(/\r\n?/g, '\n').replace(/\t/g, '    ').replace(/^\n+|\s+$/g, ''); if (!t) return false;
+    var t = cleanText(String(txt).replace(/\r\n?/g, '\n').replace(/\u000B/g, '\n')).replace(/\t/g, '    ').replace(/^\n+|\s+$/g, ''); if (!t) return false;
     var lines = t.split('\n'), w = t.length > 420 ? 900 : 560, rows = lines.reduce(function (a, l) { return a + Math.max(1, Math.ceil(l.length / (w / 9.6))); }, 0);
     var el = mkText('body', { html: lines.map(function (l) { return esc(l); }).join('<br>'), w: w }, dark()); el.h = Math.min(H - 40, Math.round(rows * el.size * el.lh + 8));
     if (at) { el.x = Math.round(Math.max(0, Math.min(W - el.w, at.x))); el.y = Math.round(Math.max(0, Math.min(H - el.h, at.y))); } else { el.x = Math.round((W - el.w) / 2); el.y = Math.round((H - el.h) / 2); }
@@ -2158,7 +2205,11 @@
     if (presenting()) return;
     if (MODS.indexOf(e.key) >= 0) return;
     stopPreview();
-    if (XM.stack.length) { if (!menuKey(e)) { e.preventDefault(); closeAllX(); } return; }
+    if (XM.stack.length) {
+      var mod0 = e.ctrlKey || e.metaKey, k0 = (e.key || '').toLowerCase();
+      if (mod0 && !e.altKey && (k0 === 's' || k0 === 'p')) { e.preventDefault(); closeAllX(); if (editingId) endEdit(); if (k0 === 's') save(); else exportAs('pdf'); return; } /* o menu ▾ mostra Ctrl+S: vale mesmo com ele aberto */
+      if (!menuKey(e)) { e.preventDefault(); closeAllX(); } return;
+    }
     var om = $('.menu.open');
     if (om && om.id === 'icMenu') { if (icKey(e)) return; om = $('.menu.open'); } /* seletor de ícones: busca, chips e grade têm teclado próprio */
     if (om) { oldMenuKey(e, om); return; }
@@ -2166,6 +2217,7 @@
     if ((e.key === 'F10' && e.shiftKey) || e.key === 'ContextMenu') { if (typing || t.isContentEditable) return; e.preventDefault(); if (editingId) endEdit(); openCtxKeyboard(); return; }
     if (e.key === 'F1') { e.preventDefault(); showHelp(); return; }
     if (mod && !e.altKey && k === 's') { e.preventDefault(); if (editingId) endEdit(); save(); return; }
+    if (mod && !e.altKey && k === 'p') { e.preventDefault(); if (editingId) endEdit(); exportAs('pdf'); return; } /* Ctrl+P: Salvar como PDF (imprimir o editor não serve para nada) */
     if (mod && !e.altKey && k === 'o') { e.preventDefault(); openPicker(); return; }
     if (mod && !e.altKey && k === 'd' && (typing || t.isContentEditable)) { e.preventDefault(); return; } /* nunca abre o "favoritos" do navegador */
     if (t.isContentEditable) { if (e.key === 'Escape') { e.preventDefault(); t.blur(); } return; }
@@ -3023,14 +3075,19 @@
     start = Math.max(0, Math.min(deck.slides.length - 1, +start || 0));
     var vis = deck.slides.filter(function (x) { return x.hidden !== true; }).length;
     if (!all && !vis) toast('Todos os slides estão ocultos — mostrando todos');
-    else if (!all && deck.slides[start].hidden === true) toast('Slide ' + (start + 1) + ' está oculto — a apresentação começa no próximo slide visível');
+    else if (!all && deck.slides[start].hidden === true) toast('Slide ' + (start + 1) + ' está oculto — a apresentação começa no ' + (deck.slides.slice(start + 1).some(function (x) { return x.hidden !== true; }) ? 'próximo' : 'último') + ' slide visível');
     /* campo do painel com o cursor (ex.: Resumo do slide + F5): sem o blur, o player ignoraria todas as teclas, inclusive o Esc */
     var ae = document.activeElement; if (ae && ae !== document.body && ae.blur) ae.blur();
     if (player) { player.destroy(); player = null; } /* um player por vez: o anterior sairia com teclado e hooks ativos */
     var pr = $('#presenter'); pr.classList.add('open');
     var me = player = RT.player(clone(deck), pr, { start: start, showHidden: !!all, noHash: true, brand: BRAND.wmW, onExit: function () { if (player !== me) return; player.destroy(); player = null; pr.classList.remove('open'); if (document.fullscreenElement) document.exitFullscreen().catch(function () { }); } });
   }
-  function slug(s) { return (String(s || 'apresentacao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-').toLowerCase() || 'apresentacao'); }
+  /* Imprimir pelo menu do navegador (sem Ctrl+P): sai a apresentação, uma página por slide, e não a tela do editor */
+  addEventListener('beforeprint', function () {
+    var X = window.AMExport; if (!X || !X.preparePrint || presenting() || coverOpen() || document.getElementById('amPrint')) return;
+    if (editingId) endEdit(); flush(); X.preparePrint(deck, { range: 'all' });
+  });
+  function slug(s) { return (String(s || 'apresentacao').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w\s-]+/g, ' ').trim().replace(/[\s_-]+/g, '-').toLowerCase().slice(0, 80).replace(/-+$/, '') || 'apresentacao'); } /* “Q3/2026” → q3-2026 (não q32026) */
   /* d (opcional): outra apresentação (ex.: "Baixar .html" em Minhas obras); sem d, a obra aberta */
   function exportHTML(d) {
     d = d && typeof d === 'object' && Array.isArray(d.slides) ? d : deck;

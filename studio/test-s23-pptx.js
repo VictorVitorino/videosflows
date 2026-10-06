@@ -151,7 +151,8 @@ function zipOK(f){ try{ execFileSync('python3',['-m','zipfile','-t',f],{stdio:'p
   const closed1=await p.evaluate(()=>document.getElementById('xkDlg').hidden&&document.activeElement&&document.activeElement.id);
   check('S23-03: Exportar baixa '+SLUG+'.pptx, fecha a caixa (foco volta ao ▾) e avisa “PowerPoint salvo … 7 slides (1 oculto)”', g1.name===SLUG+'.pptx'&&closed1==='bSaveMore'&&/^PowerPoint salvo: cobertura-powerpoint-acao-coracao\.pptx · 7 slides \(1 oculto\) · /.test(toast1), {name:g1.name,toast1,closed1,ms:msI});
   const I1=inspect(g1.f);
-  check('S23-04: Idêntico — python-pptx abre: 7 slides 16:9 (12192000×6858000 EMU), título, cada slide = 1 imagem JPEG em tela cheia', I1.slides.length===7&&I1.w===12192000&&I1.h===6858000&&I1.title===TITLE&&I1.slides.every(s=>s.shapes.length===1&&s.shapes[0].tag==='pic'&&s.shapes[0].img==='image/jpeg'&&s.shapes[0].x===0&&s.shapes[0].y===0&&s.shapes[0].w===1280&&s.shapes[0].h===720), {n:I1.slides.length,w:I1.w,h:I1.h,title:I1.title,kb:Math.round(I1.size/1024)});
+  /* revisão S23: cada slide leva um espaço reservado de título (nome do slide no contorno do PowerPoint) atrás da imagem em tela cheia */
+  check('S23-04: Idêntico — python-pptx abre: 7 slides 16:9 (12192000×6858000 EMU), título, cada slide = título (atrás) + 1 imagem JPEG em tela cheia', I1.slides.length===7&&I1.w===12192000&&I1.h===6858000&&I1.title===TITLE&&I1.slides.every(s=>s.shapes.length===2&&s.shapes[0].ph==='title'&&s.title&&s.shapes[1].tag==='pic'&&s.shapes[1].img==='image/jpeg'&&s.shapes[1].x===0&&s.shapes[1].y===0&&s.shapes[1].w===1280&&s.shapes[1].h===720), {n:I1.slides.length,w:I1.w,h:I1.h,title:I1.title,kb:Math.round(I1.size/1024),titles:I1.slides.map(s=>s.title)});
   check('S23-05: slide oculto sai oculto (<p:sld show="0">) e as anotações (Resumo do slide) vão para notesSlide', I1.slides.map(s=>s.hidden).join()==='false,false,false,false,false,false,true'&&I1.slides[0].notes==='Abertura: falar da receita.\nSegunda linha das anotações — ação.'&&I1.slides[5].notes==='Slide escuro: foto de fundo a 35 %.'&&I1.slides[6].notes==='Slide oculto.'&&I1.slides[1].notes===null, I1.slides.map(s=>[s.hidden,s.notes]));
   const z1=zipOK(g1.f);
   check('S23-06: pacote íntegro — zipfile -t e unzip -t, todas as partes XML bem formadas, relações e tipos de conteúdo completos, [Content_Types].xml primeiro', z1===true&&I1.zipBad===null&&!I1.xmlBad.length&&!I1.relBad.length&&!I1.ctMissing.length&&I1.first==='[Content_Types].xml', {z1,xmlBad:I1.xmlBad,relBad:I1.relBad,ct:I1.ctMissing});
@@ -195,7 +196,7 @@ function zipOK(f){ try{ execFileSync('python3',['-m','zipfile','-t',f],{stdio:'p
   const pics=S[3].shapes.filter(x=>x.tag==='pic');
   const cov=pics.find(x=>x.flipH), con=pics.find(x=>Math.round(x.rot)===12), tra=pics.find(x=>x.alpha!=null);
   check('S23-16: fotos — preencher com recorte (srcRect) + espelho + cantos, inteira girada 12° com faixas (recorte negativo), transparente 70 %; ícone e Linhas A&M em PNG', pics.length===5&&cov&&cov.crop&&cov.prst==='roundRect'&&con&&con.crop&&+con.crop.t<0&&con.w===300&&tra&&Math.abs(tra.alpha-.7)<.001&&pics.filter(x=>x.img==='image/png').length>=2, pics.map(x=>[x.name,x.crop,x.prst,x.rot,x.alpha,x.img]));
-  check('S23-17: gráficos, SWOT com cores e SmartArt = imagens PNG transparentes com texto alternativo; slide escuro: fundo #002A46 + foto de fundo a 35 %, título editável', S[4].shapes.length===5&&S[4].shapes.every(x=>x.tag==='pic'&&x.img==='image/png')&&S[5].bg==='002A46'&&S[5].shapes.some(x=>x.name==='Imagem de fundo'&&Math.abs(x.alpha-.35)<.001&&x.w===1280)&&S[5].shapes.some(x=>x.text==='Slide escuro com foto de fundo'), {s5:S[4].shapes.map(x=>x.name),s6:S[5].shapes.map(x=>[x.name,x.alpha,x.text])});
+  check('S23-17: gráficos, SWOT com cores e SmartArt = imagens PNG transparentes com texto alternativo; slide escuro: fundo #002A46 + foto de fundo a 35 %, título editável', S[4].shapes.filter(x=>x.ph!=='title').length===5&&S[4].shapes.filter(x=>x.ph!=='title').every(x=>x.tag==='pic'&&x.img==='image/png')&&S[4].shapes.filter(x=>x.ph==='title').length===1&&S[5].bg==='002A46'&&S[5].shapes.some(x=>x.name==='Imagem de fundo'&&Math.abs(x.alpha-.35)<.001&&x.w===1280)&&S[5].shapes.some(x=>x.text==='Slide escuro com foto de fundo'), {s5:S[4].shapes.map(x=>x.name),s6:S[5].shapes.map(x=>[x.name,x.alpha,x.text])});
   let pdfE=null; try{ pdfE=lo(g2.f,'lo-edit',true); }catch(e){ check('S23-18: LibreOffice converte o Editável', false, String(e.message).slice(0,300)); }
   if(pdfE){
     const pg=pages2x(pdfE,'edit'); const ms=[];
@@ -220,7 +221,9 @@ function zipOK(f){ try{ execFileSync('python3',['-m','zipfile','-t',f],{stdio:'p
   await openFromMore();
   await p.click('#xkDlg label.xp-rd:has(input[value=cur])'); await sleep(100);
   const g5=await grab(()=>p.click('#xkGo')); const I5=inspect(g5.f);
-  check('S23-21: “Slide atual” num slide oculto → 1 slide, oculto (foi pedido)', I5.slides.length===1&&I5.slides[0].hidden&&I5.slides[0].notes==='Slide oculto.', I5.slides.map(s=>[s.hidden,s.notes]));
+  /* revisão S23: um arquivo só com slides ocultos teria a apresentação vazia no PowerPoint → o único slide sai visível, e a caixa avisa */
+  const warnH=await p.evaluate(()=>document.getElementById('xkEst').textContent);
+  check('S23-21: “Slide atual” num slide oculto → 1 slide, visível no arquivo (senão a apresentação ficaria vazia); a caixa avisou', I5.slides.length===1&&I5.slides[0].hidden===false&&I5.slides[0].notes==='Slide oculto.'&&/Todos os slides escolhidos estão ocultos/.test(warnH), {sl:I5.slides.map(s=>[s.hidden,s.notes]),warnH});
   await p.evaluate(()=>AMStudio.goSlide(0)); await sleep(200);
 
   /* ---------- 6. cancelar no meio (16 slides) ---------- */

@@ -105,7 +105,14 @@ def inspect(path):
                     he = ln.find('{http://schemas.openxmlformats.org/drawingml/2006/main}headEnd'); te = ln.find('{http://schemas.openxmlformats.org/drawingml/2006/main}tailEnd')
                     d['head'] = he.get('type') if he is not None else None; d['tail'] = te.get('type') if te is not None else None
                     d['dash'] = ln.find('{http://schemas.openxmlformats.org/drawingml/2006/main}custDash') is not None
+                ph = sh._element.find('.//{http://schemas.openxmlformats.org/presentationml/2006/main}ph')
+                if ph is not None: d['ph'] = ph.get('type') or 'body'
                 if d['tag'] == 'pic':
+                    try:
+                        from PIL import Image as PImg; import io as _io
+                        im = PImg.open(_io.BytesIO(sh.image.blob)); d['px'] = list(im.size)
+                        d['exifOrient'] = (im.getexif().get(0x0112) if hasattr(im, 'getexif') else None) or 1
+                    except Exception: d['px'] = None
                     sr = sh._element.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}srcRect')
                     d['crop'] = dict(sr.attrib) if sr is not None else None
                     am = sh._element.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}alphaModFix')
@@ -115,6 +122,8 @@ def inspect(path):
                 info['shapes'].append(d)
                 if d['tag'] == 'grpSp': walk(sh.shapes, depth + 1)
         walk(s.shapes, 0)
+        try: info['title'] = s.shapes.title.text_frame.text if s.shapes.title is not None else None
+        except Exception: info['title'] = None
         bg = el.find('.//{http://schemas.openxmlformats.org/presentationml/2006/main}bg')
         c = bg.find('.//{http://schemas.openxmlformats.org/drawingml/2006/main}srgbClr') if bg is not None else None
         info['bg'] = c.get('val') if c is not None else None
@@ -122,5 +131,13 @@ def inspect(path):
     out['slides'] = sl
     print(json.dumps(out, ensure_ascii=False))
 
+def mkjpeg(out):
+    """JPEG 300×200 (faixas coloridas) com orientação EXIF 6 (girado 90°), como uma foto de celular"""
+    from PIL import Image as PImg, ImageDraw
+    im = PImg.new('RGB', (300, 200), '#1B7F3B'); dr = ImageDraw.Draw(im); dr.rectangle([0, 0, 150, 200], fill='#F78C16'); dr.rectangle([0, 0, 300, 40], fill='#002A46')
+    ex = im.getexif(); ex[0x0112] = 6
+    im.save(out, 'JPEG', quality=90, exif=ex.tobytes())
+    print(json.dumps({'file': out, 'orient': PImg.open(out).getexif().get(0x0112)}))
+
 if __name__ == '__main__':
-    {'fonts': fonts, 'inspect': inspect}[sys.argv[1]](sys.argv[2])
+    {'fonts': fonts, 'inspect': inspect, 'mkjpeg': mkjpeg}[sys.argv[1]](sys.argv[2])

@@ -212,8 +212,9 @@ async function open(ctx, url, tag){ const p=await ctx.newPage(); await fonts(p);
   const tdel=ts.els.find(e=>e.type==='text'&&e.id!==tq.id); await pickEl(tdel.id); await p.keyboard.press('Delete'); await sleep(250);
   await thumbCtx(1,'Redefinir slide');
   d=await D(); const tq1=d.slides[1].els.find(e=>e.id===tq.id);
-  check('S21-21: projeto pronto (capa › Projetos prontos › 1): todos os slides ganham base e ph ao abrir; Redefinir volta a posição/giro do componente; sem layout, o texto apagado não volta',
-    d.slides.length===7 && tpl.every(s=>s.b&&s.ph&&s.lay===undefined) && tq1.x===tq0.x&&tq1.y===tq0.y&&tq1.rot===undefined && !d.slides[1].els.some(e=>e.id===tdel.id), {tpl:tpl.length, tq:[tq0.x,tq0.y,tq1.x,tq1.y,tq1.rot]});
+  const tback=d.slides[1].els.find(e=>e.ph===tdel.ph); /* revisão S21: sem layout, o texto apagado volta da cópia guardada em base.tpl (mesmo ph, mesmo texto) */
+  check('S21-21: projeto pronto (capa › Projetos prontos › 1): todos os slides ganham base e ph ao abrir; Redefinir volta a posição/giro do componente; sem layout, o texto apagado volta da cópia guardada',
+    d.slides.length===7 && tpl.every(s=>s.b&&s.ph&&s.lay===undefined) && tq1.x===tq0.x&&tq1.y===tq0.y&&tq1.rot===undefined && !!tback && tback.type==='text' && tback.html===tdel.html && d.slides[1].els.filter(e=>e.ph===tdel.ph).length===1, {tpl:tpl.length, tq:[tq0.x,tq0.y,tq1.x,tq1.y,tq1.rot], back:!!tback});
 
   /* ---------- 11. deck feito à mão sem base / base hostil ---------- */
   const hm=await p.evaluate(()=>{
