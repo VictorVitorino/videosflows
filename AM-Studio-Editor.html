@@ -1407,6 +1407,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .rb.accent{background:var(--navy);color:#fff}
 .rb.accent:hover,.rb.accent.open{background:#0B3A63}
 .rb.accent svg{stroke:var(--orange)}
+.rb.inst{border:1.5px solid var(--orange);color:var(--navy);background:#FFF7EE}.rb.inst:hover,.rb.inst:focus-visible{background:#FFE9D1}.rb.inst svg{stroke:var(--orange)}.rb.inst[hidden]{display:none}
+#mSlide button[data-seq]{grid-column:1/-1;border:1.5px solid var(--orange);background:#FFF7EE;font-weight:700}#mSlide button[data-seq]:hover,#mSlide button[data-seq]:focus-visible{background:#FFE9D1}#mSlide button[data-seq] .mi-sw{background:var(--orange)!important}
 .rb .car{width:10px;height:10px;stroke-width:2.5;opacity:.6}
 .rb[disabled]{opacity:.35;pointer-events:none}
 .menu{position:fixed;z-index:40;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:var(--r-pop);box-shadow:0 16px 40px rgba(0,30,50,.18);padding:6px;display:none}
@@ -1980,10 +1982,12 @@ kbd.k.m{background:#fff;border:1px dashed #A3B8D6;color:var(--steel2);font-weigh
 @media (max-width:1560px){.brand .sub2{display:none}}
 @media (max-width:1500px){#bNew .lbl,#bOpen .lbl{display:none}#bNew,#bOpen{width:34px;padding:0;justify-content:center}}
 @media (max-width:1520px){.rb{padding:0 8px}.rg{padding:0 4px}}
-@media (max-width:1420px){#rib .rb .lbl{display:none}#rib .rb .lbs{display:inline}}
-@media (max-width:1600px){#rib #bFront :is(.lbl,.lbs),#rib #bBack :is(.lbl,.lbs),#rib #bDup :is(.lbl,.lbs),#rib #bDel :is(.lbl,.lbs){display:none}#bFront,#bBack,#bDup,#bDel{width:36px;padding:0;justify-content:center}} /* edição só com ícone (a dica fica no title): sobra lugar para Ícones */
+@media (max-width:1640px){#rib .rb .lbl{display:none}#rib .rb .lbs{display:inline}} /* S34b: rótulos curtos até 1640 (antes 1420) para caber o botão Institucional A&M */
+@media (max-width:1800px){#rib #bFront :is(.lbl,.lbs),#rib #bBack :is(.lbl,.lbs),#rib #bDup :is(.lbl,.lbs),#rib #bDel :is(.lbl,.lbs){display:none}#bFront,#bBack,#bDup,#bDel{width:36px;padding:0;justify-content:center}} /* edição só com ícone (a dica fica no title): sobra lugar para Ícones */
 @media (max-width:1366px){.tb .lbl2{display:none}#top{gap:10px}}
-@media (max-width:1240px){#rib #bCharts :is(.lbl,.lbs,.car){display:none}#bCharts{padding:0 8px}} /* Gráficos só com ícone (a dica fica no title): a barra cabe até 1180 px */
+@media (max-width:1300px){#rib #bCharts :is(.lbl,.lbs,.car){display:none}#bCharts{padding:0 8px}} /* Gráficos só com ícone (a dica fica no title) */
+@media (max-width:1380px){#rib #bPreview :is(.lbl,.lbs){display:none}#bPreview{padding:0 8px}}
+@media (max-width:1220px){#rib #bInst :is(.lbl,.lbs){display:none}#bInst{padding:0 8px}} /* S34b: até 1220 o botão Institucional fica só com o ícone laranja (title explica) */ /* S34b: “Apresentar deste slide” só com ícone (Shift+F5 no title) para o rótulo Institucional caber de 1301 a 1380; a barra cabe até 1180 px */ /* Gráficos só com ícone (a dica fica no title): a barra cabe até 1180 px */
 @media (max-width:1300px){#bPlay .lbl{display:none}#bPlay{width:34px;padding:0;justify-content:center}}
 @media (max-width:1180px){.brand .sub{display:none}}
 .hidden{display:none!important}
@@ -2390,7 +2394,7 @@ html.cv-boot,html.cv-boot body,html.cv-lock,html.cv-lock body{overflow:hidden}
 .cv-pcount{margin-left:auto;font:500 10.5px/1.3 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--s3);text-align:right}
 
 /* projetos prontos */
-.cv-tgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,1.3vw,20px)}
+.cv-tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(12px,1.3vw,20px)} /* S34b: 6 projetos (o 6º é o institucional) */
 .cv-tcard{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:rgba(255,255,255,.035);text-align:left;transition:transform .35s var(--e),border-color .25s,box-shadow .35s var(--e),background .25s;animation:cvRise .6s var(--e) backwards;animation-delay:calc(80ms + var(--i,0) * 60ms)}
 .cv-tcard:hover,.cv-tcard:focus-visible{transform:translateY(-4px);border-color:rgba(247,140,22,.6);background:rgba(255,255,255,.06);box-shadow:0 26px 50px -24px rgba(0,0,0,.8)}
 .cv-tcard.cur{border-color:rgba(247,140,22,.6)}
@@ -2791,6 +2795,7 @@ html.cv-boot,html.cv-boot body,html.cv-lock,html.cv-lock body{overflow:hidden}
     <button class="rb" data-menu="mBrand"><svg viewBox="0 0 24 24"><path d="M5 20L12 4l7 16M12 4v16"/></svg><span class="lbl">Marca A&amp;M</span><span class="lbs">Marca</span><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   <div class="rg">
+    <button class="rb inst" id="bInst" title="Inserir os 5 slides institucionais A&amp;M (capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor) depois do slide atual · Ctrl+Z desfaz"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="13" height="10" rx="1.5"/><path d="M7 5h13v10M6 12h7"/></svg><span class="lbl">Institucional A&amp;M</span><span class="lbs">Institucional</span></button>
     <button class="rb accent" id="bModels" title="Biblioteca de modelos: RACI, mapa de riscos, SWOT, matrizes, gráficos, termômetro, timeline…"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg>Modelos</button>
     <button class="rb accent" id="bFx"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><span class="lbl">Acervo de efeitos</span><span class="lbs">Efeitos</span></button>
   </div>
@@ -7064,6 +7069,7 @@ window.AMRT = (function () {
       h += '<div class="ph"><h2>Slide ' + (cur + 1) + '<small>' + plural(s.els.length, 'elemento', 'elementos') + ' · ' + (nVis === deck.slides.length ? plural(deck.slides.length, 'slide', 'slides') + ' na apresentação' : plural(deck.slides.length, 'slide', 'slides') + ' · ' + nVis + ' na apresentação') + (scn && !scn.intro ? ' · capítulo “' + esc(scn.name) + '”' : '') + '</small></h2></div>';
       h += showSec(s); /* S21: ocultar e redefinir logo no topo (cabem sem rolar a 1280×720) */
       h += numSec(); /* S27 */
+      if (hasInst()) h += '<div class="sec"><h3>Slides institucionais A&amp;M</h3><div class="row r1"><button class="btnw pri ic" data-act="inst">' + svgI('brand') + 'Inserir os 5 slides institucionais</button></div><p class="note">Capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, logo depois deste slide. Um Ctrl+Z tira o bloco.</p></div>'; /* S34b: logo abaixo de Exibição e layout, à vista sem rolar */
       h += '<div class="sec"><h3>Sobre este slide</h3>' +
         '<div class="row r1">' + fld('Título no índice', '<input type="text" data-p="s.title" maxlength="160" value="' + esc(s.title || '') + '" placeholder="' + esc(RT.slideTitle(s, cur)) + '">') + '</div>' +
         '<div class="row r1">' + fld('Capítulo (botão da linha do tempo)', '<input type="text" data-p="s.sec" maxlength="80" value="' + esc(s.sec || '') + '" placeholder="' + esc(scn && !scn.intro && !s.sec ? 'herda “' + scn.name + '”' : 'ex.: Contexto, Cultura, Benchmarks') + '">') + '</div>' +
@@ -7071,7 +7077,6 @@ window.AMRT = (function () {
         '<div class="row r1"><button class="btnw ic" data-act="autonotes">' + svgI('fx') + 'Gerar resumo automático</button></div><div class="row r1"><button class="btnw ic" data-act="viewnotes">' + svgI('zoom') + 'Ver na apresentação</button></div>' +
         '<p class="note">Na apresentação e no arquivo salvo, <b>Sobre este slide</b> (tecla <b>I</b>) mostra este resumo' + (s.notes ? '' : ' — sem texto, o apresentador gera um automático') + '; <b>G</b> abre o índice com todos os slides; o capítulo vira um botão da linha do tempo e vale até o próximo capítulo.</p></div>';
       h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button><button class="btnw ic" data-act="brandkit" title="Cores e fonte desta apresentação">' + svgI('palette') + 'Kit de marca…</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
-      if (hasInst()) h += '<div class="sec"><h3>Slides institucionais A&amp;M</h3><div class="row r1"><button class="btnw pri ic" data-act="inst">' + svgI('brand') + 'Inserir os 5 slides institucionais</button></div><p class="note">Capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, logo depois deste slide. Um Ctrl+Z tira o bloco.</p></div>'; /* S34 */
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
@@ -7858,8 +7863,9 @@ window.AMRT = (function () {
   /* seletor “Novo slide”: layouts visíveis (os ocultos, como os institucionais, entram só pelo bloco) + blocos prontos marcados para o seletor (SEQS[i][3]) */
   function buildSlidePicker() {
     var vis = Object.keys(LAYOUTS).filter(function (k) { return !LAYOUTS[k].hidden; }), sq = (typeof SEQS !== 'undefined' && SEQS || []).filter(function (s) { return s[3]; });
+    $('#bInst').hidden = !sq.some(function (s) { return s[0] === 'inst'; }); /* S34b: o botão da barra só aparece com o bloco institucional carregado */
     $('#mSlide').innerHTML = '<div class="mh">Escolha o layout</div>' + vis.map(function (k) { return '<button data-layout="' + k + '"><span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>' + LAYOUTS[k].name + '</button>'; }).join('') +
-      (sq.length ? '<div class="mh">Bloco pronto</div>' + sq.map(function (s) { return '<button data-seq="' + s[0] + '" title="' + esc(s[2].map(function (k) { return LAYOUTS[k] ? LAYOUTS[k].name.replace(/^Institucional · /, '') : k; }).join(' · ')) + '"><span class="mi-sw" style="background:#002A46"></span>' + esc(s[1]) + ' · ' + s[2].length + ' slides</button>'; }).join('') : '');
+      (sq.length ? '<div class="mh">Slides institucionais A&amp;M</div>' + sq.map(function (s) { return '<button data-seq="' + s[0] + '" title="' + esc(s[2].map(function (k) { return LAYOUTS[k] ? LAYOUTS[k].name.replace(/^Institucional · /, '') : k; }).join(' · ')) + ' · depois do slide atual"><span class="mi-sw"></span>Inserir os ' + s[2].length + ' slides institucionais</button>'; }).join('') : '');
   }
   buildSlidePicker();
   /* galeria “Gráficos ▾” (e Inserir › Gráfico ▸): os gráficos do runtime (rt-30-charts.js + bars, linechart, donut, gauge), em três grupos */
@@ -8884,6 +8890,7 @@ window.AMRT = (function () {
   }
   $('#bFx').addEventListener('click', function () { openDrawer(null, 'fx'); });
   $('#bModels').addEventListener('click', function () { openDrawer(null, 'models'); });
+  $('#bInst').addEventListener('click', function () { if (hasInst()) insertSeq('inst'); }); /* S34b: botão sempre à vista para jogar os 5 slides institucionais em qualquer apresentação */
   $('#modelsBody').addEventListener('click', function (e) { var b = e.target.closest('button[data-ins]'); if (!b) return; var el = insertFx(b.dataset.ins, null, null, presetVar(b.dataset.preset, b.dataset.ins), presetData(b.dataset.preset, b.dataset.ins)); openDrawer(false); toast('Modelo inserido. Escolha o efeito no seletor “Efeito” acima dele.'); setTimeout(function () { previewEl(el); }, 250); });
   $('#modelsBody').addEventListener('dragstart', function (e) { var c = e.target.closest('.fxi'); if (!c) return; e.dataTransfer.setData('text/plain', 'amfx:' + c.dataset.k + (c.dataset.preset ? ':' + (presetVar(c.dataset.preset, c.dataset.k) || '') + ':' + c.dataset.preset : '')); e.dataTransfer.effectAllowed = 'copy'; }); /* preset: 'amfx:matrix:quadrants:ansoff' */
   $('#bFxClose').addEventListener('click', function () { openDrawer(false); });
@@ -9437,11 +9444,11 @@ window.AMRT = (function () {
     },
     slide: function () {
       var n = deck.slides.length;
-      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }].concat(hasInst() ? [{ t: 'Inserir slides institucionais A&M', ic: 'brand', tip: 'Os 5 slides oficiais depois do slide atual · Ctrl+Z desfaz', fn: function () { insertSeq('inst'); } }] : [], [{ t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
         { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
-        { t: sideOff ? 'Mostrar painel de slides' : 'Ocultar painel de slides', ic: 'side', fn: function () { toggleSide(); } }]);
+        { t: sideOff ? 'Mostrar painel de slides' : 'Ocultar painel de slides', ic: 'side', fn: function () { toggleSide(); } }]));
     },
     arrange: function () {
       var any = hasSel();
@@ -9484,7 +9491,7 @@ window.AMRT = (function () {
   }
   function ctxThumbItems() {
     var n = deck.slides.length;
-    return [{ hd: 'Slide ' + (cur + 1) + ' de ' + n + (slide().hidden === true ? ' · oculto' : '') }, { t: 'Novo slide depois', ic: 'slide', fn: newSlideAfter }, { t: 'Duplicar slide', ic: 'dup', k: KEY.dup, fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+    return [{ hd: 'Slide ' + (cur + 1) + ' de ' + n + (slide().hidden === true ? ' · oculto' : '') }, { t: 'Novo slide depois', ic: 'slide', fn: newSlideAfter }].concat(hasInst() ? [{ t: 'Inserir slides institucionais A&M', ic: 'brand', tip: 'Os 5 slides oficiais (capa, presença global, clientes, esferas, cadeia de valor) depois deste slide · Ctrl+Z desfaz', fn: function () { insertSeq('inst'); } }] : [], [{ t: 'Duplicar slide', ic: 'dup', k: KEY.dup, fn: function () { dupSlide(cur); } }], slideShowItems(), [{ sep: 1 },
       { t: 'Copiar slide', ic: 'copy', k: KEY.copy, fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null, true); } },
       { t: 'Apagar slide', ic: 'del', k: KEY.del, dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
       { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }]);
@@ -12617,6 +12624,7 @@ window.AMExport = (function () {
   });
   if (!A.SEQS.some(function (s) { return s[0] === 'inst'; })) A.SEQS.unshift(['inst', 'Institucional A&M', ORDER.map(KEY), true]);
   if (A.rebuildSlidePicker) A.rebuildSlidePicker();
+  if (A.renderAll) A.renderAll(); /* S34b: o editor já desenhou o painel antes deste script; redesenha para a seção “Slides institucionais A&M” existir no primeiro render (sem commit/histórico) */
   /* ---------- reconhecimento de slides importados ---------- */
   var SIG = { cover: /^somos a a ?m performance/, map: /^fazemos parte da alvarez marsal/, clients: /^clientes de diferentes portes perfis e segmentos/, spheres: /^esferas de atuacao da alvarez marsal/, chain: /melhorias especificas nas atividades primarias|evolucoes que reinventam negocios/ };
   function norm(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim(); }
@@ -13400,6 +13408,18 @@ window.AMColorPop = (function () {
           fim('Obrigado.', '', 'Facilitação · nome@alvarezandmarsal.com')] };
       } }
     ];
+    /* S34b: projeto pronto com o bloco institucional (pedido do usuário: “uma versão institucional dentro de Projetos prontos”).
+       Só entra quando o bloco está carregado (ed-45 roda antes da capa). Os 5 slides oficiais + 1 slide para o conteúdo + encerramento = 7. */
+    if (S.LAYOUTS && S.LAYOUTS['inst-cover']) TPL.push({ name: 'Apresentação institucional A&M', desc: 'Os 5 slides institucionais oficiais, um slide para o seu conteúdo e o encerramento.', build: function () {
+      var ORDER = (window.AMInst && window.AMInst.ORDER) || ['cover', 'map', 'clients', 'spheres', 'chain'];
+      return { title: 'Apresentação institucional A&M', slides: ORDER.map(function (k) { return S.mk.slide('inst-' + k); }).concat([
+        sl('#FFFFFF', head('01 · SEU CONTEÚDO', 'Comece aqui a sua apresentação', 'Os cinco slides anteriores são o bloco institucional oficial — este é o primeiro slide do seu conteúdo.').concat([
+          T('subtitle', { x: 54, y: 190, w: 560, h: 30, html: 'Como usar este modelo', size: 22, anim: fade(200) }),
+          T('bullets', { x: 54, y: 230, w: 580, h: 230, html: '• Textos, logos e indicadores dos 5 slides são editáveis<br>• Troque este slide pelo seu conteúdo (Novo slide, Modelos)<br>• Em outra apresentação, use o botão <b>Institucional A&amp;M</b> da barra<br>• Um Ctrl+Z desfaz a inserção do bloco', size: 18, lh: 1.65, color: '#3E4C5E', anim: rise(300) }),
+          F('card', { x: 680, y: 194, w: 546, h: 266, data: { tag: 'Padrão oficial', title: 'O institucional não quebra', text: 'Capa, presença global, clientes, esferas e cadeia de valor seguem sempre o modelo oficial — também ao importar um .pptx.', style: 'ice' }, anim: rise(500) }),
+          src('Modelo institucional A&M Performance · substitua este slide pelo seu conteúdo.')])),
+        fim('Obrigado.', '', 'A&M Performance · nome@alvarezandmarsal.com')]) };
+    } });
     function buildTpl(i) { var d = TPL[i].build(); d.v = 1; d.app = 'AM Studio'; if (has('newId')) d.id = S.newId(); return d; } /* cada projeto carregado é uma obra nova, com id próprio */
     var PV = [];
     function pvDeck(i) { return PV[i] || (PV[i] = buildTpl(i)); }
