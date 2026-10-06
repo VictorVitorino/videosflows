@@ -867,6 +867,7 @@
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     note: '<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/>',
+    csv: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>',
     unlink: '<path d="M10 14a4 4 0 0 0 5.7 0l2.8-2.8a4 4 0 0 0-5.7-5.7L11.5 6.8"/><path d="M14 10a4 4 0 0 0-5.7 0l-2.8 2.8a4 4 0 0 0 5.7 5.7l1.3-1.3"/><path d="M4 4l16 16"/>',
     vote: '<path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
     timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
@@ -3292,7 +3293,7 @@
     },
     slide: function () {
       var n = deck.slides.length;
-      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
         { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
@@ -3509,11 +3510,12 @@
   /* S24: importar PowerPoint/PDF (ed-42-import.js): a caixa de importação decide entre substituir e acrescentar */
   function importPicker() { if (editingId) endEdit(); flush(); closeMenus(); if (window.AMImport) window.AMImport.pick($('#mbar button[data-m=file]')); else toast('Importação indisponível'); }
   /* slides importados entram no fim, validados como um arquivo aberto (safeSlide), com base para “Redefinir”; um passo de Ctrl+Z */
-  function appendSlides(list) {
+  function appendSlides(list, at) { /* at (S33): posição de inserção (padrão: fim); o primeiro slide inserido vira o atual */
     if (editingId) endEdit(); flush();
     var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
     if (!ins.length) return 0;
-    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
+    at = at == null || !isFinite(+at) ? deck.slides.length : Math.max(0, Math.min(deck.slides.length, +at | 0));
+    Array.prototype.splice.apply(deck.slides, [at, 0].concat(ins)); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
     return ins.length;
   }
