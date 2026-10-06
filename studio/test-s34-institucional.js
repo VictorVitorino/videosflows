@@ -126,7 +126,7 @@ prs.save('${mk}')
   const fit=[];
   for (const [w,h] of [[1180,720],[1280,720],[1366,768],[1600,900],[1700,900],[1920,1080]]) { await q.setViewportSize({width:w,height:h}); await sleep(250);
     fit.push(await q.evaluate(([w])=>{ const rib=document.getElementById('rib'), top=document.getElementById('top'), b=document.getElementById('bInst'), r=b.getBoundingClientRect(), s=document.getElementById('bSave').getBoundingClientRect(); const lb=[...b.querySelectorAll('.lbl,.lbs')].find(x=>getComputedStyle(x).display!=='none'); return {w, rib:rib.scrollWidth<=rib.clientWidth+1, top:top.scrollWidth<=top.clientWidth+1, btn:r.width>=30&&r.right<=innerWidth, save:s.right<=innerWidth, label:lb?lb.textContent:null}; },[w])); }
-  check('S34-21: a barra cabe sem transbordar com o botão a 1180/1280/1366/1600/1700/1920 (rótulo “Institucional” até 1640, “Institucional A&M” acima)', fit.every(f=>f.rib&&f.top&&f.btn&&f.save) && fit.slice(0,4).every(f=>f.label==='Institucional') && fit.slice(4).every(f=>f.label==='Institucional A&M'), fit);
+  check('S34-21: a barra cabe sem transbordar com o botão a 1180/1280/1366/1600/1700/1920 (só ícone até 1220, rótulo “Institucional” até 1640, “Institucional A&M” acima)', fit.every(f=>f.rib&&f.top&&f.btn&&f.save) && fit[0].label===null && fit.slice(1,4).every(f=>f.label==='Institucional') && fit.slice(4).every(f=>f.label==='Institucional A&M'), fit);
   await q.setViewportSize({width:1280,height:720}); await sleep(250);
   await q.evaluate(()=>{ AMStudio.loadDeck(AMStudio.newDeck(),null); }); await sleep(250);
   const th=await q.$('#thumbs .th'); const bb=await th.boundingBox(); await q.mouse.click(bb.x+bb.width/2, bb.y+bb.height/2, {button:'right'}); await sleep(250);
