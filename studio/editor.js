@@ -2861,7 +2861,7 @@
   var MENUS = {
     file: function () {
       return [{ t: 'Início (capa)', ic: 'home', fn: goHome }, { sep: 1 },
-        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
+        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
         { t: 'Salvar como PDF…', ic: 'pdf', fn: function () { exportAs('pdf'); } }, { t: 'Salvar como PowerPoint…', ic: 'ppt', dis: !pptxOk(), tip: pptxOk() ? '' : PPTX_SOON, fn: function () { exportAs('pptx'); } }, { sep: 1 },
         { t: 'Apresentar', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { sep: 1 },
         { t: 'Recomeçar apresentação…', ic: 'reset', fn: askReset }];
