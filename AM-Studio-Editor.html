@@ -812,6 +812,147 @@
 .fxsa.cy-active .sa-n.cy-on{transform:scale(1.04);box-shadow:0 .6em 1.4em rgba(0,30,50,.2);transition:transform .4s,box-shadow .4s}
 .fxsa.cy-active .sa-chev.cy-on,.fxsa.cy-active .sa-step.cy-on,.fxsa.cy-active .sa-bk.cy-on{transform:none;box-shadow:none}
 
+/* ---- rt-60-forms.css ---- */
+/* ===== rt-60-forms.css — Formulário interativo (S30) ===== */
+.amf{position:relative;display:flex;flex-direction:column;width:100%;height:100%;box-sizing:border-box;padding:1.1em 1.3em 1em;border-radius:.9em;background:#fff;border:1px solid #DCE3EC;box-shadow:0 .6em 1.6em -.9em rgba(0,42,70,.35);color:#002A46;font-family:Inter,Roboto,Arial,sans-serif;line-height:1.3;text-align:left;overflow:hidden}
+.amf-body{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.amf-h{flex:none;display:flex;flex-direction:column;gap:.2em;margin:0 0 .7em;padding:0 0 .6em;border-bottom:2px solid #F78C16}
+.amf-t{font:600 1.3em/1.15 Roboto,Inter,Arial,sans-serif;color:#002A46}
+.amf-i{font-size:.82em;color:#566579}
+.amf-qs{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:.75em;padding-right:.3em;scrollbar-width:thin}
+.amf-q{display:flex;flex-direction:column;gap:.35em}
+.amf-q.amf-miss .amf-l{color:#B02A3E}
+.amf-q.amf-miss .amf-in,.amf-q.amf-miss .amf-rb,.amf-q.amf-miss .amf-o{border-color:#D23F55}
+.amf-l{font-size:.92em;font-weight:600;color:#13315C}
+.amf-req{font-style:normal;color:#F78C16;font-weight:700}
+.amf-in{position:relative;min-height:1.9em;padding:.4em .6em;border:1px solid #B9C8DA;border-radius:.4em;background:#FBFCFE;font-size:.92em;color:#002A46;white-space:pre-wrap;word-break:break-word;outline:none;cursor:text}
+.amf-in.amf-ta{min-height:3.6em}
+.amf-in:empty::before{content:attr(data-ph);color:#8A96A8;pointer-events:none}
+.amf-in:focus{border-color:#4A6FA5;box-shadow:0 0 0 .18em rgba(74,111,165,.22);background:#fff}
+.amf-rate,.amf-yn,.amf-opts{display:flex;flex-wrap:wrap;gap:.4em;align-items:center}
+.amf-opts{flex-direction:column;align-items:stretch;gap:.3em}
+.amf-rb,.amf-o,.amf-send,.amf-tb,.amf-again{font:inherit;cursor:pointer;color:#002A46;background:#fff;border:1px solid #B9C8DA;border-radius:.4em;line-height:1.2}
+.amf-rb{min-width:2.2em;height:2.2em;padding:0 .5em;font-weight:600;font-size:.95em}
+.amf-rb:hover,.amf-o:hover{border-color:#43698F;background:#EEF2F7}
+.amf-rb[aria-checked=true]{background:#002A46;color:#fff;border-color:#002A46}
+.amf-ynb{min-width:4.2em}
+.amf-rl{display:flex;gap:1em;margin-left:.3em;font-size:.72em;color:#566579}
+.amf-rl em{font-style:normal}
+.amf-o{display:flex;align-items:center;gap:.55em;padding:.38em .6em;text-align:left;font-size:.9em}
+.amf-o i{flex:none;width:1.05em;height:1.05em;border:1.5px solid #43698F;border-radius:50%;background:#fff;box-sizing:border-box;position:relative}
+.amf-o[role=checkbox] i{border-radius:.2em}
+.amf-o[aria-checked=true]{border-color:#002A46;background:#EEF2F7}
+.amf-o[aria-checked=true] i{background:#002A46;border-color:#002A46}
+.amf-o[aria-checked=true] i::after{content:"";position:absolute;inset:.2em;border-radius:inherit;background:#fff}
+.amf-o[role=checkbox][aria-checked=true] i::after{inset:0;background:none;border:solid #fff;border-width:0 .18em .18em 0;width:.3em;height:.55em;left:.3em;top:.08em;transform:rotate(45deg);border-radius:0}
+.amf-rb:focus-visible,.amf-o:focus-visible,.amf-send:focus-visible,.amf-tb:focus-visible,.amf-again:focus-visible{outline:2px solid #F78C16;outline-offset:2px}
+.amf-f{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:.5em .7em;margin-top:.8em;padding-top:.7em;border-top:1px solid #EEF2F7}
+.amf-send{padding:.5em 1.3em;font-weight:700;background:#F78C16;border-color:#F78C16;color:#002A46}
+.amf-send:hover{background:#E07A0A}
+.amf-st{flex:1 1 8em;min-width:0;font-size:.78em;color:#566579}
+.amf-st.amf-ok{color:#1F8048}
+.amf-st.amf-err{color:#B02A3E}
+.amf-tools{display:flex;align-items:center;gap:.4em;margin-left:auto;font-size:.78em}
+.amf-n{color:#566579;white-space:nowrap}
+.amf-tb{padding:.3em .6em;font-size:1em}
+.amf-tb:hover{background:#EEF2F7}
+.amf-tb:disabled{opacity:.45;cursor:default}
+.amf-done{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1em;padding:1.5em;border-radius:inherit;background:rgba(255,255,255,.96);text-align:center}
+.amf-done[hidden]{display:none}
+.amf-done b{font:600 1.25em/1.3 Roboto,Inter,Arial,sans-serif;color:#002A46}
+.amf-again{padding:.5em 1.1em;font-weight:600}
+.amf-again:hover{background:#EEF2F7}
+.amf-empty{margin:0;font-size:.9em;color:#8A96A8}
+.amf-sent .amf-qs,.amf-sent .amf-send{filter:blur(1px);pointer-events:none}
+/* editor: o formulário é só desenho — clicar seleciona o elemento; sem cursor de texto */
+.am-edit .amf *{pointer-events:none}
+.am-edit .amf-in{cursor:default}
+/* fundo escuro do slide: o quadro continua branco (contraste), só o contorno some */
+.am-stage.am-dark .amf{border-color:transparent}
+/* editor e exportação (PDF/PowerPoint): a lista não rola, então sem barra de rolagem na imagem */
+.am-edit .amf-qs,.am-export .amf-qs{overflow:hidden}
+
+/* ---- rt-61-workshop.css ---- */
+/* ===== rt-61-workshop.css — quadro de post-its, votação por pontos e cronômetro (S31) ===== */
+.amw{position:relative;display:flex;flex-direction:column;width:100%;height:100%;box-sizing:border-box;padding:1em 1.2em;border-radius:.9em;background:#fff;border:1px solid #DCE3EC;box-shadow:0 .6em 1.6em -.9em rgba(0,42,70,.35);color:#002A46;font-family:Inter,Roboto,Arial,sans-serif;line-height:1.3;text-align:left;overflow:hidden}
+.amw-h{flex:none;display:flex;flex-direction:column;gap:.15em;margin:0 0 .7em;padding:0 0 .5em;border-bottom:2px solid #F78C16}
+.amw-h b{font:600 1.25em/1.15 Roboto,Inter,Arial,sans-serif}
+.amw-h span{font-size:.85em;color:#566579}
+.amw-f{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:.4em .7em;margin-top:.6em;padding-top:.5em;border-top:1px solid #EEF2F7;font-size:.78em}
+.amw-st{flex:1 1 8em;min-width:0;color:#566579}
+.amw-st.amw-ok{color:#1F8048}.amw-st.amw-err{color:#B02A3E}
+.amw-tools{display:flex;align-items:center;gap:.4em;margin-left:auto}
+.amw-n{color:#566579;white-space:nowrap}
+.amw-tb,.amb-add,.amv-send,.amv-show,.amv-p,.amv-m,.amt-go,.amt-rs,.amt-pm{font:inherit;cursor:pointer;color:#002A46;background:#fff;border:1px solid #B9C8DA;border-radius:.4em;line-height:1.2}
+.amw-tb{padding:.3em .6em}
+.amw-tb:hover,.amb-add:hover,.amv-show:hover,.amt-rs:hover,.amt-pm:hover{background:#EEF2F7}
+.amw-tb:disabled,.amv-p:disabled,.amv-m:disabled,.amv-send:disabled{opacity:.45;cursor:default}
+.amw button:focus-visible,.amb-t:focus-visible{outline:2px solid #F78C16;outline-offset:2px}
+/* ---- quadro ---- */
+.amb-cols{flex:1;min-height:0;display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:.7em}
+.amb-col{display:flex;flex-direction:column;min-height:0;border-radius:.6em;background:#F4F6F9;border:1px solid #E3E9F0;transition:background .15s,border-color .15s}
+.amb-col.amb-over{background:#E6F0FA;border-color:#4A6FA5}
+.amb-ch{flex:none;display:flex;align-items:center;gap:.4em;padding:.5em .6em;border-bottom:1px solid #E3E9F0}
+.amb-ch b{flex:1;min-width:0;font-size:.9em;font-weight:700;color:#13315C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amb-cn{font-size:.72em;color:#566579;background:#fff;border-radius:1em;padding:.1em .5em;border:1px solid #E3E9F0}
+.amb-add{font-size:.72em;padding:.25em .5em;font-weight:600}
+.amb-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:.55em;padding:.6em;scrollbar-width:thin}
+.amb-n{position:relative;display:flex;flex-direction:column;border-radius:.3em;box-shadow:.1em .2em .5em rgba(0,30,50,.18);transform:rotate(-.6deg);transition:box-shadow .15s}
+.amb-n:nth-child(2n){transform:rotate(.7deg)}
+.amb-n:nth-child(3n){transform:rotate(-1.1deg)}
+.amb-n.amb-drag{box-shadow:.3em .6em 1.2em rgba(0,30,50,.35);z-index:5;opacity:.92;pointer-events:none}
+.amb-y{background:#FFE89A}.amb-p{background:#FFC9D6}.amb-b{background:#C9E1F7}.amb-g{background:#CDEFD4}.amb-o{background:#FFD5A8}
+.amb-grip{display:flex;align-items:center;justify-content:space-between;height:1.3em;padding:0 .3em 0 .4em;border-radius:.3em .3em 0 0;background:rgba(0,30,50,.07);cursor:grab;touch-action:none}
+.amb-cs{display:flex;gap:.25em}
+.amb-c{width:.75em;height:.75em;padding:0;border:1px solid rgba(0,30,50,.25);border-radius:50%;cursor:pointer}
+.amb-c.on{outline:2px solid #002A46;outline-offset:1px}
+.amb-x{width:1.1em;height:1.1em;padding:0;border:0;border-radius:50%;background:transparent;color:#3E4C5E;font:700 .9em/1 Arial,sans-serif;cursor:pointer}
+.amb-x:hover{background:rgba(0,30,50,.12)}
+.amb-t{min-height:2.6em;padding:.4em .5em .5em;font-size:.86em;line-height:1.3;color:#1C2733;white-space:pre-wrap;word-break:break-word;outline:none}
+.amb-t:empty::before{content:attr(data-ph);color:rgba(28,39,51,.45)}
+.am-edit .amw *{pointer-events:none}
+.am-edit .amb-list,.am-export .amb-list{overflow:hidden}
+.am-edit .amb-grip{cursor:default}
+/* ---- votação ---- */
+.amv-opts{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:.45em;scrollbar-width:thin}
+.am-edit .amv-opts,.am-export .amv-opts{overflow:hidden}
+.amv-o{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l c" "b b";align-items:center;gap:.2em .8em;padding:.45em .7em;border:1px solid #DCE3EC;border-radius:.5em;background:#FBFCFE}
+.amv-o.amv-on{border-color:#4A6FA5;background:#EEF2F7}
+.amv-l{grid-area:l;font-size:.95em;font-weight:600;color:#13315C;min-width:0}
+.amv-ctl{grid-area:c;display:flex;align-items:center;gap:.35em}
+.amv-p,.amv-m{width:1.9em;height:1.9em;padding:0;font-size:1em;font-weight:700}
+.amv-p:hover:not(:disabled),.amv-m:hover:not(:disabled){background:#002A46;color:#fff;border-color:#002A46}
+.amv-v{min-width:1.4em;text-align:center;font-size:1.05em}
+.amv-bar{grid-area:b;display:none;align-items:center;gap:.5em;height:1.1em}
+.amv-bar i{display:block;height:.55em;border-radius:.3em;background:linear-gradient(90deg,#43698F,#002A46);min-width:0;transition:width .4s ease}
+.amv-bar em{font-style:normal;font-size:.75em;color:#566579;white-space:nowrap}
+.amv-res .amv-bar{display:flex}
+.amv-f{flex:none;display:flex;align-items:center;gap:.6em;margin-top:.7em}
+.amv-left{flex:1;font-size:.85em;color:#566579}
+.amv-left b{font-size:1.15em;color:#002A46}
+.amv-send{padding:.45em 1.2em;font-weight:700;background:#F78C16;border-color:#F78C16}
+.amv-send:hover:not(:disabled){background:#E07A0A}
+.amv-show{padding:.45em .8em;font-size:.85em}
+.amv-sent .amv-opts{animation:amvSent 1.2s ease}
+@keyframes amvSent{0%{box-shadow:inset 0 0 0 3px #1F8048;border-radius:.5em}100%{box-shadow:none}}
+/* ---- cronômetro ---- */
+.amt{align-items:center;justify-content:center;gap:.4em;text-align:center}
+.amt-t{font-size:.95em;font-weight:600;color:#13315C}
+.amt-ring{position:relative;width:min(100%,52%);aspect-ratio:1;flex:none}
+.amt-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.amt-bg{fill:none;stroke:#EEF2F7;stroke-width:8}
+.amt-fg{fill:none;stroke:#F78C16;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .25s linear,stroke .3s}
+.amt-low .amt-fg{stroke:#D23F55}
+.amt-d{position:absolute;inset:0;display:grid;place-items:center;font:700 2.1em/1 'Roboto Condensed',Roboto,Arial,sans-serif;letter-spacing:.02em;color:#002A46;font-variant-numeric:tabular-nums}
+.amt-end{position:absolute;left:0;right:0;bottom:12%;display:none;font-size:.75em;font-weight:700;color:#B02A3E;text-transform:uppercase;letter-spacing:.08em}
+.amt-over .amt-end{display:block}
+.amt-over .amt-d{color:#B02A3E;animation:amtBlink 1s steps(2,start) 6}
+@keyframes amtBlink{to{visibility:hidden}}
+.amt-b{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em}
+.amt-go{padding:.45em 1em;font-weight:700;background:#002A46;border-color:#002A46;color:#fff}
+.amt-go:hover{background:#13315C}
+.amt-rs,.amt-pm{padding:.45em .7em;font-size:.9em}
+
 /* ---- rt-models2.css ---- */
 /* ===== Modelos de consultoria A (rt-models2.js): .fxpd PDCA · .fxgt Gantt · .fxab AS-IS→TO-BE · .fxpt Porter · .fxrm roadmap · .fxit árvore · .fxbc BCG ===== keyframes com prefixo m7 */
 /* ---- PDCA ---- */
@@ -1485,6 +1626,7 @@ span.pf{margin-bottom:6px}
 .btnw:hover{border-color:var(--orange)}
 .btnw.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
 .note{font-size:11.5px;color:var(--mut);line-height:1.5;margin:6px 0 0}
+.fhelp{margin:4px 0 10px;padding:8px 10px;background:#F7F9FC;border:1px solid var(--line);border-radius:8px}.fhelp b{color:var(--navy)}.fhelp-code{display:block;width:100%;box-sizing:border-box;margin:8px 0 0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;font:10.5px/1.45 'JetBrains Mono',Consolas,monospace;color:#1C2733;resize:vertical;white-space:pre}
 .empty{padding:22px 16px;color:var(--mut);line-height:1.6}
 .empty b{color:var(--navy)}
 /* gaveta de efeitos */
@@ -1953,6 +2095,38 @@ kbd.k.m{background:#fff;border:1px dashed #A3B8D6;color:var(--steel2);font-weigh
 .xm-rep .xm-warn li{position:relative;padding:3px 0 3px 18px;font:400 12.5px/1.45 Inter,sans-serif;color:#3E4C5E}
 .xm-rep .xm-warn li::before{content:"";position:absolute;left:4px;top:10px;width:7px;height:7px;border-radius:50%;background:#F78C16}
 .xm-rep .note{margin:12px 0 0;font:400 12px/1.45 Inter,sans-serif;color:#5B6B7F}
+
+/* ---- ed-43-brand.css ---- */
+/* ===== ed-43-brand.css — caixa “Kit de marca” (S29; só no editor) ===== */
+html.xp-open .cpop{z-index:210} /* “Mais cores…” aberto de dentro de uma caixa .xp (z-index 190) fica por cima dela */
+.bk-box{width:min(640px,100%)}
+.bk-sum b{color:var(--navy,#002A46)}
+.bk-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 8px}
+.bk-row input[type=text],.bk-row select{flex:1 1 200px;min-width:0;height:34px;padding:0 10px;border:1px solid var(--line,#DCE3EC);border-radius:8px;background:#fff;font:inherit;font-size:13px;color:var(--ink,#1C2733)}
+.bk-row input[type=text]:focus-visible,.bk-row select:focus-visible{outline:2px solid var(--navy,#002A46);outline-offset:1px}
+.bk .xp-btn.sm{height:34px;padding:0 12px;font-size:12.5px;white-space:nowrap}
+.bk .xp-lg span{font-weight:400;letter-spacing:0;text-transform:none;color:var(--mut,#566579)}
+.bk-sw{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:2px 0 10px}
+.bk-c{position:relative;width:34px;height:34px}
+.bk-s{width:34px;height:34px;border-radius:9px;border:1px solid rgba(0,30,50,.18);padding:0;cursor:pointer;transition:transform .12s}
+.bk-s:hover{transform:scale(1.08)}
+.bk-s:focus-visible,.bk-add:focus-visible,.bk-pb:focus-visible{outline:2px solid var(--navy,#002A46);outline-offset:2px}
+.bk-x{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:50%;border:1px solid var(--line,#DCE3EC);background:#fff;color:var(--mut,#566579);font:700 12px/1 Arial,sans-serif;padding:0;cursor:pointer;opacity:0;transition:opacity .12s}
+.bk-c:hover .bk-x,.bk-c:focus-within .bk-x,.bk-x:focus-visible{opacity:1}
+.bk-x:hover{color:#B02A3E;border-color:#B02A3E}
+.bk-add{width:34px;height:34px;border-radius:9px;border:1.5px dashed #B9C8DA;background:#fff;color:var(--steel2,#43698F);font:400 20px/1 Arial,sans-serif;padding:0;cursor:pointer}
+.bk-add:hover{border-color:var(--navy,#002A46);color:var(--navy,#002A46)}
+.bk-empty{font-size:12.5px;color:var(--mut,#566579)}
+.bk-pal{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 8px}
+.bk-pal label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--navy,#002A46)}
+.bk-pal small{font-weight:400;color:var(--mut,#566579)}
+.bk-pb{display:flex;align-items:center;gap:8px;height:34px;padding:0 10px 0 6px;border:1px solid var(--line,#DCE3EC);border-radius:8px;background:#fff;font:inherit;font-size:12.5px;color:var(--ink,#1C2733);cursor:pointer;text-align:left}
+.bk-pb i{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,30,50,.18);flex:none}
+.bk-pb:hover{background:#EEF2F7}
+.bk .note{margin:0 0 4px;font-size:12px;line-height:1.4;color:var(--mut,#566579)}
+.bk .note.bk-err{color:#B02A3E}
+.bk-hint{flex:1;align-self:center;font-size:12px;color:var(--mut,#566579)}
+@media (max-width:640px){.bk-pal{grid-template-columns:1fr}.bk-hint{display:none}}
 
 /* ---- ed-colors.css ---- */
 /* ===== S19 · “Mais cores…”: botão nas linhas de amostras, campos de cor de componentes, cores das séries e o popover (só no editor) ===== */
@@ -2656,7 +2830,9 @@ window.AMRT = (function () {
   function CQ(v) { return (v / W * 100).toFixed(4) + 'cqw'; }
   /* fonte fora da lista (arquivo importado do PowerPoint/PDF): usa a fonte instalada no computador de quem vê, com a pilha padrão de reserva */
   function fontStack(name, dflt) { if (FONTS[name]) return FONTS[name]; return typeof name === 'string' && /^[\w][\w\s.-]{0,39}$/.test(name) ? "'" + name + "'," + dflt : dflt; }
-  var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace" };
+  var FONTS = { 'Roboto': "Roboto,'Arial Nova',Arial,sans-serif", 'Roboto Condensed': "'Roboto Condensed','Arial Nova Cond',Arial,sans-serif", 'Inter': "Inter,Arial,sans-serif", 'JetBrains Mono': "'JetBrains Mono',Consolas,monospace",
+    /* S29 (kit de marca): fontes do computador e serifadas do Google com reserva do mesmo tipo (Calibri → Carlito no Linux) */
+    'Calibri': "Calibri,Carlito,'Segoe UI',Arial,sans-serif", 'Segoe UI': "'Segoe UI',Roboto,Arial,sans-serif", 'Georgia': "Georgia,'Times New Roman',serif", 'Times New Roman': "'Times New Roman',Times,serif", 'Merriweather': "Merriweather,Georgia,serif", 'Playfair Display': "'Playfair Display',Georgia,serif" };
   function fmt(v, dec) { return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
   function lines(s) { return String(s || '').split(/\n|;/).map(function (x) { return x.trim(); }).filter(Boolean); }
   /* cores vindas dos dados (campos de cor dos componentes e data.colors dos gráficos): só valores seguros chegam ao markup.
@@ -3271,7 +3447,7 @@ window.AMRT = (function () {
     return real ? { list: out, secOf: secOf } : { list: [], secOf: [] };
   }
   /* textos livres de el.data (rótulos, valores), sem chaves de estilo/cor: alimenta o resumo automático */
-  var NOTEXT_KEYS = ['colors', 'style', 'weight', 'color', 'tcolor', 'c1', 'c2', 'variant', 'name', 'trig', 'accent', 'bg', 'stroke', 'pair', 'layout', 'mode', 'sort', 'kind', 'legend', 'panel', 'font', 'hl', 'highlight', 'bands', 'k'];
+  var NOTEXT_KEYS = ['colors', 'style', 'weight', 'color', 'tcolor', 'c1', 'c2', 'variant', 'name', 'trig', 'accent', 'bg', 'stroke', 'pair', 'layout', 'mode', 'sort', 'kind', 'legend', 'panel', 'font', 'hl', 'highlight', 'bands', 'k', 'qs', 'sheet', 'tools']; /* qs/sheet/tools: codec e endereço do formulário (S30) */
   var COLOR_LIKE = /^(#[0-9a-f]{3,8}|none|transparent|rgba?\([\d.,\s%]+\)|[a-z]{3,20})$/i;
   function dataStrings(d) {
     var out = [];
@@ -3413,7 +3589,7 @@ window.AMRT = (function () {
       if (e.target.closest('.amp-zb')) { openZoom(hoverId || 0); return; }
       var b = e.target.closest('[data-a]');
       if (b) { var a = b.dataset.a; if (a === 'prev') go(cur - 1); else if (a === 'next') go(cur + 1); else if (a === 'full') full(); else if (a === 'zoom') openZoom(hoverId || 0); else if (a === 'exit' && opts.onExit) opts.onExit(); return; }
-      if (!deckEl.contains(e.target) || zoomableNode(e.target)) return; /* clique num gráfico é dele (duplo clique amplia), nunca das zonas de avançar/voltar */
+      if (!deckEl.contains(e.target) || zoomableNode(e.target) || (e.target.closest && e.target.closest('.am-ia'))) return; /* clique num gráfico é dele (duplo clique amplia) e num componente interativo (.am-ia: formulário, quadro, votação…) também; nunca das zonas de avançar/voltar */
       var r = deckEl.getBoundingClientRect(); if (e.clientX > r.left + r.width * .82) go(cur + 1); else if (e.clientX < r.left + r.width * .18) go(cur - 1);
     });
     deckEl.addEventListener('dblclick', function (e) { var n = zoomableNode(e.target); if (n) { e.preventDefault(); openZoom(n.dataset.id); } });
@@ -4797,6 +4973,452 @@ window.AMRT = (function () {
   R.SMART_LAYOUTS = LAYOUTS; R.smartFind = find; R.smartParse = parse; R.smartText = text; R.smartIcon = icon; R.smartSample = sample;
 })(window.AMRT);
 
+;/* ---- rt-60-forms.js ---- */
+/* ===== rt-60-forms.js — Formulário interativo (S30): perguntas respondidas dentro da apresentação salva =====
+   Vai junto em todo arquivo exportado (concatenado ao runtime). Componente FX.form: título, texto de apoio, perguntas (uma por linha,
+   codec abaixo), botão, mensagem final, ferramentas (contagem, CSV, copiar, limpar) e, opcional, o endereço de um app do Google
+   Apps Script que recebe cada resposta (Google Sheets).
+   Codec das perguntas (data.qs, uma por linha): "Pergunta" = texto curto · "Pergunta = texto longo" · "Pergunta = 1-5" (nota)
+   · "Pergunta = sim/não" · "Pergunta = A | B | C" (uma opção) · "Pergunta = [] A | B | C" (várias) · "*" no fim = obrigatória.
+   Respostas: localStorage 'amForm.<id da obra>.<id do elemento>' = {v, q: [perguntas], rows: [{at, a: [...]}]} — ficam no
+   dispositivo de quem responde; "Baixar CSV" (; e BOM, Excel pt-BR) e "Copiar" (TSV, cola direto no Sheets/Excel) juntam tudo.
+   Com data.sheet (https://…/exec), cada envio também faz POST (texto JSON {deck, form, title, at, q, a}; mode no-cors, sem
+   confirmação de leitura) — o app do Apps Script (modelo no painel) acrescenta a linha na planilha.
+   Editor (.am-edit): o formulário é inerte (CSS pointer-events) — clicar seleciona o elemento. Exportação (PDF/PowerPoint):
+   só HTML/CSS (sem controles nativos), então a imagem sai igual à tela. Player: delegação em hd.deckEl (R.hooks.player);
+   textos são contentEditable (o player ignora teclas em campos), opções e notas são botões (Enter/Espaço acionam o botão). */
+(function (R) {
+  'use strict';
+  if (!R || !R.FX) return;
+  var esc = R.esc, CQ = R.util.CQ, lines = R.util.lines;
+  var KEY = 'amForm.', MAXQ = 20, MAXLEN = 2000, MAXROWS = 5000;
+  /* ---------- codec ---------- */
+  function parseQs(text) {
+    var out = [];
+    lines(text).forEach(function (l) {
+      if (out.length >= MAXQ) return;
+      var req = /\*\s*$/.test(l); if (req) l = l.replace(/\*\s*$/, '').trim();
+      var m = /^(.*?)\s*=\s*(.*)$/.exec(l), t = m ? m[1].trim() : l.trim(), spec = m ? m[2].trim() : ''; /* "Pergunta =" (vazio) = texto curto */
+      if (!t) return;
+      var q = { t: t, type: 'text', opts: [], req: req };
+      if (!spec) q.type = 'text';
+      else if (/^(texto\s+longo|longo|long|par[aá]grafo)$/i.test(spec)) q.type = 'long';
+      else if (/^1\s*-\s*5$/.test(spec) || /^nota$/i.test(spec)) q.type = 'rate';
+      else if (/^(sim\s*\/\s*n[aã]o|s\/n|yes\s*\/\s*no)$/i.test(spec)) q.type = 'yn';
+      else if (spec.indexOf('|') >= 0 || /^\[\s*\]/.test(spec)) {
+        q.type = /^\[\s*\]/.test(spec) ? 'many' : 'one';
+        q.opts = spec.replace(/^\[\s*\]\s*/, '').split('|').map(function (o) { return o.trim(); }).filter(Boolean).slice(0, 12);
+        if (!q.opts.length) q.type = 'text';
+      } else { q.type = 'text'; q.t = l.trim(); } /* "= algo" que não é um tipo conhecido: faz parte da pergunta */
+      out.push(q);
+    });
+    return out;
+  }
+  /* ---------- armazenamento ---------- */
+  function storeKey(deckId, elId) { return KEY + String(deckId || 'obra') + '.' + String(elId || 'form'); }
+  function load(k) { try { var o = JSON.parse(localStorage.getItem(k) || 'null'); return o && Array.isArray(o.rows) ? o : { v: 1, q: [], rows: [] }; } catch (e) { return { v: 1, q: [], rows: [] }; } }
+  function save(k, o) { try { localStorage.setItem(k, JSON.stringify(o)); return true; } catch (e) { return false; } }
+  function csvCell(v) { v = String(v == null ? '' : v); return /[;"\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function toCSV(o) { var h = ['Data/hora'].concat(o.q).map(csvCell).join(';'); return '﻿' + [h].concat(o.rows.map(function (r) { return [r.at].concat(r.a).map(csvCell).join(';'); })).join('\r\n') + '\r\n'; }
+  function toTSV(o) { var cl = function (v) { return String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' '); }; return [['Data/hora'].concat(o.q).map(cl).join('\t')].concat(o.rows.map(function (r) { return [r.at].concat(r.a).map(cl).join('\t'); })).join('\n'); }
+  function stamp() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  function download(name, text, type) {
+    var blob = new Blob([text], { type: type || 'text/plain;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }
+  function slug(s) { return String(s || 'respostas').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase().slice(0, 60) || 'respostas'; }
+  function nRows(n) { return n + (n === 1 ? ' resposta' : ' respostas'); }
+  /* ---------- markup ---------- */
+  function qHTML(q, i, id) {
+    var lab = '<span class="amf-l" id="' + id + '-l' + i + '">' + (i + 1) + '. ' + esc(q.t) + (q.req ? ' <i class="amf-req" title="obrigatória">*</i>' : '') + '</span>', body;
+    if (q.type === 'text' || q.type === 'long') body = '<div class="amf-in' + (q.type === 'long' ? ' amf-ta' : '') + '" role="textbox" aria-labelledby="' + id + '-l' + i + '"' + (q.type === 'long' ? ' aria-multiline="true"' : '') + ' data-ph="' + (q.type === 'long' ? 'Escreva aqui' : 'Sua resposta') + '"></div>';
+    else if (q.type === 'rate') body = '<div class="amf-rate" role="radiogroup" aria-labelledby="' + id + '-l' + i + '">' + [1, 2, 3, 4, 5].map(function (v) { return '<button type="button" class="amf-rb" role="radio" aria-checked="false" data-v="' + v + '">' + v + '</button>'; }).join('') + '<span class="amf-rl"><em>1 = baixo</em><em>5 = alto</em></span></div>';
+    else if (q.type === 'yn') body = '<div class="amf-yn" role="radiogroup" aria-labelledby="' + id + '-l' + i + '">' + ['Sim', 'Não'].map(function (v) { return '<button type="button" class="amf-rb amf-ynb" role="radio" aria-checked="false" data-v="' + v + '">' + v + '</button>'; }).join('') + '</div>';
+    else body = '<div class="amf-opts" role="' + (q.type === 'many' ? 'group' : 'radiogroup') + '" aria-labelledby="' + id + '-l' + i + '">' + q.opts.map(function (o) { return '<button type="button" class="amf-o" role="' + (q.type === 'many' ? 'checkbox' : 'radio') + '" aria-checked="false" data-v="' + esc(o) + '"><i></i><span>' + esc(o) + '</span></button>'; }).join('') + '</div>';
+    return '<div class="amf-q" data-q="' + i + '" data-type="' + q.type + '"' + (q.req ? ' data-req="1"' : '') + '>' + lab + body + '</div>';
+  }
+  R.FX.form = {
+    name: 'Formulário', cat: 'Interativo', w: 620, h: 520, anim: { in: 'rise' },
+    kw: 'formulário pesquisa enquete questionário perguntas respostas feedback avaliação nps workshop coleta planilha google sheets csv interativo',
+    data: {
+      title: 'Pesquisa rápida', intro: 'Leva um minuto. As respostas ficam neste dispositivo e podem ser baixadas em CSV.',
+      qs: 'Nome *\nComo avalia este encontro? = 1-5\nQual área você representa? = Finanças | Operações | TI\nComentários = texto longo',
+      btn: 'Enviar', thanks: 'Obrigado! Resposta registrada.', tools: '1', sheet: ''
+    },
+    fields: [['title', 'Título'], ['intro', 'Texto de apoio', 'area'],
+      ['qs', 'Perguntas — uma por linha: “Pergunta” (texto curto) · “= texto longo” · “= 1-5” (nota) · “= sim/não” · “= A | B | C” (uma opção) · “= [] A | B” (várias) · “*” no fim = obrigatória. Na apresentação a lista rola; no PDF e no PowerPoint só cabe o que aparece no slide (aumente a altura ou use dois formulários)', 'area'],
+      ['btn', 'Botão de enviar'], ['thanks', 'Mensagem depois de enviar'],
+      ['tools', 'Ferramentas na apresentação (contagem, Baixar CSV, Copiar, Limpar)', 'sel:1=Mostrar|0=Esconder'],
+      ['sheet', 'Google Sheets: endereço do app (https://script.google.com/…/exec), opcional'],
+      ['help', '<b>Como as respostas chegam a você</b><br>Cada pessoa responde na própria cópia da apresentação (.html): as respostas ficam no dispositivo dela e saem por <b>Baixar CSV</b> ou <b>Copiar</b> (cola no Sheets/Excel). Para juntar tudo numa planilha em tempo real: no Google Sheets, <b>Extensões › Apps Script</b>, cole o código abaixo, <b>Implantar › Novo app da Web</b> (executar como você; acesso: qualquer pessoa) e cole o endereço <i>…/exec</i> no campo acima.' +
+        '<textarea class="fhelp-code" readonly rows="6" spellcheck="false" aria-label="Código do Apps Script">function doPost(e) {\n  var d = JSON.parse(e.postData.contents), ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sh = ss.getSheetByName(d.form) || ss.insertSheet(d.form);\n  if (sh.getLastRow() === 0) sh.appendRow([\'Data/hora\'].concat(d.q));\n  sh.appendRow([d.at].concat(d.a));\n  return ContentService.createTextOutput(\'ok\');\n}</textarea>', 'help']],
+    tip: 'Na apresentação, as pessoas respondem direto no slide. Animações e transições continuam valendo; o formulário fica interativo quando o slide está na tela.',
+    parse: parseQs,
+    html: function (d, w, h, el) {
+      var qs = parseQs(d.qs), f = Math.max(11, Math.min(w * .027, h * .038)), id = 'amf-' + esc(String(el && el.id || 'x').replace(/[^\w-]/g, ''));
+      var tools = String(d.tools == null ? '1' : d.tools) !== '0';
+      return '<div class="fx amf am-ia" style="font-size:' + CQ(f) + '" data-form="1"' + (tools ? ' data-tools="1"' : '') + (typeof d.sheet === 'string' && /^https:\/\//i.test(d.sheet.trim()) ? ' data-sheet="' + esc(d.sheet.trim()) + '"' : '') + ' data-title="' + esc(d.title || '') + '">' +
+        '<div class="amf-body"><div class="amf-h">' + (d.title ? '<b class="amf-t">' + esc(d.title) + '</b>' : '') + (d.intro ? '<span class="amf-i">' + esc(d.intro) + '</span>' : '') + '</div>' +
+        '<div class="amf-qs">' + (qs.length ? qs.map(function (q, i) { return qHTML(q, i, id); }).join('') : '<p class="amf-empty">Escreva as perguntas no painel (uma por linha).</p>') + '</div>' +
+        '<div class="amf-done" hidden><b>' + esc(d.thanks || 'Obrigado!') + '</b><button type="button" class="amf-again">Responder de novo</button></div></div>' + /* a mensagem final cobre só título e perguntas: o rodapé (contagem, CSV, copiar) continua à mão */
+        '<div class="amf-f"><button type="button" class="amf-send">' + esc(d.btn || 'Enviar') + '</button><span class="amf-st" role="status" aria-live="polite"></span>' +
+        (tools ? '<span class="amf-tools"><span class="amf-n">0 respostas</span><button type="button" class="amf-tb amf-dl" title="Baixa um .csv com todas as respostas deste dispositivo">Baixar CSV</button><button type="button" class="amf-tb amf-copy" title="Copia as respostas (cola direto numa planilha)">Copiar</button><button type="button" class="amf-tb amf-clear" title="Apaga as respostas guardadas neste dispositivo">Limpar</button></span>' : '') + '</div></div>';
+    }
+  };
+  /* ---------- player ---------- */
+  function formOf(t) { return t && t.closest ? t.closest('.amf') : null; }
+  function elIdOf(root) { var n = root.closest('.am-el'); return n && n.dataset.id || 'form'; }
+  function answersOf(root) {
+    var out = [], miss = null;
+    Array.prototype.forEach.call(root.querySelectorAll('.amf-q'), function (q) {
+      var tp = q.dataset.type, v = '';
+      if (tp === 'text' || tp === 'long') { var box = q.querySelector('.amf-in'); v = (box.innerText || box.textContent || '').replace(/ /g, ' ').replace(/[ \t]+\n/g, '\n').trim().slice(0, MAXLEN); }
+      else if (tp === 'many') v = Array.prototype.map.call(q.querySelectorAll('.amf-o[aria-checked="true"]'), function (b) { return b.dataset.v; }).join(' | ');
+      else { var on = q.querySelector('[aria-checked="true"]'); v = on ? on.dataset.v : ''; }
+      if (q.dataset.req === '1' && !v && !miss) miss = q;
+      out.push(v);
+    });
+    return { a: out, miss: miss };
+  }
+  function qTitles(root) { return Array.prototype.map.call(root.querySelectorAll('.amf-q .amf-l'), function (l) { return l.textContent.replace(/^\d+\.\s*/, '').replace(/\s*\*\s*$/, '').trim(); }); }
+  function status(root, msg, kind) { var s = root.querySelector('.amf-st'); if (!s) return; s.textContent = msg || ''; s.className = 'amf-st' + (kind ? ' ' + kind : ''); }
+  function refresh(root, key) { var n = root.querySelector('.amf-n'); if (!n) return; var o = load(key); n.textContent = nRows(o.rows.length); var dis = !o.rows.length; Array.prototype.forEach.call(root.querySelectorAll('.amf-dl,.amf-copy,.amf-clear'), function (b) { b.disabled = dis; }); }
+  function reset(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.amf-in'), function (b) { b.textContent = ''; });
+    Array.prototype.forEach.call(root.querySelectorAll('[aria-checked="true"]'), function (b) { b.setAttribute('aria-checked', 'false'); });
+    Array.prototype.forEach.call(root.querySelectorAll('.amf-q.amf-miss'), function (q) { q.classList.remove('amf-miss'); });
+    root.querySelector('.amf-done').hidden = true; root.classList.remove('amf-sent'); status(root, '');
+  }
+  function arm(root, deckId) {
+    if (root.dataset.live === '1') return; root.dataset.live = '1';
+    Array.prototype.forEach.call(root.querySelectorAll('.amf-in'), function (b) { b.setAttribute('contenteditable', 'true'); b.setAttribute('spellcheck', 'true'); });
+    refresh(root, storeKey(deckId, elIdOf(root)));
+  }
+  function postSheet(url, payload) {
+    if (typeof fetch !== 'function') return Promise.reject(new Error('sem fetch'));
+    return fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), keepalive: true });
+  }
+  function submit(root, deckId) {
+    var r = answersOf(root);
+    Array.prototype.forEach.call(root.querySelectorAll('.amf-q.amf-miss'), function (q) { q.classList.remove('amf-miss'); });
+    if (r.miss) { r.miss.classList.add('amf-miss'); status(root, 'Falta responder: ' + r.miss.querySelector('.amf-l').textContent.replace(/\s*\*\s*$/, ''), 'amf-err'); var f = r.miss.querySelector('.amf-in,[role=radio],[role=checkbox]'); if (f && f.focus) f.focus(); return false; }
+    var key = storeKey(deckId, elIdOf(root)), o = load(key), q = qTitles(root), at = stamp();
+    o.q = q; o.rows.push({ at: at, a: r.a }); if (o.rows.length > MAXROWS) o.rows.splice(0, o.rows.length - MAXROWS);
+    var ok = save(key, o);
+    root.classList.add('amf-sent'); root.querySelector('.amf-done').hidden = false; refresh(root, key);
+    var url = root.dataset.sheet;
+    if (url) {
+      status(root, 'Enviando à planilha…');
+      postSheet(url, { deck: String(deckId || ''), form: (root.dataset.title || 'Formulário').slice(0, 80), title: root.dataset.title || '', at: at, q: q, a: r.a })
+        .then(function () { status(root, ok ? 'Registrada aqui e enviada à planilha.' : 'Enviada à planilha (sem espaço para guardar aqui).', 'amf-ok'); })
+        .catch(function () { status(root, ok ? 'Registrada aqui; sem internet para a planilha.' : 'Não deu para guardar nem enviar.', 'amf-err'); });
+    } else status(root, ok ? 'Registrada neste dispositivo.' : 'Não deu para guardar neste dispositivo (armazenamento cheio ou bloqueado).', ok ? 'amf-ok' : 'amf-err');
+    return true;
+  }
+  function formClick(e, hd) {
+    var b = e.target.closest ? e.target.closest('button') : null, root = formOf(e.target); if (!root || !b || !root.contains(b)) return;
+    var deckId = hd && hd.deck && hd.deck.id;
+    arm(root, deckId);
+    if (b.classList.contains('amf-rb') || b.classList.contains('amf-o')) {
+      var grp = b.parentNode, many = b.getAttribute('role') === 'checkbox';
+      if (many) b.setAttribute('aria-checked', b.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+      else Array.prototype.forEach.call(grp.querySelectorAll('[role=radio]'), function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); });
+      b.closest('.amf-q').classList.remove('amf-miss'); return;
+    }
+    if (b.classList.contains('amf-send')) { submit(root, deckId); return; }
+    if (b.classList.contains('amf-again')) { reset(root); var first = root.querySelector('.amf-in,[role=radio],[role=checkbox]'); if (first && first.focus) first.focus(); return; }
+    var key = storeKey(deckId, elIdOf(root));
+    if (b.classList.contains('amf-dl')) { var o = load(key); if (!o.rows.length) return; download('respostas-' + slug(root.dataset.title) + '.csv', toCSV(o), 'text/csv;charset=utf-8'); status(root, nRows(o.rows.length) + ' no arquivo CSV.', 'amf-ok'); return; }
+    if (b.classList.contains('amf-copy')) {
+      var o2 = load(key); if (!o2.rows.length) return; var tsv = toTSV(o2);
+      var done = function () { status(root, nRows(o2.rows.length) + ' copiadas: cole numa planilha.', 'amf-ok'); }, fail = function () { status(root, 'Não deu para copiar: use Baixar CSV.', 'amf-err'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(tsv).then(done, fail); else fail();
+      return;
+    }
+    if (b.classList.contains('amf-clear')) {
+      if (b.dataset.arm !== '1') { b.dataset.arm = '1'; b.textContent = 'Confirmar: apagar?'; status(root, 'Clique de novo para apagar as respostas deste dispositivo.', 'amf-err'); clearTimeout(b._t); b._t = setTimeout(function () { b.dataset.arm = '0'; b.textContent = 'Limpar'; }, 4000); return; }
+      clearTimeout(b._t); b.dataset.arm = '0'; b.textContent = 'Limpar'; try { localStorage.removeItem(key); } catch (er) { } refresh(root, key); status(root, 'Respostas apagadas neste dispositivo.', 'amf-ok'); return;
+    }
+  }
+  R.hooks.player.push(function (hd) {
+    var deckEl = hd.deckEl; if (!deckEl) return;
+    var click = function (e) { formClick(e, hd); };
+    var keyd = function (e) { /* Enter num campo de uma linha = vai para a próxima pergunta, não quebra linha */
+      var box = e.target && e.target.closest ? e.target.closest('.amf-in') : null; if (!box || box.classList.contains('amf-ta') || e.key !== 'Enter' || e.shiftKey) return;
+      e.preventDefault(); var all = Array.prototype.slice.call(formOf(box).querySelectorAll('.amf-in,[role=radio],[role=checkbox],.amf-send')), i = all.indexOf(box); if (all[i + 1]) all[i + 1].focus();
+    };
+    var paste = function (e) { var box = e.target && e.target.closest ? e.target.closest('.amf-in') : null; if (!box) return; e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text'); if (t) document.execCommand('insertText', false, box.classList.contains('amf-ta') ? t : t.replace(/\s*\n+\s*/g, ' ')); };
+    deckEl.addEventListener('click', click); deckEl.addEventListener('keydown', keyd); deckEl.addEventListener('paste', paste);
+    hd.onDestroy(function () { deckEl.removeEventListener('click', click); deckEl.removeEventListener('keydown', keyd); deckEl.removeEventListener('paste', paste); });
+    /* todos os slides já estão no DOM do player: os formulários ficam ativos de uma vez (sem hooks.show, que é só da navegação) */
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.amf'), function (root) { arm(root, hd.deck && hd.deck.id); });
+  });
+  R.forms = { parse: parseQs, key: storeKey, load: load, csv: toCSV, tsv: toTSV, answers: answersOf, submit: submit,
+    /* partilhado com rt-61-workshop.js (quadro, votação): guardar, baixar, nome de arquivo, data/hora, envio à planilha, célula CSV */
+    save: save, download: download, slug: slug, stamp: stamp, post: postSheet, cell: csvCell };
+})(window.AMRT);
+
+;/* ---- rt-61-workshop.js ---- */
+/* ===== rt-61-workshop.js — Workshop ao vivo (S31): quadro de post-its, votação por pontos e cronômetro =====
+   Vai junto em todo arquivo exportado (depois de rt-60-forms.js, de onde vêm guardar/baixar/CSV/planilha: R.forms).
+   · FX.board  — Quadro de post-its: colunas (uma por linha) e notas (coluna | texto | cor). Na apresentação: “+ Nota” em cada
+     coluna, texto editável, cor, apagar, arrastar entre colunas (pela faixa de cima). Estado em localStorage
+     'amBoard.<obra>.<elemento>' (começa com as notas do editor; “Limpar” volta a elas). Baixar CSV / Copiar.
+   · FX.vote   — Votação por pontos: cada pessoa distribui N pontos entre as opções (+/−) e vota; os votos ficam em
+     'amVote.<obra>.<elemento>'; resultado em barras (sempre, depois de votar ou nunca — o apresentador alterna). CSV, Copiar,
+     Limpar, Google Sheets opcional (mesmo app do formulário: linha = data/hora + pontos por opção).
+   · FX.timer  — Cronômetro regressivo: minutos:segundos, anel de progresso, Iniciar/Pausar, Reiniciar, ±1 min; ao zerar,
+     avisa (pisca) e toca três bipes (WebAudio) se o som estiver ligado. Continua contando ao trocar de slide.
+   Tudo é HTML/CSS (sem controles nativos): a imagem do PDF/PowerPoint e o palco do editor mostram o estado do editor; no
+   player, delegação em hd.deckEl (R.hooks.player). Os três levam .am-ia: o clique neles nunca cai nas zonas de avançar/voltar. */
+(function (R) {
+  'use strict';
+  if (!R || !R.FX || !R.forms) return;
+  var esc = R.esc, CQ = R.util.CQ, lines = R.util.lines, F = R.forms;
+  var COLORS = { y: ['Amarelo', '#FFE89A'], p: ['Rosa', '#FFC9D6'], b: ['Azul', '#C9E1F7'], g: ['Verde', '#CDEFD4'], o: ['Laranja', '#FFD5A8'] }, CK = ['y', 'p', 'b', 'g', 'o'];
+  function rid() { return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function num(v, d) { v = +v; return isFinite(v) ? v : d; }
+  function cleanNotes(list, ncol) {
+    return (Array.isArray(list) ? list : []).slice(0, 200).map(function (n) {
+      if (!n || typeof n !== 'object') return null;
+      var c = Math.max(0, Math.min(Math.max(0, ncol - 1), num(n.c, 0) | 0)), t = String(n.t == null ? '' : n.t).slice(0, 400), k = COLORS[n.k] ? n.k : 'y';
+      return { id: typeof n.id === 'string' && /^[\w-]{1,24}$/.test(n.id) ? n.id : rid(), c: c, t: t, k: k, at: typeof n.at === 'string' ? n.at.slice(0, 24) : '' };
+    }).filter(Boolean);
+  }
+  /* ---------------- quadro de post-its ---------------- */
+  function noteHTML(n) {
+    return '<div class="amb-n amb-' + n.k + '" data-id="' + esc(n.id) + '"><div class="amb-grip" title="Arraste para outra coluna"><span class="amb-cs">' + CK.map(function (k) { return '<button type="button" class="amb-c amb-' + k + (k === n.k ? ' on' : '') + '" data-k="' + k + '" title="' + COLORS[k][0] + '" aria-label="Cor ' + COLORS[k][0] + '"></button>'; }).join('') + '</span><button type="button" class="amb-x" title="Apagar nota" aria-label="Apagar nota">×</button></div>' +
+      '<div class="amb-t" role="textbox" aria-multiline="true" data-ph="Escreva aqui">' + esc(n.t) + '</div></div>';
+  }
+  function boardHTML(cols, notes, tools, title) {
+    return '<div class="amb-cols" style="--n:' + cols.length + '">' + cols.map(function (c, i) {
+      return '<div class="amb-col" data-c="' + i + '"><div class="amb-ch"><b>' + esc(c) + '</b><span class="amb-cn">' + notes.filter(function (n) { return n.c === i; }).length + '</span><button type="button" class="amb-add" title="Nova nota nesta coluna">+ Nota</button></div><div class="amb-list">' + notes.filter(function (n) { return n.c === i; }).map(noteHTML).join('') + '</div></div>';
+    }).join('') + '</div>' +
+      (tools ? '<div class="amw-f"><span class="amw-st" role="status" aria-live="polite"></span><span class="amw-tools"><span class="amw-n">' + notes.length + (notes.length === 1 ? ' nota' : ' notas') + '</span><button type="button" class="amw-tb amb-dl" title="Baixa um .csv com as notas (coluna, texto, cor)">Baixar CSV</button><button type="button" class="amw-tb amb-copy" title="Copia as notas (cola numa planilha)">Copiar</button><button type="button" class="amw-tb amb-clear" title="Volta às notas originais do slide">Limpar</button></span></div>' : '');
+  }
+  R.FX.board = {
+    name: 'Quadro de post-its', cat: 'Interativo', w: 1100, h: 520, anim: { in: 'rise' },
+    kw: 'post-it post it notas adesivas quadro workshop brainstorm ideias retrospectiva começar parar continuar kanban mural colaborativo',
+    data: { title: 'Retrospectiva', cols: 'Começar\nParar\nContinuar', tools: '1',
+      notes: [{ c: 0, t: 'Reunião semanal de 15 min com o cliente', k: 'y' }, { c: 0, t: 'Painel único de status', k: 'b' }, { c: 1, t: 'Relatórios em PDF por e-mail', k: 'p' }, { c: 2, t: 'Revisão em pares antes de enviar', k: 'g' }] },
+    fields: [['title', 'Título'], ['cols', 'Colunas (uma por linha, até 6)', 'lines'],
+      ['notes', 'Notas iniciais (coluna 0, 1, 2… | texto | cor: y amarelo, p rosa, b azul, g verde, o laranja)', 'rows:c:n|t|k'],
+      ['tools', 'Ferramentas na apresentação (contagem, Baixar CSV, Copiar, Limpar)', 'sel:1=Mostrar|0=Esconder'],
+      ['help', '<b>Na apresentação</b>, cada coluna tem <b>+ Nota</b>; a nota se escreve direto, muda de cor pelos pontinhos, apaga no × e vai para outra coluna arrastando pela faixa de cima. As notas ficam no dispositivo (voltam quando o arquivo é reaberto nele); <b>Baixar CSV</b> e <b>Copiar</b> levam tudo para uma planilha; <b>Limpar</b> volta às notas deste painel.', 'help']],
+    tip: 'Use um quadro por dinâmica: retrospectiva (Começar / Parar / Continuar), ideias por tema, dúvidas da equipe.',
+    html: function (d, w, h) {
+      var cols = lines(d.cols).slice(0, 6); if (!cols.length) cols = ['Ideias'];
+      var notes = cleanNotes(d.notes, cols.length), f = Math.max(10, Math.min(w * .016, h * .034)), tools = String(d.tools == null ? '1' : d.tools) !== '0';
+      return '<div class="fx amw amb am-ia" style="font-size:' + CQ(f) + '" data-board="1" data-title="' + esc(d.title || '') + '" data-cols="' + esc(cols.join('\n')) + '"' + (tools ? ' data-tools="1"' : '') + '>' +
+        (d.title ? '<div class="amw-h"><b>' + esc(d.title) + '</b></div>' : '') + boardHTML(cols, notes, tools, d.title) +
+        '<template class="amb-seed">' + esc(JSON.stringify(notes)) + '</template></div>';
+    }
+  };
+  function bKey(root, hd) { var n = root.closest('.am-el'); return 'amBoard.' + String(hd && hd.deck && hd.deck.id || 'obra') + '.' + (n && n.dataset.id || 'board'); }
+  function bState(root, hd) {
+    var k = bKey(root, hd), o; try { o = JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { o = null; }
+    if (!o || !Array.isArray(o.notes)) { var seed = root.querySelector('.amb-seed'); var init = []; try { init = JSON.parse(seed ? seed.innerHTML.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&') : '[]'); } catch (e) { init = []; } o = { v: 1, notes: cleanNotes(init, 99) }; }
+    return { key: k, o: o };
+  }
+  function bSave(root, hd, o) { F.save(bKey(root, hd), o); }
+  function bRender(root, hd) {
+    var st = bState(root, hd), cols = (root.dataset.cols || '').split('\n'), tools = root.dataset.tools === '1';
+    var notes = cleanNotes(st.o.notes, cols.length);
+    var keep = root.querySelector('.amw-st'), msg = keep ? keep.textContent : '';
+    var wrap = root.querySelector('.amb-cols'); var tmp = document.createElement('div'); tmp.innerHTML = boardHTML(cols, notes, tools, root.dataset.title);
+    wrap.replaceWith(tmp.firstChild); var f = root.querySelector('.amw-f'); if (f) f.remove(); if (tmp.firstChild) root.insertBefore(tmp.firstChild, root.querySelector('.amb-seed'));
+    Array.prototype.forEach.call(root.querySelectorAll('.amb-t'), function (t) { t.setAttribute('contenteditable', 'true'); });
+    var s2 = root.querySelector('.amw-st'); if (s2) s2.textContent = msg;
+    return notes;
+  }
+  function wStatus(root, msg, kind) { var s = root.querySelector('.amw-st'); if (!s) return; s.textContent = msg || ''; s.className = 'amw-st' + (kind ? ' ' + kind : ''); }
+  function boardCSV(cols, notes) { return '﻿' + ['Coluna;Nota;Cor;Data/hora'].concat(notes.map(function (n) { return [cols[n.c] || n.c, n.t, COLORS[n.k][0], n.at || ''].map(F.cell).join(';'); })).join('\r\n') + '\r\n'; }
+  function boardTSV(cols, notes) { var cl = function (v) { return String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' '); }; return ['Coluna\tNota\tCor\tData/hora'].concat(notes.map(function (n) { return [cols[n.c] || n.c, n.t, COLORS[n.k][0], n.at || ''].map(cl).join('\t'); })).join('\n'); }
+  function boardClick(e, root, hd) {
+    var b = e.target.closest('button'); if (!b || !root.contains(b)) return;
+    var st = bState(root, hd), cols = (root.dataset.cols || '').split('\n');
+    if (b.classList.contains('amb-add')) {
+      var c = +b.closest('.amb-col').dataset.c, n = { id: rid(), c: c, t: '', k: CK[st.o.notes.length % CK.length], at: F.stamp() };
+      st.o.notes.push(n); bSave(root, hd, st.o); bRender(root, hd);
+      var nt = root.querySelector('.amb-n[data-id="' + n.id + '"] .amb-t'); if (nt) { nt.focus(); }
+      return;
+    }
+    var note = b.closest('.amb-n'); if (!note) {
+      if (b.classList.contains('amb-dl')) { var ns = cleanNotes(st.o.notes, cols.length); if (!ns.length) return; F.download('notas-' + F.slug(root.dataset.title || 'quadro') + '.csv', boardCSV(cols, ns), 'text/csv;charset=utf-8'); wStatus(root, ns.length + ' notas no arquivo CSV.', 'amw-ok'); return; }
+      if (b.classList.contains('amb-copy')) { var ns2 = cleanNotes(st.o.notes, cols.length); if (!ns2.length) return; var ok = function () { wStatus(root, ns2.length + ' notas copiadas: cole numa planilha.', 'amw-ok'); }, bad = function () { wStatus(root, 'Não deu para copiar: use Baixar CSV.', 'amw-err'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(boardTSV(cols, ns2)).then(ok, bad); else bad(); return; }
+      if (b.classList.contains('amb-clear')) { if (b.dataset.arm !== '1') { b.dataset.arm = '1'; b.textContent = 'Confirmar: voltar ao original?'; clearTimeout(b._t); b._t = setTimeout(function () { b.dataset.arm = '0'; b.textContent = 'Limpar'; }, 4000); return; } try { localStorage.removeItem(bKey(root, hd)); } catch (er) { } bRender(root, hd); wStatus(root, 'Quadro de volta às notas originais.', 'amw-ok'); return; }
+      return;
+    }
+    var id = note.dataset.id, n2 = st.o.notes.filter(function (x) { return x.id === id; })[0]; if (!n2) return;
+    if (b.classList.contains('amb-x')) { st.o.notes = st.o.notes.filter(function (x) { return x.id !== id; }); bSave(root, hd, st.o); bRender(root, hd); return; }
+    if (b.classList.contains('amb-c')) { n2.k = COLORS[b.dataset.k] ? b.dataset.k : 'y'; bSave(root, hd, st.o); note.className = 'amb-n amb-' + n2.k; Array.prototype.forEach.call(note.querySelectorAll('.amb-c'), function (x) { x.classList.toggle('on', x.dataset.k === n2.k); }); return; }
+  }
+  function boardInput(e, root, hd) {
+    var t = e.target.closest ? e.target.closest('.amb-t') : null; if (!t) return;
+    var note = t.closest('.amb-n'), st = bState(root, hd), n = st.o.notes.filter(function (x) { return x.id === note.dataset.id; })[0]; if (!n) return;
+    n.t = (t.innerText || t.textContent || '').replace(/ /g, ' ').trim().slice(0, 400); bSave(root, hd, st.o);
+  }
+  var drag = null;
+  function boardDown(e, root, hd) {
+    var g = e.target.closest ? e.target.closest('.amb-grip') : null; if (!g || e.target.closest('button') || e.button) return;
+    var note = g.closest('.amb-n'); e.preventDefault();
+    drag = { root: root, hd: hd, note: note, id: note.dataset.id, x0: e.clientX, y0: e.clientY, moved: false };
+    note.classList.add('amb-drag'); try { g.setPointerCapture(e.pointerId); } catch (er) { }
+  }
+  function boardMove(e) {
+    if (!drag) return; var dx = e.clientX - drag.x0, dy = e.clientY - drag.y0; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true;
+    drag.note.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(-1.5deg)';
+    Array.prototype.forEach.call(drag.root.querySelectorAll('.amb-col.amb-over'), function (c) { c.classList.remove('amb-over'); });
+    var el = document.elementFromPoint(e.clientX, e.clientY), col = el && el.closest ? el.closest('.amb-col') : null; if (col && drag.root.contains(col)) col.classList.add('amb-over');
+  }
+  function boardUp(e) {
+    if (!drag) return; var d = drag; drag = null; d.note.classList.remove('amb-drag'); d.note.style.transform = '';
+    Array.prototype.forEach.call(d.root.querySelectorAll('.amb-col.amb-over'), function (c) { c.classList.remove('amb-over'); });
+    if (!d.moved) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY), col = el && el.closest ? el.closest('.amb-col') : null; if (!col || !d.root.contains(col)) return;
+    var st = bState(d.root, d.hd), n = st.o.notes.filter(function (x) { return x.id === d.id; })[0]; if (!n) return;
+    var c = +col.dataset.c; if (n.c === c) return; n.c = c; bSave(d.root, d.hd, st.o); bRender(d.root, d.hd);
+  }
+  /* ---------------- votação por pontos ---------------- */
+  function voteHTML(opts, pts, show, tools, totals, nVotes, dark) {
+    var max = Math.max(1, Math.max.apply(null, totals.concat([0]))), sum = totals.reduce(function (a, b) { return a + b; }, 0);
+    return '<div class="amv-opts">' + opts.map(function (o, i) {
+      return '<div class="amv-o" data-i="' + i + '"><span class="amv-l">' + esc(o) + '</span><span class="amv-ctl"><button type="button" class="amv-m" aria-label="Tirar um ponto de ' + esc(o) + '" title="−1">−</button><b class="amv-v" aria-live="polite">0</b><button type="button" class="amv-p" aria-label="Dar um ponto a ' + esc(o) + '" title="+1">+</button></span>' +
+        '<span class="amv-bar"><i style="width:' + (sum ? Math.round(totals[i] / max * 100) : 0) + '%"></i><em>' + totals[i] + (sum ? ' · ' + Math.round(totals[i] / sum * 100) + '%' : '') + '</em></span></div>';
+    }).join('') + '</div>' +
+      '<div class="amv-f"><span class="amv-left"><b>' + pts + '</b> ' + (pts === 1 ? 'ponto' : 'pontos') + ' para distribuir</span><button type="button" class="amv-send">Votar</button><button type="button" class="amv-show" aria-pressed="' + (show === 'always' ? 'true' : 'false') + '">' + (show === 'always' ? 'Esconder resultado' : 'Ver resultado') + '</button></div>' +
+      (tools ? '<div class="amw-f"><span class="amw-st" role="status" aria-live="polite"></span><span class="amw-tools"><span class="amw-n">' + nVotes + (nVotes === 1 ? ' voto' : ' votos') + '</span><button type="button" class="amw-tb amv-dl" title="Baixa um .csv com os votos">Baixar CSV</button><button type="button" class="amw-tb amv-copy" title="Copia os votos (cola numa planilha)">Copiar</button><button type="button" class="amw-tb amv-clear" title="Apaga os votos deste dispositivo">Limpar</button></span></div>' : '');
+  }
+  R.FX.vote = {
+    name: 'Votação por pontos', cat: 'Interativo', w: 700, h: 460, anim: { in: 'rise' },
+    kw: 'votação votar pontos dot voting priorização prioridades enquete ranking workshop decisão consenso',
+    data: { title: 'Priorização', question: 'Onde investir primeiro? Distribua os seus pontos.', opts: 'Automação do intake\nPortal do cliente\nTorre de controle\nDados mestres', pts: 3, show: 'after', tools: '1', sheet: '' },
+    fields: [['title', 'Título'], ['question', 'Pergunta ou instrução'], ['opts', 'Opções (uma por linha, até 12)', 'lines'], ['pts', 'Pontos por pessoa (1 a 10)', 'number'],
+      ['show', 'Resultado', 'sel:after=Mostrar depois de votar|always=Sempre visível|never=Só quando o apresentador pedir'],
+      ['tools', 'Ferramentas na apresentação (contagem, Baixar CSV, Copiar, Limpar)', 'sel:1=Mostrar|0=Esconder'],
+      ['sheet', 'Google Sheets: endereço do app (https://script.google.com/…/exec), opcional — mesmo código do Formulário'],
+      ['help', 'Cada pessoa distribui os pontos com <b>+</b> e <b>−</b> (pode pôr mais de um na mesma opção) e clica em <b>Votar</b>. O resultado soma os votos guardados <b>neste dispositivo</b>; com o app do Google Sheets (código no Formulário), cada voto também vai para a planilha (uma linha: data/hora + pontos por opção).', 'help']],
+    tip: 'Para várias pessoas no mesmo computador (sala), cada uma vota na sua vez; para votar de longe, ligue a planilha.',
+    html: function (d, w, h) {
+      var opts = lines(d.opts).slice(0, 12); if (!opts.length) opts = ['Opção A', 'Opção B'];
+      var pts = Math.max(1, Math.min(10, num(d.pts, 3) | 0)), show = /^(always|after|never)$/.test(d.show) ? d.show : 'after', f = Math.max(10, Math.min(w * .024, h * .036)), tools = String(d.tools == null ? '1' : d.tools) !== '0';
+      return '<div class="fx amw amv am-ia' + (show === 'always' ? ' amv-res' : '') + '" style="font-size:' + CQ(f) + '" data-vote="1" data-pts="' + pts + '" data-show="' + show + '" data-title="' + esc(d.title || '') + '" data-opts="' + esc(opts.join('\n')) + '"' + (tools ? ' data-tools="1"' : '') + (typeof d.sheet === 'string' && /^https:\/\//i.test(d.sheet.trim()) ? ' data-sheet="' + esc(d.sheet.trim()) + '"' : '') + '>' +
+        '<div class="amw-h">' + (d.title ? '<b>' + esc(d.title) + '</b>' : '') + (d.question ? '<span>' + esc(d.question) + '</span>' : '') + '</div>' +
+        voteHTML(opts, pts, show, tools, opts.map(function () { return 0; }), 0) + '</div>';
+    }
+  };
+  function vKey(root, hd) { var n = root.closest('.am-el'); return 'amVote.' + String(hd && hd.deck && hd.deck.id || 'obra') + '.' + (n && n.dataset.id || 'vote'); }
+  function vLoad(root, hd) { var o; try { o = JSON.parse(localStorage.getItem(vKey(root, hd)) || 'null'); } catch (e) { o = null; } return o && Array.isArray(o.rows) ? o : { v: 1, q: [], rows: [] }; }
+  function vTotals(root, o) { var opts = (root.dataset.opts || '').split('\n'), t = opts.map(function () { return 0; }); o.rows.forEach(function (r) { (r.a || []).forEach(function (v, i) { if (i < t.length) t[i] += num(v, 0); }); }); return t; }
+  function vRefresh(root, hd) {
+    var o = vLoad(root, hd), t = vTotals(root, o), max = Math.max(1, Math.max.apply(null, t.concat([0]))), sum = t.reduce(function (a, b) { return a + b; }, 0);
+    Array.prototype.forEach.call(root.querySelectorAll('.amv-o'), function (row, i) { var bar = row.querySelector('.amv-bar'); bar.querySelector('i').style.width = (sum ? Math.round(t[i] / max * 100) : 0) + '%'; bar.querySelector('em').textContent = t[i] + (sum ? ' · ' + Math.round(t[i] / sum * 100) + '%' : ''); });
+    var n = root.querySelector('.amw-n'); if (n) n.textContent = o.rows.length + (o.rows.length === 1 ? ' voto' : ' votos');
+    var dis = !o.rows.length; Array.prototype.forEach.call(root.querySelectorAll('.amv-dl,.amv-copy,.amv-clear'), function (b) { b.disabled = dis; });
+  }
+  function vMine(root) { return Array.prototype.map.call(root.querySelectorAll('.amv-o .amv-v'), function (b) { return num(b.textContent, 0) | 0; }); }
+  function vLeft(root) { var pts = num(root.dataset.pts, 3), used = vMine(root).reduce(function (a, b) { return a + b; }, 0), left = pts - used, el = root.querySelector('.amv-left'); if (el) el.innerHTML = '<b>' + left + '</b> ' + (left === 1 ? 'ponto' : 'pontos') + ' para distribuir'; root.querySelector('.amv-send').disabled = used === 0; Array.prototype.forEach.call(root.querySelectorAll('.amv-p'), function (b) { b.disabled = left <= 0; }); Array.prototype.forEach.call(root.querySelectorAll('.amv-o'), function (row) { row.querySelector('.amv-m').disabled = num(row.querySelector('.amv-v').textContent, 0) <= 0; }); return left; }
+  function vShow(root, on) { root.classList.toggle('amv-res', on); var b = root.querySelector('.amv-show'); if (b) { b.textContent = on ? 'Esconder resultado' : 'Ver resultado'; b.setAttribute('aria-pressed', on ? 'true' : 'false'); } }
+  function voteCSV(opts, o) { return '﻿' + [['Data/hora'].concat(opts).map(F.cell).join(';')].concat(o.rows.map(function (r) { return [r.at].concat(r.a).map(F.cell).join(';'); })).join('\r\n') + '\r\n'; }
+  function voteTSV(opts, o) { return [['Data/hora'].concat(opts).join('\t')].concat(o.rows.map(function (r) { return [r.at].concat(r.a).join('\t'); })).join('\n'); }
+  function voteClick(e, root, hd) {
+    var b = e.target.closest('button'); if (!b || !root.contains(b)) return;
+    var opts = (root.dataset.opts || '').split('\n');
+    if (b.classList.contains('amv-p') || b.classList.contains('amv-m')) {
+      var v = b.parentNode.querySelector('.amv-v'), cur = num(v.textContent, 0) | 0, left = vLeft(root);
+      if (b.classList.contains('amv-p')) { if (left <= 0) return; v.textContent = cur + 1; } else { if (cur <= 0) return; v.textContent = cur - 1; }
+      b.closest('.amv-o').classList.toggle('amv-on', num(v.textContent, 0) > 0); vLeft(root); return;
+    }
+    if (b.classList.contains('amv-send')) {
+      var mine = vMine(root); if (!mine.some(function (x) { return x > 0; })) return;
+      var o = vLoad(root, hd), at = F.stamp(); o.q = opts; o.rows.push({ at: at, a: mine }); if (o.rows.length > 5000) o.rows.splice(0, o.rows.length - 5000);
+      var ok = F.save(vKey(root, hd), o);
+      Array.prototype.forEach.call(root.querySelectorAll('.amv-v'), function (x) { x.textContent = '0'; }); Array.prototype.forEach.call(root.querySelectorAll('.amv-o.amv-on'), function (r) { r.classList.remove('amv-on'); }); vLeft(root); vRefresh(root, hd);
+      if (root.dataset.show !== 'never') vShow(root, true);
+      root.classList.add('amv-sent'); setTimeout(function () { root.classList.remove('amv-sent'); }, 1200);
+      var url = root.dataset.sheet;
+      if (url) { wStatus(root, 'Enviando à planilha…'); F.post(url, { deck: String(hd && hd.deck && hd.deck.id || ''), form: (root.dataset.title || 'Votação').slice(0, 80), title: root.dataset.title || '', at: at, q: opts, a: mine }).then(function () { wStatus(root, ok ? 'Voto registrado aqui e enviado à planilha.' : 'Voto enviado à planilha (sem espaço para guardar aqui).', 'amw-ok'); }).catch(function () { wStatus(root, ok ? 'Voto registrado aqui; sem internet para a planilha.' : 'Não deu para guardar nem enviar.', 'amw-err'); }); }
+      else wStatus(root, ok ? 'Voto registrado. Próxima pessoa pode votar.' : 'Não deu para guardar o voto (armazenamento cheio ou bloqueado).', ok ? 'amw-ok' : 'amw-err');
+      return;
+    }
+    if (b.classList.contains('amv-show')) { vShow(root, !root.classList.contains('amv-res')); return; }
+    var o2 = vLoad(root, hd);
+    if (b.classList.contains('amv-dl')) { if (!o2.rows.length) return; F.download('votos-' + F.slug(root.dataset.title || 'votacao') + '.csv', voteCSV(opts, o2), 'text/csv;charset=utf-8'); wStatus(root, o2.rows.length + ' votos no arquivo CSV.', 'amw-ok'); return; }
+    if (b.classList.contains('amv-copy')) { if (!o2.rows.length) return; var okc = function () { wStatus(root, o2.rows.length + ' votos copiados: cole numa planilha.', 'amw-ok'); }, badc = function () { wStatus(root, 'Não deu para copiar: use Baixar CSV.', 'amw-err'); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(voteTSV(opts, o2)).then(okc, badc); else badc(); return; }
+    if (b.classList.contains('amv-clear')) { if (b.dataset.arm !== '1') { b.dataset.arm = '1'; b.textContent = 'Confirmar: apagar?'; clearTimeout(b._t); b._t = setTimeout(function () { b.dataset.arm = '0'; b.textContent = 'Limpar'; }, 4000); return; } clearTimeout(b._t); b.dataset.arm = '0'; b.textContent = 'Limpar'; try { localStorage.removeItem(vKey(root, hd)); } catch (er) { } vRefresh(root, hd); wStatus(root, 'Votos apagados neste dispositivo.', 'amw-ok'); return; }
+  }
+  /* ---------------- cronômetro ---------------- */
+  var RING = 2 * Math.PI * 45;
+  function mmss(s) { s = Math.max(0, Math.round(s)); var m = Math.floor(s / 60), r = s % 60; return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r; }
+  R.FX.timer = {
+    name: 'Cronômetro', cat: 'Interativo', w: 360, h: 360, anim: { in: 'zoom' },
+    kw: 'cronômetro timer contagem regressiva tempo minutos relógio timebox dinâmica atividade pausa',
+    data: { title: 'Tempo da atividade', min: 5, sec: 0, sound: '1', auto: '0' },
+    fields: [['title', 'Título'], ['min', 'Minutos (0 a 180)', 'number'], ['sec', 'Segundos (0 a 59)', 'number'], ['sound', 'Bipes ao terminar', 'sel:1=Sim|0=Não'], ['auto', 'Começar sozinho ao abrir o slide', 'sel:0=Não|1=Sim'],
+      ['help', 'Na apresentação: <b>Iniciar/Pausar</b>, <b>Reiniciar</b> e <b>±1 min</b>. O anel esvazia com o tempo; ao zerar, o cronômetro pisca e, com o som ligado, toca três bipes. Continua contando se você trocar de slide e voltar.', 'help']],
+    tip: 'Um cronômetro por atividade: 5 min para ideias, 2 min para votar, 10 min para a discussão.',
+    html: function (d, w, h) {
+      var total = Math.max(0, Math.min(180, num(d.min, 5) | 0)) * 60 + Math.max(0, Math.min(59, num(d.sec, 0) | 0)), f = Math.max(10, Math.min(w, h) * .07);
+      return '<div class="fx amw amt am-ia" style="font-size:' + CQ(f) + '" data-timer="1" data-total="' + total + '" data-sound="' + (String(d.sound) === '0' ? '0' : '1') + '" data-auto="' + (String(d.auto) === '1' ? '1' : '0') + '">' +
+        (d.title ? '<div class="amt-t">' + esc(d.title) + '</div>' : '') +
+        '<div class="amt-ring"><svg viewBox="0 0 100 100" aria-hidden="true"><circle class="amt-bg" cx="50" cy="50" r="45"/><circle class="amt-fg" cx="50" cy="50" r="45" style="stroke-dasharray:' + RING.toFixed(2) + ';stroke-dashoffset:0"/></svg><b class="amt-d" role="timer" aria-live="off">' + mmss(total) + '</b><span class="amt-end">Tempo esgotado</span></div>' +
+        '<div class="amt-b"><button type="button" class="amt-go" aria-label="Iniciar">▶ Iniciar</button><button type="button" class="amt-rs" aria-label="Reiniciar">↺</button><button type="button" class="amt-pm" data-d="-60" aria-label="Menos um minuto">−1 min</button><button type="button" class="amt-pm" data-d="60" aria-label="Mais um minuto">+1 min</button></div></div>';
+    }
+  };
+  /* um estado por cronômetro, guardado no player (hd.amtTimers): {root, total, left, running, t0, iv, done}; some com o player */
+  function tOf(root, hd) { var L = hd.amtTimers || (hd.amtTimers = []); for (var i = 0; i < L.length; i++) if (L[i].root === root) return L[i]; var t = { root: root, total: num(root.dataset.total, 300), left: num(root.dataset.total, 300), running: false, t0: 0, iv: 0, done: false }; L.push(t); return t; }
+  function tDraw(t) {
+    var d = t.root.querySelector('.amt-d'), fg = t.root.querySelector('.amt-fg'), go = t.root.querySelector('.amt-go');
+    if (d) d.textContent = mmss(t.left); if (fg) fg.style.strokeDashoffset = (RING * (t.total ? 1 - t.left / t.total : 1)).toFixed(2);
+    if (go) { go.textContent = t.running ? '❚❚ Pausar' : (t.left > 0 && t.left < t.total ? '▶ Continuar' : '▶ Iniciar'); go.setAttribute('aria-label', t.running ? 'Pausar' : 'Iniciar'); }
+    t.root.classList.toggle('amt-run', t.running); t.root.classList.toggle('amt-over', t.done); t.root.classList.toggle('amt-low', t.left > 0 && t.left <= 10);
+  }
+  function beep() {
+    try { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; var ac = new AC(); [0, .35, .7].forEach(function (at) { var o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.0001, ac.currentTime + at); g.gain.exponentialRampToValueAtTime(.25, ac.currentTime + at + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + at + .28); o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + at); o.stop(ac.currentTime + at + .3); }); setTimeout(function () { try { ac.close(); } catch (e) { } }, 1500); } catch (e) { }
+  }
+  function tTick(t) {
+    if (!t.running) return; var now = performance.now(), el = (now - t.t0) / 1000; t.t0 = now; t.left = Math.max(0, t.left - el);
+    if (t.left <= 0) { t.left = 0; t.running = false; t.done = true; clearInterval(t.iv); t.iv = 0; if (t.root.dataset.sound !== '0') beep(); }
+    tDraw(t);
+  }
+  function tStart(t) { if (t.running || t.left <= 0) return; t.running = true; t.done = false; t.t0 = performance.now(); clearInterval(t.iv); t.iv = setInterval(function () { tTick(t); }, 250); tDraw(t); }
+  function tPause(t) { if (!t.running) return; tTick(t); t.running = false; clearInterval(t.iv); t.iv = 0; tDraw(t); }
+  function tReset(t) { t.running = false; clearInterval(t.iv); t.iv = 0; t.left = t.total; t.done = false; tDraw(t); }
+  function timerClick(e, root, hd) {
+    var b = e.target.closest('button'); if (!b || !root.contains(b)) return; var t = tOf(root, hd);
+    if (b.classList.contains('amt-go')) { if (t.running) tPause(t); else { if (t.left <= 0) t.left = t.total; tStart(t); } return; }
+    if (b.classList.contains('amt-rs')) { tReset(t); return; }
+    if (b.classList.contains('amt-pm')) { var dd = num(b.dataset.d, 60); t.total = Math.max(0, Math.min(180 * 60, t.total + dd)); t.left = Math.max(0, Math.min(t.total, t.left + dd)); if (t.left > 0) t.done = false; tDraw(t); return; }
+  }
+  /* ---------------- player ---------------- */
+  function armAll(deckEl, hd) {
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.amb'), function (root) { if (root.dataset.live === '1') return; root.dataset.live = '1'; bRender(root, hd); });
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.amv'), function (root) { if (root.dataset.live === '1') return; root.dataset.live = '1'; vRefresh(root, hd); vLeft(root); });
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.amt'), function (root) { if (root.dataset.live === '1') return; root.dataset.live = '1'; var t = tOf(root, hd); tDraw(t); });
+  }
+  /* cronômetro “começar sozinho”: arranca uma vez quando o slide dele entra (a classe am-in do palco), sem usar hooks.show (só da navegação) */
+  function autoStart(st, hd) { Array.prototype.forEach.call(st.querySelectorAll('.amt[data-auto="1"]'), function (root) { var t = tOf(root, hd); if (!t.running && t.left === t.total && !t.done) tStart(t); }); }
+  R.hooks.player.push(function (hd) {
+    var deckEl = hd.deckEl; if (!deckEl) return;
+    var click = function (e) { var r = e.target.closest ? e.target.closest('.amw') : null; if (!r) return; if (r.classList.contains('amb')) boardClick(e, r, hd); else if (r.classList.contains('amv')) voteClick(e, r, hd); else if (r.classList.contains('amt')) timerClick(e, r, hd); };
+    var input = function (e) { var r = e.target.closest ? e.target.closest('.amb') : null; if (r) boardInput(e, r, hd); };
+    var down = function (e) { var r = e.target.closest ? e.target.closest('.amb') : null; if (r) boardDown(e, r, hd); };
+    var paste = function (e) { var box = e.target.closest ? e.target.closest('.amb-t') : null; if (!box) return; e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text'); if (t) document.execCommand('insertText', false, t.slice(0, 400)); };
+    deckEl.addEventListener('click', click); deckEl.addEventListener('input', input); deckEl.addEventListener('pointerdown', down); deckEl.addEventListener('paste', paste);
+    window.addEventListener('pointermove', boardMove); window.addEventListener('pointerup', boardUp); window.addEventListener('pointercancel', boardUp);
+    armAll(deckEl, hd);
+    var mo = null;
+    if (window.MutationObserver) { mo = new MutationObserver(function (recs) { recs.forEach(function (r) { var st = r.target; if (st && st.classList && st.classList.contains('am-stage') && st.classList.contains('am-in') && !(r.oldValue && /\bam-in\b/.test(r.oldValue))) autoStart(st, hd); }); }); mo.observe(deckEl, { attributes: true, subtree: true, attributeFilter: ['class'], attributeOldValue: true }); }
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.am-stage.am-in'), function (st) { autoStart(st, hd); });
+    hd.onDestroy(function () {
+      deckEl.removeEventListener('click', click); deckEl.removeEventListener('input', input); deckEl.removeEventListener('pointerdown', down); deckEl.removeEventListener('paste', paste);
+      window.removeEventListener('pointermove', boardMove); window.removeEventListener('pointerup', boardUp); window.removeEventListener('pointercancel', boardUp);
+      if (mo) mo.disconnect(); (hd.amtTimers || []).forEach(function (t) { clearInterval(t.iv); }); hd.amtTimers = []; drag = null;
+    });
+  });
+  R.workshop = { COLORS: COLORS, notes: cleanNotes, boardCSV: boardCSV, voteCSV: voteCSV, mmss: mmss };
+})(window.AMRT);
+
 ;/* ---- rt-models2.js ---- */
 /* ===== Modelos de consultoria A (item 5): ciclo PDCA, cronograma (Gantt), AS-IS → TO-BE, 5 Forças de Porter, roadmap em
    ondas / horizontes, árvore de problemas (MECE) e matriz BCG =====
@@ -5422,6 +6044,32 @@ window.AMRT = (function () {
   var BRAND_SIZE = { perfW: [743, 134], perfN: [743, 134], wmW: [262, 42], wmN: [262, 42] };
   /* paleta A&M: navy, azuis-aço, gelos, branco e um único laranja */
   var SW = ['#002A46', '#001E32', '#13315C', '#43698F', '#4A6FA5', '#7EA1C3', '#A3B8D6', '#E3EAF2', '#EBEEF1', '#FFFFFF', '#F78C16', '#3E4C5E', '#6B7A90'];
+  /* S29: kit de marca da apresentação (deck.brand = {name, colors: [#RRGGBB…], pal: {p, a}, font}). As cores do kit vêm primeiro nas
+     amostras e em “Mais cores…” (seção “Cores da marca”); a fonte vale para os textos e formas novos; pal (cores dos componentes) vale
+     para os componentes novos; “aplicar a todos” é uma ação explícita (um passo de desfazer). Fontes do Google fora das quatro do
+     Canteiro entram por <link> sob demanda (ensureFonts) e no arquivo salvo (fontLink); as do computador (Arial, Calibri…) não
+     precisam de nada. A caixa “Kit de marca” fica em ed-43-brand.js (só no editor). */
+  var GFONTS = { 'Montserrat': 'Montserrat:wght@300;400;500;600;700', 'Open Sans': 'Open+Sans:wght@300;400;500;600;700', 'Lato': 'Lato:wght@300;400;700', 'Poppins': 'Poppins:wght@300;400;500;600;700', 'Source Sans 3': 'Source+Sans+3:wght@300;400;500;600;700', 'Nunito Sans': 'Nunito+Sans:wght@300;400;500;600;700', 'Raleway': 'Raleway:wght@300;400;500;600;700', 'Work Sans': 'Work+Sans:wght@300;400;500;600;700', 'Oswald': 'Oswald:wght@300;400;500;600;700', 'PT Sans': 'PT+Sans:wght@400;700', 'Merriweather': 'Merriweather:wght@300;400;700', 'Playfair Display': 'Playfair+Display:wght@400;500;600;700' };
+  var SYS_FONTS = ['Arial', 'Calibri', 'Segoe UI', 'Verdana', 'Georgia', 'Times New Roman'];
+  var GF_BASE = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700';
+  function brand() { return deck && deck.brand ? deck.brand : null; }
+  function brandCols() { var b = brand(); return b && Array.isArray(b.colors) ? b.colors : []; }
+  function swList() { var bc = brandCols(); return bc.map(function (c) { return [c, 'Marca']; }).concat(SW.filter(function (c) { return bc.indexOf(c) < 0; }).map(function (c) { return [c, c]; })); }
+  function kitOpt() { var b = brand(), bc = brandCols(); return bc.length ? { title: 'Cores da marca' + (b.name ? ' · ' + b.name : ''), colors: bc } : null; }
+  /* o kit vale para o que o usuário insere na obra aberta (addEl, addSlide, blocos, texto no clique): mk* continuam puros, porque também
+     montam modelos, prévias e outras obras (capa, Minhas obras) enquanto esta está aberta. kitSlide: aplica e regrava a base (Redefinir) */
+  function kitify(el) { var b = brand(); if (!b || !el) return el; if (b.font && (el.type === 'text' || el.type === 'shape')) el.font = b.font; if (b.pal && palOk(el)) el.pal = clone(b.pal); return el; }
+  function kitSlide(s) { if (brand() && s && s.els) { s.els.forEach(kitify); stampSlide(s); } return s; }
+  /* fontes que um JSON (obra, slides, elementos) usa: textos, formas, componentes com campo de fonte e a do kit */
+  function fontsIn(s) { var out = {}, re = /"font":"([^"\\]{1,40})"/g, m; while ((m = re.exec(s))) out[m[1]] = 1; return Object.keys(out); }
+  function deckFonts(d) { return fontsIn(JSON.stringify(d || deck)); }
+  function fontLink(d, json) { var ex = fontsIn(json || JSON.stringify(d || deck)).filter(function (f) { return GFONTS[f]; }); return GF_BASE + ex.map(function (f) { return '&family=' + GFONTS[f]; }).join('') + '&display=swap'; } /* json: o JSON já gerado da obra (exportHTML), para não serializar duas vezes */
+  function ensureFonts(list) {
+    (list || deckFonts()).forEach(function (f) {
+      if (!GFONTS[f] || document.querySelector('link[data-gf="' + f + '"]')) return;
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.gf = f; l.href = 'https://fonts.googleapis.com/css2?family=' + GFONTS[f] + '&display=swap'; document.head.appendChild(l);
+    });
+  }
   var esc = RT.esc;
   function uid() { return 'e' + Math.random().toString(36).slice(2, 9); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -5608,7 +6256,15 @@ window.AMRT = (function () {
     SNAP_REQ = { x: 1, y: 1, w: 1, h: 1, x1: 1, y1: 1, x2: 1, y2: 1 }, PH_MAX = 200, PH_RE = /^p\d{1,3}$/;
   /* fontes do painel; uma fonte importada (PowerPoint/PDF) que não é do Canteiro aparece como opção extra, para não sumir do seletor */
   var FONT_OPTS = [['Roboto', 'Roboto (A&M)'], ['Roboto Condensed', 'Roboto Condensed'], ['Inter', 'Inter'], ['JetBrains Mono', 'JetBrains Mono']];
-  function fontOpts(cur) { var known = FONT_OPTS.some(function (o) { return o[0] === cur; }); return typeof cur === 'string' && cur && !known ? FONT_OPTS.concat([[cur, cur + ' (do arquivo importado)']]) : FONT_OPTS; }
+  /* S29: Canteiro + fonte do kit (primeiro, quando não é das quatro) + Google (carregadas sob demanda) + do computador + a importada */
+  function fontOpts(cur, plain) {
+    var b = brand(), out = FONT_OPTS.slice(), seen = {}; out.forEach(function (o) { seen[o[0]] = 1; });
+    if (!plain && b && b.font && !seen[b.font]) { out.unshift([b.font, b.font + ' (kit de marca)']); seen[b.font] = 1; }
+    Object.keys(GFONTS).forEach(function (f) { if (!seen[f]) { out.push([f, f + ' (Google)']); seen[f] = 1; } });
+    SYS_FONTS.forEach(function (f) { if (!seen[f]) { out.push([f, f + ' (do computador)']); seen[f] = 1; } });
+    if (typeof cur === 'string' && cur && !seen[cur]) out.push([cur, cur + ' (do arquivo importado)']);
+    return out;
+  }
   var cropOpen = null; /* S27b: id da foto com os controles de recorte abertos (sem recorte ainda) */
   function fxStyleField(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return !!(F && Array.isArray(F.fields) && F.fields.some(function (f) { return f && f[0] === 'style'; })); }
   /* campos de escolha fechada do componente (sel:…, smartlayout): formato que “Redefinir” devolve — fonte/cor do título de impacto, cores das
@@ -5708,6 +6364,16 @@ window.AMRT = (function () {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
     var o = {}; ['p', 'a'].forEach(function (k) { if (typeof v[k] === 'string' && /^#[0-9a-f]{6}$/i.test(v[k])) o[k] = v[k].toUpperCase(); });
     return o.p || o.a ? o : null;
+  }
+  /* S29: kit de marca — nome ≤ 60, até 12 cores #RRGGBB únicas (maiúsculas), pal como safePal, fonte TOKEN_RE; vazio sai */
+  function safeBrand(b) {
+    if (!b || typeof b !== 'object' || Array.isArray(b)) return null;
+    var o = {}, seen = {};
+    if (typeof b.name === 'string' && b.name.trim()) o.name = b.name.trim().slice(0, 60);
+    if (Array.isArray(b.colors)) { var cs = []; b.colors.forEach(function (c) { var m = typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c.toUpperCase() : null; if (m && !seen[m] && cs.length < 12) { seen[m] = 1; cs.push(m); } }); if (cs.length) o.colors = cs; }
+    var pl = safePal(b.pal); if (pl) o.pal = pl;
+    if (typeof b.font === 'string' && b.font.trim() && TOKEN_RE.test(b.font.trim())) o.font = b.font.trim();
+    return o.name || o.colors || o.pal || o.font ? o : null;
   }
   function safeSrc(s) { return typeof s === 'string' && /^(data:image\/[\w.+-]+[;,]|https?:|blob:)/i.test(s) && !/["\\\n\r]/.test(s) ? s : null; }
   function safeEl(e) {
@@ -5819,6 +6485,7 @@ window.AMRT = (function () {
     if (typeof d.id === 'string' && /^[\w-]{1,40}$/.test(d.id)) o.id = d.id;
     if (d.nav && typeof d.nav === 'object') o.nav = { chapters: d.nav.chapters !== false };
     if (d.num && typeof d.num === 'object' && d.num.on === true) { o.num = { on: true, pos: /^(tl|tr|bl|br)$/.test(d.num.pos) ? d.num.pos : 'br' }; if (d.num.from != null && isFinite(+d.num.from)) o.num.from = Math.max(0, Math.min(999, +d.num.from | 0)); } /* S27: numeração dos slides */
+    var bk = safeBrand(d.brand); if (bk) o.brand = bk; /* S29: kit de marca */
     ['created', 'updated'].forEach(function (k) { if (d[k] != null && isFinite(+d[k])) o[k] = +d[k]; });
     if (Array.isArray(d.comments)) { var cm = d.comments.slice(0, 2000).map(safeComment).filter(Boolean); if (cm.length) o.comments = cm; }
     return o;
@@ -5829,6 +6496,7 @@ window.AMRT = (function () {
     if (!d.id) d.id = deckId(); /* modelos prontos e arquivos antigos ganham id ao abrir */
     d.slides.forEach(function (s) { if (!s.base) stampSlide(s); }); /* S21: arquivo antigo, modelo pronto ou rascunho sem base: o estado de agora vira o original de “Redefinir slide” */
     deck = d; cur = 0; pick([]); editingId = null; freshId = null; hist.length = 0; fut.length = 0; rev++; last = JSON.stringify(deck);
+    ensureFonts(fontsIn(last)); /* S29: fontes do Google que a obra usa */
     $('#title').value = deck.title || ''; renderAll(); $('#thumbs').scrollTop = 0; /* outra obra: a lista começa no slide 1, não na rolagem da anterior */
     updUndo(); if (msg) toast(msg);
     if (!noHist) histCall('put', JSON.parse(last)); /* arquivo aberto, projeto pronto ou rascunho entram em Minhas obras */
@@ -6073,7 +6741,7 @@ window.AMRT = (function () {
      próprias opções [[cor, nome]]) + “Mais cores…” (abre o seletor AMColorPop: paleta ampliada, recentes, hex, conta-gotas) */
   var HEXC = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
   function swatches(p, v, none, list) {
-    var cur = String(v || '').toUpperCase(), L = list || SW.map(function (c) { return [c, c]; }), inL = L.some(function (o) { return String(o[0]).toUpperCase() === cur; });
+    var cur = String(v || '').toUpperCase(), L = list || swList(), inL = L.some(function (o) { return String(o[0]).toUpperCase() === cur; });
     var cust = HEXC.test(cur) && !inL ? '<button class="cust on" style="background:' + cur + '" data-set="' + p + '" data-v="' + cur + '" title="Cor atual: ' + cur + '" aria-label="Cor atual ' + cur + '"></button>' : '';
     return '<div class="sw">' + cust + (none ? '<button class="none' + (!v || v === 'none' ? ' on' : '') + '" data-set="' + p + '" data-v="none" title="Sem cor"></button>' : '') + L.map(function (o) { var c = String(o[0]); return '<button style="background:' + c + '" class="' + (cur === c.toUpperCase() ? 'on' : '') + '" data-set="' + p + '" data-v="' + c + '" title="' + esc(o[1] === c ? c : o[1] + ' · ' + c) + '"></button>'; }).join('') +
       '<button type="button" class="more" data-cpick="' + p + '" data-cv="' + (HEXC.test(cur) ? cur : '') + '" title="Mais cores…" aria-label="Mais cores…" aria-haspopup="dialog"></button></div>';
@@ -6181,6 +6849,10 @@ window.AMRT = (function () {
     'flip-v': '<path d="M3 12h18" stroke-dasharray="2 2.4"/><path d="M6.5 9L17.5 3v6z"/><path class="fl" d="M6.5 15l11 6v-6z"/>',
     'rot-0': '<path d="M3 20h18"/><rect x="6" y="9" width="12" height="8" rx="1.5"/><path d="M12 3v3"/>',
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
+    form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    note: '<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/>',
+    vote: '<path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
+    timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
     smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>',
     /* S21: slide oculto / reexibir / redefinir slide */
@@ -6246,7 +6918,7 @@ window.AMRT = (function () {
         '<div class="row r1">' + fld('Resumo do slide', '<textarea data-p="s.notes" maxlength="4000" style="min-height:96px" placeholder="O que o público precisa saber sobre este slide">' + esc(s.notes || '') + '</textarea>') + '</div>' +
         '<div class="row r1"><button class="btnw ic" data-act="autonotes">' + svgI('fx') + 'Gerar resumo automático</button></div><div class="row r1"><button class="btnw ic" data-act="viewnotes">' + svgI('zoom') + 'Ver na apresentação</button></div>' +
         '<p class="note">Na apresentação e no arquivo salvo, <b>Sobre este slide</b> (tecla <b>I</b>) mostra este resumo' + (s.notes ? '' : ' — sem texto, o apresentador gera um automático') + '; <b>G</b> abre o índice com todos os slides; o capítulo vira um botão da linha do tempo e vale até o próximo capítulo.</p></div>';
-      h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row r1" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
+      h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button><button class="btnw ic" data-act="brandkit" title="Cores e fonte desta apresentação">' + svgI('palette') + 'Kit de marca…</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
@@ -6264,6 +6936,7 @@ window.AMRT = (function () {
     if (el.type === 'fx') {
       h += '<div class="sec"><h3>Conteúdo</h3>' + RT.FX[el.kind].fields.map(function (f) {
         var k = 'data.' + f[0], v = el.data[f[0]], t = f[2] || 'text';
+        if (t === 'help') return '<div class="note fhelp">' + f[1] + '</div>'; /* S30: texto de ajuda do componente (HTML do registro, sem campo) */
         if (t === 'lines') return '<div class="row r1">' + fld(f[1], '<textarea data-p="' + k + '" data-codec="lines">' + esc((Array.isArray(v) ? v : String(v || '').split(/\n/)).join('\n')) + '</textarea>') + '</div>';
         if (t.indexOf('rows:') === 0) return '<div class="row r1">' + fld(f[1], '<textarea data-p="' + k + '" data-codec="' + t + '" style="min-height:120px">' + esc(rowsToText(v, t.slice(5))) + '</textarea>') + '</div>';
         if (t === 'number') return '<div class="row r1">' + fld(f[1], num(k, v, 'any')) + '</div>';
@@ -6329,6 +7002,28 @@ window.AMRT = (function () {
   /* “Cores do componente” (S20): el.pal = {p, a}; o runtime (rt-05-pal.js) troca o azul-marinho/azuis pela cor principal e o laranja
      pela de destaque, só neste elemento. Não vale para a Marca A&M nem para ícones (que já têm cores próprias) */
   function palOk(el) { var F = el && el.type === 'fx' && RT.FX[el.kind]; return !!(F && RT.palTag && F.cat !== 'Marca A&M' && !isIcon(el)); }
+  /* S29: kit de marca — cada chamada é um passo de desfazer; devolvem o que ficou gravado / quantos elementos mudaram */
+  function setBrand(b, msg) { var nb = safeBrand(b); if (editingId) endEdit(); flush(); if (nb) deck.brand = nb; else delete deck.brand; ensureFonts(); renderAll(); commit(); if (msg) toast(msg); return nb; }
+  function fxHasFont(e) { var F = e.type === 'fx' && RT.FX[e.kind]; return !!(F && F.fields && F.fields.some(function (f) { return f[0] === 'font'; })); }
+  function brandApplyFont(font) {
+    font = typeof font === 'string' ? font.trim() : ''; if (!font || !TOKEN_RE.test(font)) return 0;
+    if (editingId) endEdit(); flush(); var n = 0;
+    deck.slides.forEach(function (s) { s.els.forEach(function (e) {
+      if (e.type === 'text' || e.type === 'shape') {
+        var h = typeof e.html === 'string' && /font-family/i.test(e.html) ? e.html.replace(/font-family\s*:[^;"']*;?/gi, '') : e.html; /* fontes de trechos (arquivo importado) saem: a fonte vale para o texto inteiro */
+        if (e.font !== font || h !== e.html) { e.font = font; if (h !== e.html) e.html = h; n++; }
+      } else if (fxHasFont(e)) { e.data = e.data || {}; if (e.data.font !== font) { e.data.font = font; n++; } }
+    }); });
+    if (n) { ensureFonts([font]); renderAll(); commit(); }
+    return n;
+  }
+  function brandApplyPal(pal) {
+    var nb = pal ? safePal(pal) : null, want = JSON.stringify(nb), n = 0; if (editingId) endEdit(); flush();
+    deck.slides.forEach(function (s) { s.els.forEach(function (e) { if (!palOk(e) || JSON.stringify(e.pal || null) === want) return; if (nb) e.pal = clone(nb); else delete e.pal; n++; }); });
+    if (n) { renderAll(); commit(); }
+    return n;
+  }
+  function openBrandKit(opener) { if (window.AMBrand && window.AMBrand.open) window.AMBrand.open(opener && opener.isConnected ? opener : null); else toast('A caixa do kit de marca não está disponível nesta versão.'); }
   /* contraste dos textos DESTE componente com as cores escolhidas × com as cores A&M: desenha as duas versões fora da tela (sem
      animação) e compara texto a texto; devolve o pior texto que ficou abaixo de 3:1 e pior que no A&M ({t, c}) ou null. Guardado por
      tipo/dados/paleta: o painel redesenha muitas vezes */
@@ -6366,7 +7061,7 @@ window.AMRT = (function () {
   function palSec(el) {
     var pl = el.pal || {}, bad = el.pal && RT.pal ? palProbe(el) : null;
     /* sem cor própria, a amostra marcada é a cor A&M da linha (navy / laranja); clicá-la volta só aquela cor (applyProp apaga a chave) */
-    var row = function (def) { return SW.map(function (c) { return [c, c === def ? 'Cor A&M (sem troca)' : c]; }); };
+    var row = function (def) { return swList().map(function (o) { return [o[0], o[0] === def ? 'Cor A&M (sem troca)' : o[1]]; }); };
     return '<div class="sec" id="palSec"><h3>Cores do componente</h3>' +
       '<span class="pf"><span>Cor principal <small>(no lugar do azul-marinho)</small></span></span>' + swatches('pal.p', pl.p || '#002A46', false, row('#002A46')) +
       '<span class="pf" style="margin-top:10px"><span>Cor de destaque <small>(no lugar do laranja)</small></span></span>' + swatches('pal.a', pl.a || '#F78C16', false, row('#F78C16')) +
@@ -6471,6 +7166,7 @@ window.AMRT = (function () {
       setPath(slide(), path.slice(2), val); renderStage(); if (!live) { commit(); renderProps(); } return;
     }
     var el = sel(); if (!el) return;
+    if (/(^|\.)font$/.test(path) && typeof val === 'string') ensureFonts([val]); /* S29 */
     if (/^pal\.[pa]$/.test(path)) { /* cores do componente: a cor A&M da linha (navy / laranja) ou nenhuma = sem troca, apaga só essa chave */
       var pk = path.slice(4), pv = typeof val === 'string' ? val.toUpperCase() : '';
       if (!/^#[0-9A-F]{6}$/.test(pv) || pv === (pk === 'p' ? '#002A46' : '#F78C16')) { if (el.pal) { delete el.pal[pk]; if (!el.pal.p && !el.pal.a) delete el.pal; } rerenderEl(el); if (!live) commit(); return; }
@@ -6562,7 +7258,7 @@ window.AMRT = (function () {
     flush(); /* pendências viram um passo próprio antes: a prévia do seletor do sistema volta exatamente ao que estava (onCancel) */
     var refocus = function () { var nb = $$('#props [data-cpick]').filter(function (x) { return x.dataset.cpick === path; })[0]; if (nb) nb.focus(); };
     window.AMColorPop.open(b, {
-      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
+      value: b.dataset.cv, title: lab, keyboard: kb, brand: SW, kit: kitOpt(), row: b.closest('.cser') || b.parentNode, /* sem espaço em cima nem embaixo, abre ao lado desta linha */
       onLive: function (c) { applyProp(path, c, true); },
       onPick: function (c, viaKey) { applyProp(path, c); renderProps(); if (viaKey) refocus(); },
       onCancel: function (live) { if (live) { if (JSON.stringify(deck) !== last) restore(last); renderProps(); } }, /* Esc / clique fora depois da prévia: desfaz a prévia, sem gravar */
@@ -6634,8 +7330,8 @@ window.AMRT = (function () {
     var e = { shape: 'round', radius: 5, look: k, fill: k === 'accent' || k === 'topbar' ? '#EEF2F7' : k === 'header' ? '#FFFFFF' : '#002A46', strokeW: k === 'header' ? 1 : 0, stroke: '#DCE5F0' };
     return '<svg' + (cls ? ' class="' + cls + '"' : '') + ' viewBox="-2 -1 42 28" aria-hidden="true">' + RT.shapeBody(e, 38, 24) + '</svg>';
   }
-  function addEls(list, noCommit) { if (editingId) endEdit(); list.forEach(function (el) { slide().els.push(el); }); pick(list.map(function (el) { return el.id; })); renderStage(); renderProps(); if (!noCommit) commit(); return list; }
-  function addEl(el) { addEls([el]); return el; }
+  function addEls(list, noCommit) { if (editingId) endEdit(); ensureFonts(fontsIn(JSON.stringify(list))); list.forEach(function (el) { slide().els.push(el); }); pick(list.map(function (el) { return el.id; })); renderStage(); renderProps(); if (!noCommit) commit(); return list; }
+  function addEl(el) { addEls([kitify(el)]); return el; } /* S29: inserção pela interface leva fonte/cores do kit; colar e duplicar (addEls) não */
   function delSel() {
     var ids = selIds.filter(function (id) { return !isLocked(getEl(id)); }), lk = selIds.length - ids.length; if (lk) toast(lk > 1 ? lk + ' elementos bloqueados não foram apagados' : 'Elemento bloqueado não foi apagado · desbloqueie para apagar');
     if (!ids.length) return;
@@ -6869,6 +7565,7 @@ window.AMRT = (function () {
     if (a === 'preview') return present(cur);
     if (a === 'zoomview') { if (!el) return; present(cur, s.hidden === true); if (player && player.zoom) player.zoom.open(el.id); return; }
     if (a === 'pvel') return previewEl(el);
+    if (a === 'brandkit') { openBrandKit(document.activeElement); return; } /* S29 */
     if (a === 'palreset') { if (!el || !el.pal) return; delete el.pal; rerenderEl(el); renderProps(); commit(); toast('Cores A&M restauradas neste elemento · Ctrl+Z desfaz'); return; }
     if (a === 'gallery') return openGallery('in');
     if (a === 'gallery-tr') return openGallery('tr');
@@ -7045,12 +7742,12 @@ window.AMRT = (function () {
   buildSmartMenu();
   function chartItems() { var out = []; CH_GROUPS.forEach(function (g) { var ks = g[1].filter(function (k) { return RT.FX[k]; }); if (!ks.length) return; out.push({ hd: g[0] }); ks.forEach(function (k) { out.push({ t: RT.FX[k].name, raw: chartIcon(k, 'icx'), fn: function () { var ne = insertFx(k); toast('Gráfico inserido. Edite os dados no painel à direita.'); setTimeout(function () { previewEl(ne); }, 250); } }); }); }); return out; }
   $('#addSlide').addEventListener('click', function (e) { var m = $('#mSlide'), open = m.classList.contains('open'); closeMenus(); if (open) return; var r = e.currentTarget.getBoundingClientRect(); m.style.left = (r.left) + 'px'; m.style.top = Math.max(60, r.top - 330) + 'px'; m.classList.add('open'); });
-  function addSlide(layout) { if (editingId) endEdit(); deck.slides.splice(cur + 1, 0, mkSlide(layout)); cur++; pick([]); renderAll(); commit(); }
+  function addSlide(layout) { if (editingId) endEdit(); deck.slides.splice(cur + 1, 0, kitSlide(mkSlide(layout))); cur++; pick([]); renderAll(); commit(); }
   /* S28: blocos prontos = sequências de layouts, inseridas depois do slide atual (um Ctrl+Z tira o bloco inteiro) */
   var SEQS = [['proposal', 'Proposta comercial', ['cover', 'agenda', 'content', 'roadmap', 'compare', 'closing']], ['panel', 'Painel executivo', ['section', 'dashboard', 'kpis']], ['roadmap', 'Roadmap de transformação', ['section', 'roadmap', 'next']], ['exec', 'Apresentação executiva', ['cover', 'exec', 'content', 'next', 'closing']]];
   function insertSeq(key) {
     var sq = SEQS.filter(function (x) { return x[0] === key; })[0]; if (!sq) return;
-    if (editingId) endEdit(); var ins = sq[2].map(mkSlide);
+    if (editingId) endEdit(); var ins = sq[2].map(function (k) { return kitSlide(mkSlide(k)); });
     Array.prototype.splice.apply(deck.slides, [cur + 1, 0].concat(ins)); cur++; pick([]); setZone('thumbs'); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
     toast(sq[1] + ': ' + ins.length + ' slides inseridos depois do slide ' + cur + ' · Ctrl+Z desfaz');
@@ -7526,7 +8223,7 @@ window.AMRT = (function () {
   /* duplo clique no vazio: caixa de texto já em edição; se ficar vazia, some sem deixar rastro no histórico */
   function createTextAt(p) {
     if (editingId) endEdit();
-    var w = 440, h = 34, el = mkText('body', { html: '', w: w, h: h, x: Math.round(Math.max(0, Math.min(W - w, p.x - 6))), y: Math.round(Math.max(0, Math.min(H - h, p.y - h / 2))) }, dark());
+    var w = 440, h = 34, el = kitify(mkText('body', { html: '', w: w, h: h, x: Math.round(Math.max(0, Math.min(W - w, p.x - 6))), y: Math.round(Math.max(0, Math.min(H - h, p.y - h / 2))) }, dark()));
     slide().els.push(el); pick([el.id]); renderStage(); freshId = el.id; startEdit(el, false); return el;
   }
   function startEdit(el, selectAll) {
@@ -8506,6 +9203,12 @@ window.AMRT = (function () {
       { hd: 'Elementos' }, { t: 'Linhas diagonais A&M', ic: 'brand', fn: function () { insertFx('amlines'); } }, { t: 'Traço laranja', raw: '<span class="mi-sw" style="background:linear-gradient(120deg,#fff 45%,#F78C16 45%,#F78C16 55%,#fff 55%)"></span>', fn: function () { insertBrand('slash'); } }];
   }
   /* mesmos itens do menu "Cards" da faixa de ferramentas */
+  /* S30/S31: componentes interativos da apresentação (formulário; depois post-its, votação, cronômetro) */
+  var INTERACTIVE = [['form', 'Formulário inserido. Escreva as perguntas no painel à direita; na apresentação, as pessoas respondem no slide.', 'form'],
+    ['board', 'Quadro inserido. Defina as colunas e as notas iniciais no painel; na apresentação, cada coluna ganha “+ Nota”.', 'note'],
+    ['vote', 'Votação inserida. Escreva as opções e os pontos por pessoa no painel; na apresentação, cada um distribui os pontos e vota.', 'vote'],
+    ['timer', 'Cronômetro inserido. Defina minutos e segundos no painel; na apresentação, Iniciar/Pausar, Reiniciar e ±1 min.', 'timer']];
+  function interactiveItems() { return INTERACTIVE.filter(function (o) { return RT.FX[o[0]]; }).map(function (o) { return { t: RT.FX[o[0]].name, ic: o[2] || 'form', fn: function () { insertFx(o[0]); toast(o[1]); } }; }); }
   function cardItems() { return $$('#mCard button').map(function (b) { return { t: b.textContent, ic: 'card', fn: function () { insertFx(b.dataset.fx, b.dataset.style || (b.dataset.fx === 'card' && dark() ? 'dark' : null)); } }; }); }
   function alignItems() {
     var list = sels(), n = list.length, many = n > 1;
@@ -8521,7 +9224,7 @@ window.AMRT = (function () {
   var MENUS = {
     file: function () {
       return [{ t: 'Início (capa)', ic: 'home', fn: goHome }, { sep: 1 },
-        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
+        { t: 'Nova apresentação', ic: 'file', fn: newPresentation }, { t: 'Abrir…', ic: 'open', k: KEY.open, fn: openPicker }, { t: 'Minhas obras…', ic: 'obras', fn: goObras }, { t: 'Kit de marca…', ic: 'palette', fn: function () { openBrandKit(XM.prev); }, dis: !window.AMBrand, tip: 'Cores e fonte desta apresentação: vêm primeiro nas amostras, valem para o que você inserir e podem ser aplicadas a tudo' }, { t: 'Importar PowerPoint ou PDF…', ic: 'import', fn: importPicker, dis: !window.AMImport, tip: window.AMImport ? 'Converte um .pptx ou .pdf em slides editáveis (textos, formas, linhas, fotos, tabelas)' : 'Importação indisponível' }, { t: 'Salvar apresentação', ic: 'save', k: KEY.save, fn: save },
         { t: 'Salvar como PDF…', ic: 'pdf', fn: function () { exportAs('pdf'); } }, { t: 'Salvar como PowerPoint…', ic: 'ppt', dis: !pptxOk(), tip: pptxOk() ? '' : PPTX_SOON, fn: function () { exportAs('pptx'); } }, { sep: 1 },
         { t: 'Apresentar', ic: 'play', k: KEY.f5, fn: function () { present(0); } }, { sep: 1 },
         { t: 'Recomeçar apresentação…', ic: 'reset', fn: askReset }];
@@ -8555,7 +9258,7 @@ window.AMRT = (function () {
         RT.ICONS ? { t: 'Ícone animado', ic: 'icons', sub: iconItems } : null,
         { t: 'Gráfico', ic: 'chart', sub: chartItems },
         RT.SMART_LAYOUTS ? { t: 'SmartArt', ic: 'smart', sub: smartItems } : null,
-        { t: 'Cards', ic: 'card', sub: cardItems }, { t: 'Marca A&M', ic: 'brand', sub: brandItems }, { sep: 1 },
+        { t: 'Cards', ic: 'card', sub: cardItems }, RT.FX.form ? { t: 'Interativo', ic: 'form', sub: interactiveItems } : null, { t: 'Marca A&M', ic: 'brand', sub: brandItems }, { sep: 1 },
         { t: 'Modelos…', ic: 'models', fn: function () { openDrawer(true, 'models'); } }, { t: 'Efeitos…', ic: 'fx', fn: function () { openDrawer(true, 'fx'); } }];
     },
     slide: function () {
@@ -8781,7 +9484,7 @@ window.AMRT = (function () {
     if (editingId) endEdit(); flush();
     var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
     if (!ins.length) return 0;
-    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); renderAll(); commit();
+    var at = deck.slides.length; deck.slides = deck.slides.concat(ins); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
     return ins.length;
   }
@@ -8858,7 +9561,7 @@ window.AMRT = (function () {
     var data = JSON.stringify(d).replace(/</g, '\\u003c');
     var css = $('#am-runtime-css').textContent, js = $('#am-runtime').textContent;
     var S = 'script';
-    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Roboto:wght@300;400;500;700&family=Roboto+Condensed:wght@400;700&display=swap" rel="stylesheet">\n<style id="am-runtime-css">' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
+    return '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="generator" content="Canteiro · Acervo de Apresentações A&amp;M">\n<title>' + esc(d.title || 'Apresentação') + '</title>\n<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n<link href="' + fontLink(d, data) + '" rel="stylesheet">\n<style id="am-runtime-css">' + css + '</style>\n<style>html,body{margin:0;height:100%;background:#00192b}</style>\n</head>\n<body>\n<div id="am-player"></div>\n<' + S + ' type="application/json" id="am-deck-data">' + data + '</' + S + '>\n<' + S + '>' + js + '</' + S + '>\n<' + S + '>AMRT.player(JSON.parse(document.getElementById("am-deck-data").textContent),document.getElementById("am-player"),{brand:' + JSON.stringify(BRAND.wmW) + '});</' + S + '>\n</body>\n</html>\n';
   }
   function download(name, text, type) {
     var blob = new Blob([text], { type: type || 'text/html;charset=utf-8' }), a = document.createElement('a');
@@ -8920,6 +9623,9 @@ window.AMRT = (function () {
     W: W, H: H, BRAND: BRAND, LAYOUTS: LAYOUTS, uid: uid, clone: clone, toast: toast,
     mk: { slide: mkSlide, text: mkText, shape: mkShape, line: mkLine, image: mkImage, brand: mkBrand, fx: mkFx },
     newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind, insertSeq: insertSeq, SEQS: SEQS,
+    /* S29: kit de marca (ed-43-brand.js usa) */
+    brand: { get: brand, set: setBrand, safe: safeBrand, kitify: kitify, applyFont: brandApplyFont, applyPal: brandApplyPal, fonts: fontOpts, GFONTS: GFONTS, SYS_FONTS: SYS_FONTS, ensureFonts: ensureFonts, fontLink: fontLink, open: openBrandKit, palOk: palOk, SW: SW },
+    pickImage: pickImage, confirmBox: confirmBox, insertText: insertText,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },
@@ -8977,10 +9683,10 @@ window.AMExport = (function () {
   function frame() { return new Promise(function (r) { requestAnimationFrame(function () { r(); }); }); }
 
   /* ---------------- fontes: o CSS do Google Fonts da própria página, cada woff2 vira data: (cache da sessão) ---------------- */
-  var faces = null, failAt = 0, fontData = {}, warned = false;
+  var facesBy = {}, fontData = {}, warned = false; /* S29: uma lista de @font-face por <link> do Google (o base do editor + os das fontes do kit) */
   function warnFonts() { if (warned) return; warned = true; toast('Sem acesso às fontes da internet: o arquivo pode sair com outra fonte'); }
   function withTimeout(p, ms) { return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('tempo esgotado')); }, ms); })]); }
-  function gfHref() { var l = document.querySelector('link[rel=stylesheet][href^="https://fonts.googleapis.com/"]'); return l ? l.href : null; }
+  function gfHrefs() { return [].map.call(document.querySelectorAll('link[rel=stylesheet][href^="https://fonts.googleapis.com/"]'), function (l) { return l.href; }); }
   /* unicode-range "U+0000-00FF, U+0131" → [[0,255],[305,305]] */
   function ranges(s) {
     if (!s) return [[0, 0x10FFFF]];
@@ -8988,11 +9694,15 @@ window.AMExport = (function () {
       .filter(function (r) { return isFinite(r[0]) && isFinite(r[1]); });
   }
   function loadFaces() {
-    if (faces && failAt && Date.now() - failAt > 60000) { faces = null; failAt = 0; } /* sem internet: tenta de novo depois de 1 min, não a cada slide */
-    if (faces) return faces;
-    var href = gfHref();
-    if (!href) { faces = Promise.resolve([]); return faces; }
-    faces = withTimeout(fetch(href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }), 10000).then(function (css) {
+    var hs = gfHrefs(); if (!hs.length) return Promise.resolve([]);
+    return Promise.all(hs.map(facesOf)).then(function (r) { return [].concat.apply([], r); });
+  }
+  function facesOf(href) {
+    var o = facesBy[href];
+    if (o && o.failAt && Date.now() - o.failAt > 60000) o = null; /* sem internet: tenta de novo depois de 1 min, não a cada slide */
+    if (o) return o.p;
+    o = facesBy[href] = { failAt: 0 };
+    o.p = withTimeout(fetch(href).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }), 10000).then(function (css) {
       var out = {}, re = /(?:\/\*\s*([\w-]+)\s*\*\/\s*)?@font-face\s*\{([^}]*)\}/g, m;
       while ((m = re.exec(css))) {
         var b = m[2], g = function (k) { var x = new RegExp(k + '\\s*:\\s*([^;]+);?', 'i').exec(b); return x ? x[1].trim() : ''; };
@@ -9004,8 +9714,8 @@ window.AMExport = (function () {
         f.w0 = Math.min(f.w0, w[0]); f.w1 = Math.max(f.w1, w[w.length - 1]);
       }
       return Object.keys(out).map(function (k) { return out[k]; });
-    }).catch(function () { warnFonts(); failAt = Date.now(); return []; });
-    return faces;
+    }).catch(function () { warnFonts(); o.failAt = Date.now(); return []; });
+    return o.p;
   }
   function dataOf(url) {
     if (!fontData[url]) {
@@ -9565,11 +10275,17 @@ window.AMExport = (function () {
   function rels(list) { return HDR + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + list.map(function (r) { return '<Relationship Id="' + r[0] + '" Type="' + (r[1].indexOf('http') === 0 ? r[1] : RN + r[1]) + '" Target="' + xe(r[2]) + '"/>'; }).join('') + '</Relationships>'; }
   var GRP0 = '<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>';
   var CLRMAP = '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/>';
-  function theme(name) {
+  /* bk (S29, deck.brand): as cores do kit viram os acentos do tema (destaque primeiro, depois as cores da marca; o que faltar fica A&M),
+     a cor principal vira dk2 e a fonte do kit vira a fonte do tema — o seletor de cores e fontes do PowerPoint mostra a marca */
+  function theme(name, bk) {
     var c = function (k, v) { return '<a:' + k + '><a:srgbClr val="' + v + '"/></a:' + k + '>'; }, sf = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>';
-    return HDR + '<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="' + name + '"><a:themeElements><a:clrScheme name="Alvarez &amp; Marsal">' +
-      c('dk1', '002A46') + c('lt1', 'FFFFFF') + c('dk2', '13315C') + c('lt2', 'EEF2F7') + c('accent1', 'F78C16') + c('accent2', '002A46') + c('accent3', '4A6FA5') + c('accent4', '7EA1C3') + c('accent5', '43698F') + c('accent6', 'A3B8D6') + c('hlink', '4A6FA5') + c('folHlink', '7EA1C3') +
-      '</a:clrScheme><a:fontScheme name="Canteiro"><a:majorFont><a:latin typeface="Roboto"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Inter"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>' +
+    var H6 = function (x) { return typeof x === 'string' && /^#[0-9a-f]{6}$/i.test(x) ? x.slice(1).toUpperCase() : null; }, bc = bk && Array.isArray(bk.colors) ? bk.colors.map(H6).filter(Boolean) : [], pa = bk && bk.pal ? H6(bk.pal.a) : null, pp = bk && bk.pal ? H6(bk.pal.p) : null;
+    var acc = (pa ? [pa] : []).concat(bc.filter(function (x) { return x !== pa; })), dflt = ['F78C16', '002A46', '4A6FA5', '7EA1C3', '43698F', 'A3B8D6'];
+    acc = acc.concat(dflt.filter(function (x) { return acc.indexOf(x) < 0; })).slice(0, 6);
+    var fnt = bk && typeof bk.font === 'string' && bk.font.trim() ? xe(bk.font.trim()) : null;
+    return HDR + '<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="' + name + '"><a:themeElements><a:clrScheme name="' + (bk && bc.length ? xe(bk.name || 'Kit de marca') : 'Alvarez &amp; Marsal') + '">' +
+      c('dk1', '002A46') + c('lt1', 'FFFFFF') + c('dk2', pp || '13315C') + c('lt2', 'EEF2F7') + acc.map(function (x, i) { return c('accent' + (i + 1), x); }).join('') + c('hlink', '4A6FA5') + c('folHlink', '7EA1C3') +
+      '</a:clrScheme><a:fontScheme name="Canteiro"><a:majorFont><a:latin typeface="' + (fnt || 'Roboto') + '"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="' + (fnt || 'Inter') + '"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme>' +
       '<a:fmtScheme name="Canteiro"><a:fillStyleLst>' + sf + sf + sf + '</a:fillStyleLst><a:lnStyleLst>' + [6350, 12700, 19050].map(function (w) { return '<a:ln w="' + w + '" cap="flat" cmpd="sng" algn="ctr">' + sf + '<a:prstDash val="solid"/><a:miter lim="800000"/></a:ln>'; }).join('') +
       '</a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst>' + sf + sf + sf + '</a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>';
   }
@@ -10087,8 +10803,8 @@ window.AMExport = (function () {
       files.push({ name: 'ppt/presProps.xml', data: HDR + '<p:presentationPr ' + NS + '/>' });
       files.push({ name: 'ppt/viewProps.xml', data: HDR + '<p:viewPr ' + NS + '><p:normalViewPr><p:restoredLeft sz="15620"/><p:restoredTop sz="94660"/></p:normalViewPr><p:gridSpacing cx="76200" cy="76200"/></p:viewPr>' });
       files.push({ name: 'ppt/tableStyles.xml', data: HDR + '<a:tblStyleLst xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" def="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}"/>' });
-      files.push({ name: 'ppt/theme/theme1.xml', data: theme('Canteiro') });
-      files.push({ name: 'ppt/theme/theme2.xml', data: theme('Canteiro anotações') });
+      files.push({ name: 'ppt/theme/theme1.xml', data: theme('Canteiro', deck.brand) });
+      files.push({ name: 'ppt/theme/theme2.xml', data: theme('Canteiro anotações', deck.brand) });
       files.push({ name: 'ppt/slideMasters/slideMaster1.xml', data: master() });
       files.push({ name: 'ppt/slideMasters/_rels/slideMaster1.xml.rels', data: rels([['rId1', 'slideLayout', '../slideLayouts/slideLayout1.xml'], ['rId2', 'theme', '../theme/theme1.xml']]) });
       files.push({ name: 'ppt/slideLayouts/slideLayout1.xml', data: layout() });
@@ -10940,6 +11656,7 @@ window.AMExport = (function () {
       return (th ? pkg.xml(th) : Promise.resolve(null)).then(function (tdoc) {
         var root = doc.documentElement, cSld = kid(root, 'cSld'), tree = kid(cSld, 'spTree');
         var m = { path: p, rels: rels, theme: readTheme(tdoc), clrMap: readClrMap(kid(root, 'clrMap')), txStyles: kid(root, 'txStyles'), ph: [], tree: tree, cSld: cSld, doc: doc };
+        if (!ctx.theme0) ctx.theme0 = m.theme; /* S29: o tema do primeiro mestre vira o kit de marca da obra importada */
         kids(tree).forEach(function (n) { var ph = phInfo(n); if (ph) m.ph.push({ type: ph.type, idx: ph.idx, sp: n }); });
         return m;
       });
@@ -11123,8 +11840,16 @@ window.AMExport = (function () {
     var name = String(file && file.name || 'apresentacao').replace(/\.(pptx|pdf)$/i, ''), title = (res.title || name).slice(0, 160);
     var rep = report(ctx, slides);
     if (opts.mode === 'append') { var n = A.appendSlides(slides); rep.added = n; rep.replaced = false; }
-    else { var d = A.newDeck(); d.title = title; d.slides = slides; if (!A.loadDeck(d, null)) throw new Error('a apresentação lida não passou na validação'); rep.added = A.deck.slides.length; rep.replaced = true; }
+    else { var d = A.newDeck(); d.title = title; d.slides = slides; var bk = brandOf(ctx, name); if (bk) d.brand = bk; if (!A.loadDeck(d, null)) throw new Error('a apresentação lida não passou na validação'); rep.added = A.deck.slides.length; rep.replaced = true; }
     return rep;
+  }
+  /* S29: kit de marca a partir do tema do arquivo (acentos, dk2, lt2, dk1, sem o branco) e a fonte de corpo do tema; só ao substituir a obra */
+  function brandOf(ctx, name) {
+    var th = ctx.theme0; if (!th) return null; var c = th.colors || {}, cols = [], seen = {};
+    ['accent1', 'accent2', 'accent3', 'accent4', 'accent5', 'accent6', 'dk2', 'lt2', 'dk1'].forEach(function (k) { var h = typeof c[k] === 'string' ? c[k].toUpperCase() : ''; if (/^#[0-9A-F]{6}$/.test(h) && !seen[h] && h !== '#FFFFFF' && cols.length < 12) { seen[h] = 1; cols.push(h); } });
+    var fw = th.min ? famWeight(th.min) : null, font = fw && fw.family && /^[\w\s.%-]{1,40}$/.test(fw.family) ? fw.family : null;
+    if (!cols.length && !font) return null;
+    var b = { name: ('Tema de ' + String(name || 'arquivo')).slice(0, 60) }; if (cols.length) b.colors = cols; if (font) b.font = font; return b;
   }
   var WARN = { imgFmt: 'imagem em formato que o navegador não desenha (EMF/WMF/TIFF): ficou de fora', imgExt: 'imagem ligada a um arquivo externo: ficou de fora', chartKind: 'gráfico de tipo sem equivalente: virou um quadro “não importado”', smartNoDraw: 'SmartArt sem desenho gravado no arquivo: virou um quadro “não importado”', objUnknown: 'objeto incorporado sem imagem de reserva: virou um quadro “não importado”', slideBad: 'slide que não pôde ser lido: pulado' };
   function report(ctx, slides) {
@@ -11135,7 +11860,8 @@ window.AMExport = (function () {
     if (c.smart) lines.push(c.smart + ' formas de SmartArt'); if (c.notes) lines.push(c.notes + (c.notes === 1 ? ' slide com anotações' : ' slides com anotações'));
     if (c.approx) warns.push(c.approx + (c.approx === 1 ? ' forma sem equivalente virou retângulo' : ' formas sem equivalente viraram retângulos') + ' (mesmo lugar, cor e texto)');
     Object.keys(ctx.warn).forEach(function (k) { if (WARN[k]) warns.push(ctx.warn[k] + '× ' + WARN[k]); });
-    var fonts = Object.keys(ctx.fonts).filter(function (f) { return !FONTS_OK[f]; }).sort(function (a, b) { return ctx.fonts[b] - ctx.fonts[a]; });
+    var GF = S() && S().brand && S().brand.GFONTS || {}; /* S29: fontes do Google que o Canteiro carrega sob demanda não faltam */
+    var fonts = Object.keys(ctx.fonts).filter(function (f) { return !FONTS_OK[f] && !GF[f]; }).sort(function (a, b) { return ctx.fonts[b] - ctx.fonts[a]; });
     if (fonts.length) warns.push('fontes do arquivo que o Canteiro não traz: ' + fonts.slice(0, 5).join(', ') + (fonts.length > 5 ? '…' : '') + ' — usam a fonte instalada no computador; sem ela, Inter (as quebras de linha podem mudar)');
     if (c.charts) warns.push('gráficos viraram gráficos do Canteiro com os mesmos dados (o visual é o do Canteiro, editável no painel)');
     var hid = slides.filter(function (s) { return s.hidden; }).length; if (hid) lines.push(hid + (hid === 1 ? ' slide oculto' : ' slides ocultos'));
@@ -11290,6 +12016,214 @@ window.AMExport = (function () {
   };
 })();
 </script>
+<script id="am-ed-43-brand">/* ===== ed-43-brand.js — “Kit de marca” (S29): cores e fonte da apresentação (só no editor; não vai para o arquivo exportado) =====
+   Caixa (Arquivo › Kit de marca…, botão “Kit de marca…” em Fundo): nome do kit · cores da marca (trocar/adicionar pelo seletor
+   “Mais cores…”, colar códigos, extrair de um logotipo) · cores dos componentes (principal/destaque; “aplicar a todos”) · fonte
+   (“aplicar a todos os textos”) · kits guardados no navegador (localStorage 'amStudio.brandKits') · baixar/abrir kit .json.
+   O kit vive em deck.brand (editor.js: safeBrand, swList, kitOpt, withBrandFont, mkFx+pal, fontLink/ensureFonts); cada mudança
+   passa por AMStudio.brand.set/applyFont/applyPal = um passo de desfazer. As amostras do painel e “Mais cores…” leem deck.brand na
+   hora, então a caixa só precisa gravar. Não usa #modal (ARCH regra 15): teclas ficam na caixa (Esc fecha, Tab circula); com o
+   seletor de cores aberto por cima, Esc/Tab são dele.
+   API: window.AMBrand = { open(opener), close(), isOpen(), parseColors(text), colorsFromImage(img, n), kits(), saveKit(kit), removeKit(name), toJSON(), fromJSON(text) } */
+(function () {
+  'use strict';
+  function S() { return window.AMStudio; }
+  function $(q, r) { return (r || document).querySelector(q); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var KITS = 'amStudio.brandKits', HEX = /^#[0-9A-F]{6}$/, MAXC = 12, DEF = { p: '#002A46', a: '#F78C16' };
+  var dlg = null, st = null;
+  function svg(p) { return '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>'; }
+  var IPAL = '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>';
+  function toast(m) { var A = S(); if (A && A.toast) A.toast(m); }
+  function norm(v) {
+    v = String(v == null ? '' : v).replace(/\s+/g, '');
+    var m = /^rgba?\((\d{1,3}),(\d{1,3}),(\d{1,3})(?:,[\d.]+%?)?\)$/i.exec(v);
+    if (m && +m[1] < 256 && +m[2] < 256 && +m[3] < 256) v = '#' + [m[1], m[2], m[3]].map(function (x) { return (+x < 16 ? '0' : '') + (+x).toString(16); }).join('');
+    if (v && v[0] !== '#') v = '#' + v;
+    if (/^#[0-9a-f]{3}$/i.test(v)) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+    return /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : null;
+  }
+  /* “#1F66A8, f2c94c; rgb(0,42,70) #abc” → ['#1F66A8', '#F2C94C', '#002A46', '#AABBCC'] (únicas, na ordem em que aparecem);
+     só códigos inteiros valem (6 dígitos, com ou sem #; 3 dígitos só com #): “nada”, “12345” e palavras ficam de fora */
+  function parseColors(text) {
+    var out = [], s = String(text == null ? '' : text).replace(/rgba?\([^)]*\)/gi, function (m) { return ' ' + (norm(m) || '') + ' '; });
+    s.split(/[\s,;|]+/).forEach(function (t) {
+      t = t.replace(/^[^#0-9a-f]+/i, '').replace(/[^0-9a-f]+$/i, '');
+      if (!/^#?[0-9a-f]{6}$/i.test(t) && !/^#[0-9a-f]{3}$/i.test(t)) return;
+      var c = norm(t); if (c && out.indexOf(c) < 0) out.push(c);
+    });
+    return out;
+  }
+  /* cores dominantes de um logotipo: amostra 64×64 sem suavizar (nada de tons misturados nas bordas), caixas de 16 níveis por canal,
+     mais frequentes primeiro (≥ 1 % da imagem), sem o branco do fundo e sem tons quase iguais (distância RGB < 90); n cores no máximo */
+  function colorsFromImage(img, n) {
+    n = n || 5; var s = 64, cv = document.createElement('canvas'), g, d; cv.width = s; cv.height = s; g = cv.getContext('2d');
+    try { g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, s, s); d = g.getImageData(0, 0, s, s).data; } catch (e) { return []; }
+    var bins = {}, i;
+    for (i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) continue;
+      var r = d[i], gg = d[i + 1], b = d[i + 2], k = ((r >> 4) << 8) | ((gg >> 4) << 4) | (b >> 4), o = bins[k] || (bins[k] = { n: 0, r: 0, g: 0, b: 0 });
+      o.n++; o.r += r; o.g += gg; o.b += b;
+    }
+    var list = Object.keys(bins).map(function (k) { var o = bins[k]; return { n: o.n, c: [Math.round(o.r / o.n), Math.round(o.g / o.n), Math.round(o.b / o.n)] }; }).sort(function (a, b) { return b.n - a.n; });
+    var out = [], tot = s * s;
+    list.forEach(function (o) {
+      if (out.length >= n || o.n < tot * .01) return; var c = o.c;
+      if (Math.min(c[0], c[1], c[2]) > 235) return; /* fundo branco / quase branco */
+      if (out.some(function (x) { return Math.abs(x[0] - c[0]) + Math.abs(x[1] - c[1]) + Math.abs(x[2] - c[2]) < 90; })) return;
+      out.push(c);
+    });
+    return out.map(function (c) { return '#' + c.map(function (v) { return (v < 16 ? '0' : '') + v.toString(16); }).join('').toUpperCase(); });
+  }
+  /* ---------- kits guardados no navegador ---------- */
+  function kits() { var a; try { a = JSON.parse(localStorage.getItem(KITS) || '[]'); } catch (e) { a = []; } var A = S(); return (Array.isArray(a) ? a : []).map(function (k) { var o = A.brand.safe(k); if (o && k && typeof k.at === 'number') o.at = k.at; return o; }).filter(function (k) { return k && k.name; }); }
+  function writeKits(list) { try { localStorage.setItem(KITS, JSON.stringify(list.slice(0, 20))); return true; } catch (e) { return false; } }
+  function saveKit(kit) { var A = S(), k = A.brand.safe(kit); if (!k || !k.name) return false; k.at = Date.now(); var list = kits().filter(function (x) { return x.name !== k.name; }); list.unshift(k); return writeKits(list); }
+  function removeKit(name) { var list = kits(), n = list.length; list = list.filter(function (x) { return x.name !== name; }); return list.length < n && writeKits(list); }
+  function toJSON(b) { var A = S(), k = A.brand.safe(b || A.brand.get()); return JSON.stringify(Object.assign({ app: 'Canteiro', kind: 'brand-kit', v: 1 }, k || {}), null, 2); }
+  function fromJSON(text) { var A = S(), o; try { o = JSON.parse(String(text)); } catch (e) { return null; } if (o && o.brand && typeof o.brand === 'object') o = o.brand; return A.brand.safe(o); }
+  /* ---------- caixa ---------- */
+  function cur() { var A = S(), b = A.brand.get(); return b ? JSON.parse(JSON.stringify(b)) : {}; }
+  function put(b, msg) { var A = S(); A.brand.set(b, msg); render(); }
+  function counts() {
+    var A = S(), RT = window.AMRT, t = 0, c = 0;
+    A.deck.slides.forEach(function (s) { s.els.forEach(function (e) {
+      if (e.type === 'text' || e.type === 'shape') t++;
+      else if (e.type === 'fx') { var F = RT && RT.FX[e.kind]; if (F && F.fields && F.fields.some(function (f) { return f[0] === 'font'; })) t++; if (A.brand.palOk(e)) c++; } /* componentes com campo de fonte (ex.: frase de impacto) contam como texto */
+    }); });
+    return { texts: t, comps: c };
+  }
+  function build() {
+    dlg = document.createElement('div'); dlg.id = 'bkDlg'; dlg.className = 'xp bk'; dlg.hidden = true;
+    dlg.innerHTML = '<div class="xp-bk" data-x="bk"></div>' +
+      '<form class="xp-box bk-box" role="dialog" aria-modal="true" aria-labelledby="bkT" aria-describedby="bkSum" novalidate>' +
+      '<header class="xp-h"><div class="xp-ic">' + svg(IPAL) + '</div><div class="xp-hd"><div class="xp-ey">Apresentação</div><h3 id="bkT">Kit de marca</h3></div>' +
+      '<button type="button" class="xp-x" data-x="close" title="Fechar (Esc)" aria-label="Fechar">' + svg('<path d="M6 6l12 12M18 6L6 18"/>') + '</button></header>' +
+      '<div class="xp-b">' +
+      '<p class="xp-sum bk-sum" id="bkSum">As <b>cores do kit</b> aparecem primeiro nas amostras e em “Mais cores…”. A <b>fonte</b> e as <b>cores dos componentes</b> valem para o que você inserir a partir de agora e podem ser aplicadas a tudo de uma vez. O kit vai junto no arquivo salvo.</p>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Nome do kit</legend><div class="bk-row"><input type="text" id="bkName" maxlength="60" placeholder="ex.: Cliente XPTO" aria-label="Nome do kit"><button type="button" class="xp-btn sm" data-x="kitdel" id="bkDel" title="Tira o kit desta apresentação (os elementos ficam como estão)">Remover kit</button></div></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Cores da marca <span id="bkCn"></span></legend><div class="bk-sw" id="bkSw"></div>' +
+      '<div class="bk-row"><input type="text" id="bkPaste" placeholder="Colar códigos: #1F66A8, #F2C94C, rgb(0,42,70)…" aria-label="Códigos de cor para adicionar"><button type="button" class="xp-btn sm" data-x="paste">Adicionar</button><button type="button" class="xp-btn sm" data-x="logo" title="Escolhe uma imagem (logotipo) e tira dela as cores mais presentes">Do logotipo…</button></div>' +
+      '<p class="note bk-err" id="bkErr" hidden></p></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Cores dos componentes</legend><div class="bk-pal">' +
+      '<label><span>Cor principal <small>(no lugar do azul-marinho)</small></span><button type="button" class="bk-pb" data-x="pal" data-k="p" id="bkP" aria-haspopup="dialog"><i></i><span></span></button></label>' +
+      '<label><span>Cor de destaque <small>(no lugar do laranja)</small></span><button type="button" class="bk-pb" data-x="pal" data-k="a" id="bkA" aria-haspopup="dialog"><i></i><span></span></button></label></div>' +
+      '<div class="bk-row"><button type="button" class="xp-btn sm" data-x="palall" id="bkPalAll">Aplicar a todos os componentes</button><button type="button" class="xp-btn sm" data-x="palnone" id="bkPalNone">Restaurar cores A&amp;M em todos</button></div>' +
+      '<p class="note">Gráficos, SmartArt e modelos novos já nascem com estas cores; os que existem mudam com “Aplicar a todos”. Cada azul do modelo vira um tom da cor principal (mesma claridade, textos legíveis); o laranja vira a cor de destaque.</p></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Fonte</legend><div class="bk-row"><select id="bkFont" aria-label="Fonte do kit"></select><button type="button" class="xp-btn sm" data-x="fontall" id="bkFontAll">Aplicar a todos os textos</button></div>' +
+      '<p class="note" id="bkFontNote"></p></fieldset>' +
+      '<fieldset class="xp-sec"><legend class="xp-lg">Guardar e reutilizar</legend>' +
+      '<div class="bk-row"><select id="bkKits" aria-label="Kits guardados neste navegador"></select><button type="button" class="xp-btn sm" data-x="kituse" id="bkUse">Usar</button><button type="button" class="xp-btn sm" data-x="kitrm" id="bkRm">Apagar</button></div>' +
+      '<div class="bk-row"><button type="button" class="xp-btn sm" data-x="kitsave" id="bkSave">Guardar este kit no navegador</button><button type="button" class="xp-btn sm" data-x="dl" id="bkDl">Baixar kit (.json)</button><button type="button" class="xp-btn sm" data-x="up">Abrir kit (.json)…</button></div>' +
+      '<p class="note">O kit guardado fica só neste navegador; o arquivo .json serve para passar o kit a colegas (Abrir kit…).</p></fieldset>' +
+      '</div>' +
+      '<footer class="xp-f"><span class="bk-hint">Cada mudança é um passo de desfazer (Ctrl+Z) depois de fechar.</span><button type="submit" class="xp-btn pri" id="bkOk">Concluir</button></footer></form>' +
+      '<input type="file" id="bkFile" accept=".json,application/json" hidden>';
+    document.body.appendChild(dlg);
+    dlg.addEventListener('click', onClick);
+    $('form', dlg).addEventListener('submit', function (e) { e.preventDefault(); close(); });
+    $('#bkName').addEventListener('change', function () { var b = cur(), v = this.value.trim(); if (v) b.name = v; else delete b.name; put(b); });
+    $('#bkFont').addEventListener('change', function () { var b = cur(), v = this.value; if (v) b.font = v; else delete b.font; put(b, v ? 'Fonte do kit: ' + v + ' · vale para os textos novos' : 'Fonte do kit removida: textos novos usam as fontes do Canteiro'); });
+    $('#bkKits').addEventListener('change', function () { $('#bkUse').disabled = $('#bkRm').disabled = !this.value; });
+    $('#bkFile').addEventListener('change', function () {
+      var f = this.files && this.files[0]; this.value = ''; if (!f) return;
+      var r = new FileReader(); r.addEventListener('load', function () { var k = fromJSON(r.result); if (!k) { showErr('Este arquivo não é um kit de marca do Canteiro (.json).'); return; } put(k, 'Kit “' + (k.name || f.name) + '” aberto · Ctrl+Z desfaz'); }); r.addEventListener('error', function () { showErr('Não deu para ler o arquivo.'); }); r.readAsText(f);
+    });
+  }
+  function showErr(m) { var e = $('#bkErr'); e.textContent = m; e.hidden = !m; }
+  function render() {
+    if (!isOpen()) return;
+    var A = S(), b = cur(), cs = b.colors || [], n = counts(), pal = b.pal || {};
+    var nm = $('#bkName'); if (document.activeElement !== nm) nm.value = b.name || '';
+    $('#bkDel').disabled = !A.brand.get();
+    $('#bkCn').textContent = cs.length ? '(' + cs.length + ' de ' + MAXC + ')' : '';
+    $('#bkSw').innerHTML = cs.map(function (c, i) { return '<span class="bk-c"><button type="button" class="bk-s" data-x="col" data-i="' + i + '" style="background:' + c + '" title="' + c + ' · clique para trocar" aria-label="Cor ' + (i + 1) + ' ' + c + ', trocar" aria-haspopup="dialog"></button><button type="button" class="bk-x" data-x="coldel" data-i="' + i + '" title="Tirar ' + c + '" aria-label="Tirar a cor ' + c + '">×</button></span>'; }).join('') +
+      (cs.length < MAXC ? '<button type="button" class="bk-add" data-x="coladd" title="Adicionar uma cor pelo seletor" aria-label="Adicionar cor" aria-haspopup="dialog">+</button>' : '') +
+      (cs.length ? '' : '<span class="bk-empty">Nenhuma cor ainda: use +, cole os códigos ou tire do logotipo.</span>');
+    ['p', 'a'].forEach(function (k) { var bt = $('#bk' + k.toUpperCase()), v = pal[k] || null; $('i', bt).style.background = v || DEF[k]; $('span', bt).textContent = v ? v : 'A&M (sem troca)'; bt.dataset.cv = v || DEF[k]; });
+    $('#bkPalAll').disabled = !(pal.p || pal.a) || !n.comps; $('#bkPalAll').textContent = 'Aplicar a todos os componentes' + (n.comps ? ' (' + n.comps + ')' : '');
+    $('#bkPalNone').disabled = !A.deck.slides.some(function (s) { return s.els.some(function (e) { return e.pal && A.brand.palOk(e); }); });
+    var fs = $('#bkFont'), opts = A.brand.fonts(b.font, true);
+    fs.innerHTML = '<option value="">Fontes do Canteiro (Roboto e Inter)</option>' + opts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (o[0] === b.font ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('');
+    $('#bkFontAll').disabled = !b.font || !n.texts; $('#bkFontAll').textContent = 'Aplicar a todos os textos' + (n.texts ? ' (' + n.texts + ')' : '');
+    $('#bkFontNote').textContent = b.font ? (A.brand.GFONTS[b.font] ? b.font + ' vem do Google Fonts: carrega com internet, vai embutida no PDF e no PowerPoint “Idêntico”; no “Editável” o PowerPoint usa a fonte instalada (ou a mais parecida).' : A.brand.SYS_FONTS.indexOf(b.font) >= 0 ? b.font + ' é uma fonte do computador: aparece igual onde ela está instalada; sem ela, o navegador usa a reserva do mesmo tipo.' : b.font + ' veio do arquivo importado: usa a fonte instalada no computador de quem vê.') : 'Sem fonte no kit, os textos novos usam Roboto (títulos) e Inter (textos), como no A&M.';
+    var ks = kits(), sel = $('#bkKits'), was = sel.value;
+    sel.innerHTML = '<option value="">' + (ks.length ? 'Kits guardados neste navegador…' : 'Nenhum kit guardado neste navegador') + '</option>' + ks.map(function (k) { return '<option value="' + esc(k.name) + '"' + (k.name === was ? ' selected' : '') + '>' + esc(k.name) + ' · ' + (k.colors ? k.colors.length + (k.colors.length === 1 ? ' cor' : ' cores') : 'sem cores') + (k.font ? ' · ' + k.font : '') + '</option>'; }).join('');
+    sel.disabled = !ks.length; $('#bkUse').disabled = $('#bkRm').disabled = !sel.value;
+    $('#bkSave').disabled = !A.brand.get(); $('#bkDl').disabled = !A.brand.get();
+  }
+  function addColors(list, src) {
+    var b = cur(), cs = (b.colors || []).slice(), add = 0, full = false;
+    list.forEach(function (c) { c = norm(c); if (!c || cs.indexOf(c) >= 0) return; if (cs.length >= MAXC) { full = true; return; } cs.push(c); add++; });
+    if (!add) { showErr(full ? 'O kit já tem ' + MAXC + ' cores: tire alguma antes de adicionar.' : list.length ? 'Essas cores já estão no kit.' : 'Nenhum código de cor reconhecido. Use #RRGGBB (ex.: #1F66A8).'); return 0; }
+    showErr(''); b.colors = cs; put(b, add + (add === 1 ? ' cor adicionada' : ' cores adicionadas') + (src ? ' ' + src : '') + (full ? ' · o kit ficou cheio (' + MAXC + ')' : '') + ' · Ctrl+Z desfaz'); return add;
+  }
+  function addPasted() { var inp = $('#bkPaste'), n = addColors(parseColors(inp.value), ''); if (n) inp.value = ''; }
+  function pickColor(anchor, value, title, onPick) {
+    if (!window.AMColorPop) return;
+    var A = S();
+    window.AMColorPop.open(anchor, { value: value, title: title, keyboard: true, brand: A.brand.SW, onPick: function (c, viaKey) { onPick(c); if (viaKey) setTimeout(function () { var a = $('#' + anchor.id) || anchor; if (a && a.isConnected) a.focus(); }, 0); }, onClose: function (viaKey) { if (viaKey && anchor.isConnected) anchor.focus(); } });
+  }
+  function onClick(e) {
+    var x = e.target.closest('[data-x]'); if (!x || !isOpen()) return;
+    var k = x.dataset.x, A = S(), b;
+    if (k === 'bk' || k === 'close') { close(); return; }
+    if (k === 'kitdel') { if (!A.brand.get()) return; put(null, 'Kit de marca removido desta apresentação · Ctrl+Z desfaz'); return; }
+    if (k === 'col') { var i = +x.dataset.i; b = cur(); if (!b.colors || !b.colors[i]) return; pickColor(x, b.colors[i], 'Cor da marca ' + (i + 1), function (c) { var nb = cur(); if (!nb.colors || !nb.colors[i]) return; if (nb.colors.indexOf(c) >= 0 && nb.colors[i] !== c) { showErr('Essa cor já está no kit.'); return; } nb.colors[i] = c; showErr(''); put(nb); }); return; }
+    if (k === 'coldel') { b = cur(); var j = +x.dataset.i; if (!b.colors || !b.colors[j]) return; var gone = b.colors.splice(j, 1)[0]; if (!b.colors.length) delete b.colors; showErr(''); put(b, 'Cor ' + gone + ' tirada do kit · Ctrl+Z desfaz'); return; }
+    if (k === 'coladd') { pickColor(x, '', 'Nova cor da marca', function (c) { addColors([c], ''); }); return; }
+    if (k === 'paste') { addPasted(); return; }
+    if (k === 'logo') { if (!A.pickImage) return; A.pickImage(function (src) { var im = new Image(); im.addEventListener('load', function () { var cs = colorsFromImage(im, 5); if (!cs.length) { showErr('Não achei cores no logotipo (imagem toda branca ou transparente).'); return; } addColors(cs, 'do logotipo'); }); im.addEventListener('error', function () { showErr('Não deu para ler a imagem.'); }); im.src = src; }); return; }
+    if (k === 'pal') { var pk = x.dataset.k; b = cur(); pickColor(x, (b.pal && b.pal[pk]) || DEF[pk], pk === 'p' ? 'Cor principal dos componentes' : 'Cor de destaque dos componentes', function (c) { var nb = cur(); nb.pal = nb.pal || {}; if (c === DEF[pk]) delete nb.pal[pk]; else nb.pal[pk] = c; if (!nb.pal.p && !nb.pal.a) delete nb.pal; put(nb, 'Componentes novos usam ' + (pk === 'p' ? 'a cor principal ' : 'a cor de destaque ') + (c === DEF[pk] ? 'A&M' : c)); }); return; }
+    if (k === 'palall') { b = cur(); if (!b.pal) return; var n1 = A.brand.applyPal(b.pal); toast(n1 ? n1 + (n1 === 1 ? ' componente recebeu' : ' componentes receberam') + ' as cores do kit · Ctrl+Z desfaz' : 'Todos os componentes já estão com as cores do kit'); render(); return; }
+    if (k === 'palnone') { var n2 = A.brand.applyPal(null); toast(n2 ? 'Cores A&M restauradas em ' + n2 + (n2 === 1 ? ' componente' : ' componentes') + ' · Ctrl+Z desfaz' : 'Nenhum componente com cores próprias'); render(); return; }
+    if (k === 'fontall') { b = cur(); if (!b.font) return; var n3 = A.brand.applyFont(b.font); toast(n3 ? n3 + (n3 === 1 ? ' texto passou' : ' textos passaram') + ' para ' + b.font + ' · Ctrl+Z desfaz' : 'Todos os textos já usam ' + b.font); render(); return; }
+    if (k === 'kitsave') { b = cur(); if (!A.brand.get()) return; if (!b.name) { b.name = 'Kit ' + new Date().toLocaleDateString('pt-BR'); put(b); } if (saveKit(b)) { toast('Kit “' + b.name + '” guardado neste navegador'); render(); $('#bkKits').value = b.name; $('#bkUse').disabled = $('#bkRm').disabled = false; } else toast('Não deu para guardar o kit neste navegador (armazenamento cheio ou bloqueado)'); return; }
+    if (k === 'kituse') { var nmU = $('#bkKits').value, kU = kits().filter(function (q) { return q.name === nmU; })[0]; if (!kU) return; delete kU.at; put(kU, 'Kit “' + kU.name + '” aplicado · Ctrl+Z desfaz'); return; }
+    if (k === 'kitrm') { var nmR = $('#bkKits').value; if (!nmR) return; if (A.confirmBox) A.confirmBox({ title: 'Apagar o kit “' + nmR + '”?', msg: 'Sai da lista deste navegador. A apresentação aberta não muda.', ok: 'Apagar', icon: 'del' }, function () { removeKit(nmR); toast('Kit “' + nmR + '” apagado'); render(); }); else { removeKit(nmR); render(); } return; }
+    if (k === 'dl') { b = cur(); if (!A.brand.get()) return; A.download((A.slug ? A.slug(b.name || A.deck.title || 'kit') : 'kit') + '-kit-de-marca.json', toJSON(b), 'application/json;charset=utf-8'); toast('Kit baixado (.json)'); return; }
+    if (k === 'up') { $('#bkFile').click(); return; }
+  }
+  function focusables() { return [].slice.call(dlg.querySelectorAll('button,input,select,textarea,[tabindex]:not([tabindex="-1"])')).filter(function (x) { return !x.disabled && !x.hidden && x.offsetParent !== null && x.tabIndex >= 0; }); }
+  function onKey(e) {
+    if (!isOpen()) return;
+    if (document.querySelector('.cpop')) return; /* seletor de cores aberto por cima: Esc, Tab e setas são dele */
+    if ($('#modal.open') || $('.mdl-a')) { if (e.key === 'Escape' || e.key === 'Enter') return; } /* confirmação A&M (apagar kit) por cima */
+    if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); close(); return; }
+    if (e.key === 'Tab') { var f = focusables(); if (!f.length) return; var i = f.indexOf(document.activeElement); e.preventDefault(); e.stopImmediatePropagation(); (f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length] || f[0]).focus(); return; }
+    var inField = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || '') && dlg.contains(e.target);
+    if (e.key === 'Enter' && inField && e.target.tagName === 'INPUT') { /* Enter num campo: não fecha a caixa (submit); nos códigos adiciona, no nome grava */
+      e.preventDefault(); e.stopImmediatePropagation(); if (e.target.id === 'bkPaste') addPasted(); else if (e.target.id === 'bkName') e.target.blur(); return;
+    }
+    if (e.key === 'F1' || e.key === 'F5' || ((e.ctrlKey || e.metaKey) && /^[sodpzy]$/i.test(e.key) && !inField)) e.preventDefault();
+    e.stopImmediatePropagation();
+  }
+  function isOpen() { return !!(dlg && !dlg.hidden); }
+  function open(opener) {
+    var A = S(); if (!A || !A.brand) return;
+    if (!dlg) build();
+    if (A.closeMenus) A.closeMenus();
+    if (window.AMExport) { if (window.AMExport.isOpen && window.AMExport.isOpen()) window.AMExport.closeDialog(); if (window.AMExport.pptxDialog && window.AMExport.pptxDialog.isOpen()) window.AMExport.pptxDialog.close(); }
+    if (window.AMImport && window.AMImport.isOpen && window.AMImport.isOpen()) window.AMImport.close();
+    var ae = document.activeElement;
+    st = { prev: opener || (ae && ae !== document.body ? ae : null) };
+    showErr(''); $('#bkPaste').value = '';
+    dlg.hidden = false; document.documentElement.classList.add('xp-open');
+    addEventListener('keydown', onKey, true);
+    render();
+    setTimeout(function () { if (isOpen()) $('#bkName').focus(); }, 30);
+  }
+  function close() {
+    if (!isOpen()) return;
+    if (window.AMColorPop && document.querySelector('.cpop')) window.AMColorPop.close();
+    dlg.hidden = true; document.documentElement.classList.remove('xp-open');
+    removeEventListener('keydown', onKey, true);
+    var p = st && st.prev; st = null;
+    if (p && p.isConnected && p.focus) p.focus();
+  }
+  window.AMBrand = { open: open, close: close, isOpen: isOpen, parseColors: parseColors, colorsFromImage: colorsFromImage, kits: kits, saveKit: saveKit, removeKit: removeKit, toJSON: toJSON, fromJSON: fromJSON, render: render };
+})();
+</script>
 <script id="am-ed-colors">/* ===== “Mais cores…” (S19): seletor de cores do painel de propriedades (só no editor; não vai para o arquivo exportado) =====
    AMColorPop.open(botão, {value, title, brand, keyboard, row, onPick(cor, viaTeclado), onLive(cor), onCancel(houvePrevia), onClose(viaTeclado)})
    Popover fixo (position: fixed, preso dentro da janela) com: Cores A&M · Mais cores (paleta ampliada, 6 famílias × 8 tons, claro → escuro)
@@ -11338,6 +12272,8 @@ window.AMColorPop = (function () {
   function build(o) {
     var cur = norm(o.value), brand = (o.brand || BRAND).map(norm).filter(Boolean), rec = recent();
     var h = '<div class="cp-hd"><b>Mais cores</b>' + (o.title ? '<span>' + esc(o.title) + '</span>' : '') + '<button type="button" class="cp-x" title="Fechar (Esc)" aria-label="Fechar">×</button></div>';
+    var kit = o.kit && Array.isArray(o.kit.colors) ? o.kit.colors.map(norm).filter(Boolean) : []; /* S29: cores do kit de marca da obra */
+    if (kit.length) h += '<div class="cp-sec cp-kit"><h4>' + esc(o.kit.title || 'Cores da marca') + '</h4><div class="cp-g">' + kit.map(function (c) { return sw(c, cur); }).join('') + '</div></div>';
     h += '<div class="cp-sec"><h4>Cores A&amp;M</h4><div class="cp-g">' + brand.map(function (c) { return sw(c, cur); }).join('') + '</div></div>';
     h += '<div class="cp-sec"><h4>Mais cores</h4><div class="cp-g cp-ext">' + EXT.map(function (r) { return r[1].map(function (c) { return sw(c, cur, r[0]); }).join(''); }).join('') + '</div></div>';
     h += '<div class="cp-sec cp-rec"><h4>Recentes</h4>' + (rec.length ? '<div class="cp-g">' + rec.map(function (c) { return sw(c, cur); }).join('') + '</div>' : '<p class="cp-empty">As cores personalizadas que você usar aparecem aqui.</p>') + '</div>';
@@ -11386,7 +12322,7 @@ window.AMColorPop = (function () {
   }
   function pick(c, viaKey) {
     c = norm(c); if (!c || !st) return;
-    var o = st.o; pushRecent(c, (o.brand || BRAND).map(norm)); teardown();
+    var o = st.o; pushRecent(c, (o.brand || BRAND).map(norm).concat(o.kit && Array.isArray(o.kit.colors) ? o.kit.colors.map(norm) : [])); teardown();
     if (o.onPick) o.onPick(c, !!viaKey);
   }
   function close(viaKey) {
