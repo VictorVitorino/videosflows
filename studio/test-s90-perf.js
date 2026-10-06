@@ -3,7 +3,7 @@
 process.env.NODE_PATH='/opt/node22/lib/node_modules'; require('module').Module._initPaths();
 const {chromium}=require('playwright'); const path=require('path'); const fs=require('fs');
 const FILE=path.join(__dirname,'AM-Studio-Editor.html'); const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const B={file_kb:1700,load_ms:2000,heap_idle_mb:40,template_ms:1200,drag_avg_ms:22,drag_worst_ms:80,drawer_ms:1500,gallery_ms:1200,export_kb:800,player_load_ms:1500,player_heap_mb:30,leak_mb:25};
+const B={file_kb:2000, /* S34: +≈380 KB das artes dos slides institucionais (jpeg embutido); antes 1700 */load_ms:2000,heap_idle_mb:40,template_ms:1200,drag_avg_ms:22,drag_worst_ms:80,drawer_ms:1500,gallery_ms:1200,export_kb:800,player_load_ms:1500,player_heap_mb:30,leak_mb:25};
 let fails=0; const errs=[];
 function check(name,ok,v){console.log((ok?'PASS ':'FAIL ')+name+'  '+JSON.stringify(v)); if(!ok)fails++;}
 async function measure(){
