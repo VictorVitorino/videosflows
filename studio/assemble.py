@@ -31,6 +31,25 @@ for k, f in {'%%LOGO_PERF_W%%': 'logo-perf.png', '%%LOGO_PERF_N%%': 'logo-perf-n
     u = uri(f)
     js = js.replace(k, u); cjs = cjs.replace(k, u); chtml = chtml.replace(k, u); h = h.replace(k, u)
     edjs = [(n, t.replace(k, u)) for n, t in edjs]
+# S34: slides institucionais A&M — specs JSON em inst/*.json (imagens relativas viram data:) entram em ed-45-institucional.js no lugar de /*%%INST_SPECS%%*/null
+import json
+INST = {}
+for name in ('cover', 'map', 'clients', 'spheres', 'chain'):
+    p = os.path.join('inst', name + '.json')
+    if not os.path.exists(p): continue
+    spec = json.load(open(p, encoding='utf-8'))
+    def inl(src):
+        if not src or src.startswith('data:'): return src
+        f = os.path.join('inst', src); ext = os.path.splitext(f)[1].lower()
+        mime = 'image/jpeg' if ext in ('.jpg', '.jpeg') else 'image/svg+xml' if ext == '.svg' else 'image/' + ext.lstrip('.')
+        return 'data:' + mime + ';base64,' + base64.b64encode(open(f, 'rb').read()).decode()
+    if spec.get('bgImg'): spec['bgImg'] = inl(spec['bgImg'])
+    for e in spec.get('els', []):
+        if e.get('type') == 'image' and e.get('src'): e['src'] = inl(e['src'])
+    INST[name] = spec
+if INST:
+    lit = json.dumps(INST, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    edjs = [(n, t.replace('/*%%INST_SPECS%%*/null', lit)) for n, t in edjs]
 # ';' entre arquivos: um arquivo terminado em "})(window.AMRT)" sem ponto e vírgula não vira chamada do próximo
 rt = rd('runtime.js') + ''.join('\n;/* ---- %s ---- */\n' % f + rd(f) for f in RTJS)
 css = rd('runtime.css') + ''.join('\n/* ---- %s ---- */\n' % f + rd(f) for f in RTCSS)

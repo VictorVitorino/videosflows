@@ -22,7 +22,7 @@
   /* o kit vale para o que o usuário insere na obra aberta (addEl, addSlide, blocos, texto no clique): mk* continuam puros, porque também
      montam modelos, prévias e outras obras (capa, Minhas obras) enquanto esta está aberta. kitSlide: aplica e regrava a base (Redefinir) */
   function kitify(el) { var b = brand(); if (!b || !el) return el; if (b.font && (el.type === 'text' || el.type === 'shape')) el.font = b.font; if (b.pal && palOk(el)) el.pal = clone(b.pal); return el; }
-  function kitSlide(s) { if (brand() && s && s.els) { s.els.forEach(kitify); stampSlide(s); } return s; }
+  function kitSlide(s) { if (brand() && s && s.els && !(LAYOUTS[s.layout] && LAYOUTS[s.layout].inst)) { s.els.forEach(kitify); stampSlide(s); } return s; } /* slides institucionais (S34) ficam no padrão oficial, sem o kit */
   /* fontes que um JSON (obra, slides, elementos) usa: textos, formas, componentes com campo de fonte e a do kit */
   function fontsIn(s) { var out = {}, re = /"font":"([^"\\]{1,40})"/g, m; while ((m = re.exec(s))) out[m[1]] = 1; return Object.keys(out); }
   function deckFonts(d) { return fontsIn(JSON.stringify(d || deck)); }
@@ -204,6 +204,7 @@
   function mkSlide(layout) {
     if (!LAYOUTS.hasOwnProperty(layout)) layout = 'blank-light';
     var L = LAYOUTS[layout], o = { id: uid(), bg: L.bg, tr: 'fade', layout: layout, els: L.els() }; if (layout === 'section') o.kind = 'section';
+    if (L.bgImg) { o.bgImg = L.bgImg; o.bgImgOp = L.bgImgOp == null ? 1 : L.bgImgOp; } /* S34: layout com imagem de fundo (slides institucionais) */
     return stampSlide(o); /* S21: posições e formatos originais para “Redefinir slide” */
   }
   /* ---------- Redefinir slide (S21) ----------
@@ -937,6 +938,7 @@
         '<div class="row r1"><button class="btnw ic" data-act="autonotes">' + svgI('fx') + 'Gerar resumo automático</button></div><div class="row r1"><button class="btnw ic" data-act="viewnotes">' + svgI('zoom') + 'Ver na apresentação</button></div>' +
         '<p class="note">Na apresentação e no arquivo salvo, <b>Sobre este slide</b> (tecla <b>I</b>) mostra este resumo' + (s.notes ? '' : ' — sem texto, o apresentador gera um automático') + '; <b>G</b> abre o índice com todos os slides; o capítulo vira um botão da linha do tempo e vale até o próximo capítulo.</p></div>';
       h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button><button class="btnw ic" data-act="brandkit" title="Cores e fonte desta apresentação">' + svgI('palette') + 'Kit de marca…</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
+      if (hasInst()) h += '<div class="sec"><h3>Slides institucionais A&amp;M</h3><div class="row r1"><button class="btnw pri ic" data-act="inst">' + svgI('brand') + 'Inserir os 5 slides institucionais</button></div><p class="note">Capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, logo depois deste slide. Um Ctrl+Z tira o bloco.</p></div>'; /* S34 */
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
@@ -1586,6 +1588,7 @@
     if (a === 'zoomview') { if (!el) return; present(cur, s.hidden === true); if (player && player.zoom) player.zoom.open(el.id); return; }
     if (a === 'pvel') return previewEl(el);
     if (a === 'brandkit') { openBrandKit(document.activeElement); return; } /* S29 */
+    if (a === 'inst') { if (hasInst()) insertSeq('inst'); return; } /* S34 */
     if (a === 'unlink-a1' || a === 'unlink-a2') { if (!el || !el[a.slice(7)]) return; delete el[a.slice(7)]; commit(); renderProps(); toast('Ponta solta · Ctrl+Z desfaz'); return; } /* S32 */
     if (a === 'palreset') { if (!el || !el.pal) return; delete el.pal; rerenderEl(el); renderProps(); commit(); toast('Cores A&M restauradas neste elemento · Ctrl+Z desfaz'); return; }
     if (a === 'gallery') return openGallery('in');
@@ -1717,8 +1720,15 @@
     else if (b.dataset.open) toggleMenu(b.dataset.open, $('#bCharts') || b); /* “Gráficos ▾” › SmartArt: troca para o seletor de layouts */
     else if (b.dataset.line) addEl(mkLinePreset(b.dataset.line, dark()));
     else if (b.dataset.layout) addSlide(b.dataset.layout);
+    else if (b.dataset.seq) insertSeq(b.dataset.seq); /* S34: bloco pronto no seletor “Novo slide” */
   });
-  $('#mSlide').innerHTML = '<div class="mh">Escolha o layout</div>' + Object.keys(LAYOUTS).map(function (k) { return '<button data-layout="' + k + '"><span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>' + LAYOUTS[k].name + '</button>'; }).join('');
+  /* seletor “Novo slide”: layouts visíveis (os ocultos, como os institucionais, entram só pelo bloco) + blocos prontos marcados para o seletor (SEQS[i][3]) */
+  function buildSlidePicker() {
+    var vis = Object.keys(LAYOUTS).filter(function (k) { return !LAYOUTS[k].hidden; }), sq = (typeof SEQS !== 'undefined' && SEQS || []).filter(function (s) { return s[3]; });
+    $('#mSlide').innerHTML = '<div class="mh">Escolha o layout</div>' + vis.map(function (k) { return '<button data-layout="' + k + '"><span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>' + LAYOUTS[k].name + '</button>'; }).join('') +
+      (sq.length ? '<div class="mh">Bloco pronto</div>' + sq.map(function (s) { return '<button data-seq="' + s[0] + '" title="' + esc(s[2].map(function (k) { return LAYOUTS[k] ? LAYOUTS[k].name.replace(/^Institucional · /, '') : k; }).join(' · ')) + '"><span class="mi-sw" style="background:#002A46"></span>' + esc(s[1]) + ' · ' + s[2].length + ' slides</button>'; }).join('') : '');
+  }
+  buildSlidePicker();
   /* galeria “Gráficos ▾” (e Inserir › Gráfico ▸): os gráficos do runtime (rt-30-charts.js + bars, linechart, donut, gauge), em três grupos */
   var CH_IC = { columns: '<path d="M4 20h16"/><path d="M6 17v-6h3v6M10.5 17V5h3v12M15 17v-8h3v8"/>', bars: '<path d="M4 20h16"/><path d="M7 16V9M12 16V5M17 16v-4"/>', hbars: '<path d="M4 4v16"/><path d="M4 7h13M4 12h9M4 17h5"/>',
     waterfall: '<path d="M3 20h18"/><path d="M4 18V7h3v11M9.5 7V4h3v3M14 7v6h3V7M19 13v5"/>', linechart: '<path d="M4 20h16"/><path d="M4 15l5-6 4 3 7-8"/>', donut: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/><path d="M12 4v4.8M18.9 9.5l-4.4 1.6"/>',
@@ -3226,11 +3236,12 @@
   }
   function cardLookItems() { return LOOKS.slice(1).map(function (l) { return { t: l[1], raw: lookSvg(l[0], 'shp'), fn: function () { addEl(mkCard(l[0], dark())); } }; }); }
   function lineItems() { var out = []; LINE_PRESETS.forEach(function (p) { if (p[3]) out.push({ hd: p[3] }); out.push({ t: p[1], raw: linePrev(p[0], 'xln').replace('<svg ', '<svg class="shp lnp" '), fn: function () { addEl(mkLinePreset(p[0], dark())); } }); }); out.cls = 'xwide'; return out; }
-  function layoutItems(after) { return Object.keys(LAYOUTS).map(function (k) { return { t: LAYOUTS[k].name, raw: '<span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>', fn: function () { addSlide(k); } }; }); }
+  function layoutItems(after) { return Object.keys(LAYOUTS).filter(function (k) { return !LAYOUTS[k].hidden; }).map(function (k) { return { t: LAYOUTS[k].name, raw: '<span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>', fn: function () { addSlide(k); } }; }); }
+  function hasInst() { return SEQS.some(function (s) { return s[0] === 'inst'; }); }
   function brandItems() {
-    return [{ hd: 'Logos' }, { t: 'A&M Performance (branco)', raw: '<span class="mi-sw" style="background:#002A46"></span>', fn: function () { insertBrand('perfW'); } }, { t: 'A&M Performance (navy)', raw: '<span class="mi-sw" style="background:#fff"></span>', fn: function () { insertBrand('perfN'); } },
+    return (hasInst() ? [{ hd: 'Slides institucionais' }, { t: 'Inserir os 5 slides institucionais', ic: 'brand', tip: 'Capa, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, depois do slide atual', fn: function () { insertSeq('inst'); } }] : []).concat([{ hd: 'Logos' }, { t: 'A&M Performance (branco)', raw: '<span class="mi-sw" style="background:#002A46"></span>', fn: function () { insertBrand('perfW'); } }, { t: 'A&M Performance (navy)', raw: '<span class="mi-sw" style="background:#fff"></span>', fn: function () { insertBrand('perfN'); } },
       { t: 'Alvarez & Marsal (branco)', raw: '<span class="mi-sw" style="background:#002A46"></span>', fn: function () { insertBrand('wmW'); } }, { t: 'Alvarez & Marsal (navy)', raw: '<span class="mi-sw" style="background:#fff"></span>', fn: function () { insertBrand('wmN'); } },
-      { hd: 'Elementos' }, { t: 'Linhas diagonais A&M', ic: 'brand', fn: function () { insertFx('amlines'); } }, { t: 'Traço laranja', raw: '<span class="mi-sw" style="background:linear-gradient(120deg,#fff 45%,#F78C16 45%,#F78C16 55%,#fff 55%)"></span>', fn: function () { insertBrand('slash'); } }];
+      { hd: 'Elementos' }, { t: 'Linhas diagonais A&M', ic: 'brand', fn: function () { insertFx('amlines'); } }, { t: 'Traço laranja', raw: '<span class="mi-sw" style="background:linear-gradient(120deg,#fff 45%,#F78C16 45%,#F78C16 55%,#fff 55%)"></span>', fn: function () { insertBrand('slash'); } }]);
   }
   /* mesmos itens do menu "Cards" da faixa de ferramentas */
   /* S30/S31: componentes interativos da apresentação (formulário; depois post-its, votação, cronômetro) */
@@ -3657,7 +3668,7 @@
     newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind, insertSeq: insertSeq, SEQS: SEQS,
     /* S29: kit de marca (ed-43-brand.js usa) */
     brand: { get: brand, set: setBrand, safe: safeBrand, kitify: kitify, applyFont: brandApplyFont, applyPal: brandApplyPal, fonts: fontOpts, GFONTS: GFONTS, SYS_FONTS: SYS_FONTS, ensureFonts: ensureFonts, fontLink: fontLink, open: openBrandKit, palOk: palOk, SW: SW },
-    pickImage: pickImage, confirmBox: confirmBox, insertText: insertText, dupSlide: dupSlide,
+    pickImage: pickImage, confirmBox: confirmBox, insertText: insertText, dupSlide: dupSlide, rebuildSlidePicker: buildSlidePicker,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },

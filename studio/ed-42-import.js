@@ -832,6 +832,7 @@
     var rep = report(ctx, slides);
     if (opts.mode === 'append') { var n = A.appendSlides(slides); rep.added = n; rep.replaced = false; }
     else { var d = A.newDeck(); d.title = title; d.slides = slides; var bk = brandOf(ctx, name); if (bk) d.brand = bk; if (!A.loadDeck(d, null)) throw new Error('a apresentação lida não passou na validação'); rep.added = A.deck.slides.length; rep.replaced = true; }
+    rep.inst = window.AMInst && window.AMInst.scan ? window.AMInst.scan(rep.replaced ? 0 : A.deck.slides.length - rep.added, rep.added) : []; /* S34: slides institucionais reconhecidos → troca pelos oficiais */
     return rep;
   }
   /* S29: kit de marca a partir do tema do arquivo (acentos, dk2, lt2, dk1, sem o branco) e a fonte de corpo do tema; só ao substituir a obra */
@@ -890,6 +891,7 @@
       if (x.dataset.x === 'bk') { if (st && st.busy) return; closeDialog(); }
       else if (x.dataset.x === 'close') { if (st && st.busy) cancelRun(); else closeDialog(); }
       else if (x.dataset.x === 'cancel') { if (st && st.busy) cancelRun(); else closeDialog(); }
+      else if (x.dataset.x === 'inst') { var li = st && st.rep && st.rep.inst || []; if (!li.length || !window.AMInst) return; var nr = window.AMInst.replace(li); x.disabled = true; x.textContent = nr + (nr === 1 ? ' slide trocado' : ' slides trocados') + ' · Ctrl+Z desfaz'; }
     });
     $('form', dlg).addEventListener('submit', function (e) { e.preventDefault(); if (st.done) closeDialog(); else run(); });
   }
@@ -983,9 +985,11 @@
     });
   }
   function showReport(rep, file, kind, ms) {
-    $('#xmOpts').hidden = true; var r = $('#xmRep'); r.hidden = false;
+    $('#xmOpts').hidden = true; var r = $('#xmRep'); r.hidden = false; if (st) st.rep = rep;
+    var inst = rep.inst || [];
     r.innerHTML = '<h4>' + (rep.replaced ? 'Apresentação importada' : 'Slides adicionados ao final') + ' <small>' + esc(file.name) + ' · ' + (ms / 1000).toFixed(1).replace('.', ',') + ' s</small></h4>' +
       '<ul class="xm-ok">' + rep.lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
+      (inst.length ? '<div class="xm-inst"><b>' + inst.length + (inst.length === 1 ? ' slide institucional reconhecido' : ' slides institucionais reconhecidos') + '</b> (' + inst.map(function (o) { return esc(o.name); }).join(', ') + '). <button type="button" class="xp-btn sm" data-x="inst">Usar os modelos oficiais</button><p class="note">Troca esses slides, no mesmo lugar, pela versão oficial do Canteiro, que nunca perde o padrão. Um Ctrl+Z desfaz.</p></div>' : '') +
       (rep.warns.length ? '<h5>Atenção</h5><ul class="xm-warn">' + rep.warns.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' : '') +
       '<p class="note">' + (kind === 'pptx' ? 'Animações e transições do PowerPoint não foram lidas: use o painel “Animação” do Canteiro para dar vida aos slides.' : 'O fundo de cada slide é a página sem o texto. Para trocar o fundo, use o painel do slide.') + ' Confira os slides no painel à esquerda e salve com Ctrl+S.</p>';
     $('#xmGo').textContent = 'Concluir'; $('#xmGo').disabled = false; $('#xmCancel').hidden = true; $('#xmGo').focus();
