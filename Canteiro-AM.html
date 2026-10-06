@@ -1261,6 +1261,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .menu button:hover{background:#EEF2F7}
 .menu button small{margin-left:auto;color:var(--mut);font-size:11px}
 .menu .mh{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:8px 10px 4px}
+/* S28: 13 layouts no seletor “Novo slide” — duas colunas para caber a 1280×720 */
+#mSlide{width:460px;display:none;grid-template-columns:1fr 1fr;gap:2px}#mSlide.open{display:grid}#mSlide .mh{grid-column:1/-1}#mSlide button{padding:7px 9px}
 .menu .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .menu .grid button{flex-direction:column;gap:4px;padding:8px 4px;font-size:11px;text-align:center}
 .menu .grid svg{width:42px;height:28px}
@@ -5527,6 +5529,61 @@ window.AMRT = (function () {
         mkFx('counter', { x: 856, y: 200, w: 370, h: 220, data: { label: 'Adoção pelas áreas', value: 68, decimals: 0, prefix: '', suffix: '%', sub: 'meta de 75%', bar: 68, style: 'light' }, anim: { in: 'rise', delay: 500, dur: 700, loop: 'none', hover: 'lift' } }),
         mkFx('quote', { x: 54, y: 480, w: 1172, h: 80, data: { text: 'Mensagem-chave do slide: o que o comitê precisa decidir a partir destes números.', style: 'ice' }, anim: { in: 'wipe', delay: 900, dur: 900, loop: 'none', hover: 'none' } })];
     } },
+    /* S28: layouts prontos e editáveis (agenda, resumo executivo, painel, roadmap, comparativo, próximos passos) — mesmos componentes do Canteiro */
+    agenda: { name: 'Agenda', bg: '#FFFFFF', els: function () {
+      var els = [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'AGENDA', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 60, html: 'O que vamos ver hoje', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } })];
+      [['Contexto e objetivos', 'Por que estamos aqui e o que queremos decidir', '10 min'], ['Diagnóstico', 'O que os dados e as entrevistas mostram', '20 min'], ['Recomendações', 'Caminhos possíveis e a proposta', '20 min'], ['Próximos passos', 'Decisões, responsáveis e prazos', '10 min']].forEach(function (it, i) {
+        var y = 170 + i * 110, d = 200 + i * 120;
+        els.push(mkText('number', { x: 54, y: y, w: 90, h: 50, html: '0' + (i + 1), size: 44, lh: 1, color: i === 0 ? '#F78C16' : '#7EA1C3', anim: { in: 'fade', delay: d } }));
+        els.push(mkText('body', { x: 160, y: y + 2, w: 820, h: 32, html: it[0], font: 'Roboto', size: 24, color: '#002A46', lh: 1.2, anim: { in: 'fade', delay: d } }));
+        els.push(mkText('body', { x: 160, y: y + 40, w: 820, h: 26, html: it[1], font: 'Inter', size: 15, color: '#6B7A90', lh: 1.3, anim: { in: 'fade', delay: d + 60 } }));
+        els.push(mkText('eyebrow', { x: 1006, y: y + 12, w: 220, h: 22, html: it[2], align: 'right', size: 14, ls: .06, color: '#43698F', anim: { in: 'fade', delay: d + 60 } }));
+        if (i < 3) els.push(Object.assign(mkLine(false, false), { x1: 54, y1: y + 92, x2: 1226, y2: y + 92, stroke: '#DCE3EC', strokeW: 1, anim: { in: 'none' } }));
+      });
+      return els;
+    } },
+    exec: { name: 'Resumo executivo', bg: '#FFFFFF', els: function () {
+      return [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'RESUMO EXECUTIVO', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 90, html: 'A mensagem principal em uma frase: o que recomendamos e por quê', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } }),
+        mkFx('cardgrid', { x: 54, y: 180, w: 1172, h: 300, data: { cards: [{ tag: '01', t: 'Situação', x: 'Onde estamos e o que mudou no contexto.' }, { tag: '02', t: 'Complicação', x: 'O que impede o resultado hoje.' }, { tag: '03', t: 'Resposta', x: 'A proposta e o que ela entrega.' }], style: 'light' }, anim: { in: 'rise', delay: 200, dur: 700, loop: 'none', hover: 'lift' } }),
+        mkFx('quote', { x: 54, y: 520, w: 1172, h: 80, data: { text: 'Decisão pedida ao comitê: aprovar a onda 1 e nomear os responsáveis.', style: 'ice' }, anim: { in: 'wipe', delay: 800, dur: 900, loop: 'none', hover: 'none' } })];
+    } },
+    dashboard: { name: 'Painel de indicadores', bg: '#FFFFFF', els: function () {
+      var K = [['Receita', 128, 'R$ ', ' mi', '+12% vs. plano', 72], ['Margem EBITDA', 23.4, '', '%', 'meta 25%', 60], ['NPS', 62, '', '', '+8 pontos', 62], ['Entregas no prazo', 91, '', '%', '34 de 37', 91]];
+      return [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'PAINEL EXECUTIVO', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 60, html: 'Indicadores do mês em um só painel', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } })].concat(K.map(function (k, i) {
+          return mkFx('counter', { x: 54 + i * 298, y: 140, w: 280, h: 150, data: { label: k[0], value: k[1], decimals: k[1] % 1 ? 1 : 0, prefix: k[2], suffix: k[3], sub: k[4], bar: k[5], style: 'light' }, anim: { in: 'rise', delay: 150 + i * 120, dur: 700, loop: 'none', hover: 'lift' } });
+        }), [mkFx('columns', { x: 54, y: 320, w: 700, h: 330, anim: { in: 'rise', delay: 600, dur: 700, loop: 'none', hover: 'none' } }), mkFx('bullet', { x: 790, y: 320, w: 436, h: 330, anim: { in: 'rise', delay: 750, dur: 700, loop: 'none', hover: 'none' } })]);
+    } },
+    roadmap: { name: 'Roadmap', bg: '#FFFFFF', els: function () {
+      return [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'ROADMAP', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 60, html: 'Três ondas até o modelo-alvo', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } }),
+        mkText('body', { x: 54, y: 120, w: 1170, h: 28, html: 'Cada onda entrega valor por si; as frentes andam em paralelo com um comitê mensal.', font: 'Roboto', size: 18, color: '#43698F', lh: 1.3, anim: { in: 'fade', delay: 150 } }),
+        mkFx('roadmap', { x: 54, y: 170, w: 1172, h: 440, anim: { in: 'rise', delay: 300, dur: 700, loop: 'none', hover: 'none' } }),
+        mkText('body', { x: 54, y: 640, w: 1000, h: 24, html: 'Marcos em laranja = decisões do comitê · Edite as ondas, frentes e itens no painel à direita.', font: 'Inter', size: 12, color: '#6B7A90', lh: 1.3 })];
+    } },
+    compare: { name: 'Comparativo', bg: '#FFFFFF', els: function () {
+      return [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'OPÇÕES', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 60, html: 'Duas opções lado a lado', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } }),
+        mkFx('card', { x: 54, y: 160, w: 560, h: 400, data: { tag: 'OPÇÃO A', title: 'Manter o modelo atual', text: 'Menor esforço e risco de mudança; mantém os gargalos de hoje e adia o ganho de escala.', style: 'light' }, anim: { in: 'left', delay: 200, dur: 700, loop: 'none', hover: 'lift' } }),
+        mkFx('card', { x: 666, y: 160, w: 560, h: 400, data: { tag: 'OPÇÃO B · RECOMENDADA', title: 'Nova estrutura em ondas', text: 'Investimento concentrado na onda 1, ganhos a partir do 2º semestre e governança única desde o início.', style: 'dark' }, anim: { in: 'right', delay: 350, dur: 700, loop: 'none', hover: 'lift' } }),
+        mkFx('quote', { x: 54, y: 590, w: 1172, h: 80, data: { text: 'Recomendação: Opção B, com a onda 1 iniciada ainda neste trimestre.', style: 'ice' }, anim: { in: 'wipe', delay: 800, dur: 900, loop: 'none', hover: 'none' } })];
+    } },
+    next: { name: 'Próximos passos', bg: '#FFFFFF', els: function () {
+      var els = [mkText('eyebrow', { x: 54, y: 30, w: 760, h: 22, html: 'PRÓXIMOS PASSOS', color: '#4A6FA5' }), mkBrand('wmN', { x: 1098, y: 30, w: 128, h: 21 }),
+        mkText('title', { x: 54, y: 60, w: 1170, h: 60, html: 'O que acontece a partir de hoje', size: 32, weight: 400, color: '#002A46', anim: { in: 'fade' } }),
+        mkFx('timeline', { x: 54, y: 150, w: 1172, h: 210, data: { items: 'Semana 1 | Validar o plano\nSemana 2 | Nomear os responsáveis\nMês 1 | Iniciar a onda 1\nMês 3 | Primeira revisão', current: 0, style: 'clear', tcolor: '#002A46' }, anim: { in: 'draw', delay: 200, dur: 900, loop: 'none', hover: 'none' } })];
+      [['Validar o plano com a diretoria', 'Patrocinador', 'até sexta'], ['Nomear os líderes de cada frente', 'PMO', '2 semanas'], ['Abrir a onda 1 com o kickoff', 'Equipe A&M', 'mês 1']].forEach(function (r, i) {
+        var y = 400 + i * 80, d = 500 + i * 150;
+        els.push(Object.assign(mkShape('round', false), { x: 54, y: y, w: 1172, h: 64, fill: i === 0 ? '#EEF2F7' : '#FFFFFF', stroke: '#DCE5F0', strokeW: 1.5, radius: 12, html: '', anim: { in: 'rise', delay: d, dur: 600 } }));
+        els.push(mkText('number', { x: 74, y: y + 10, w: 60, h: 44, html: String(i + 1), size: 36, lh: 1.2, color: '#F78C16', anim: { in: 'fade', delay: d + 100 } }));
+        els.push(mkText('body', { x: 140, y: y + 18, w: 700, h: 30, html: r[0], font: 'Roboto', size: 21, color: '#002A46', lh: 1.2, anim: { in: 'fade', delay: d + 100 } }));
+        els.push(mkText('eyebrow', { x: 860, y: y + 22, w: 200, h: 22, html: r[1], size: 13, ls: .06, color: '#43698F', anim: { in: 'fade', delay: d + 150 } }));
+        els.push(mkText('eyebrow', { x: 1060, y: y + 22, w: 146, h: 22, html: r[2], align: 'right', size: 13, ls: .06, color: '#F78C16', anim: { in: 'fade', delay: d + 150 } }));
+      });
+      return els;
+    } },
     closing: { name: 'Encerramento', bg: '#002A46', els: function () {
       return [mkBrand('perfW', { x: 54, y: 44 }), mkFx('amlines', { x: 700, y: 0, w: 580, h: 720 }),
         mkFx('headline', { x: 54, y: 300, w: 760, h: 110, data: { text: 'Obrigado.', hl: '', size: 72, color: '#FFFFFF', font: 'Roboto', weight: 300 } }),
@@ -6989,6 +7046,16 @@ window.AMRT = (function () {
   function chartItems() { var out = []; CH_GROUPS.forEach(function (g) { var ks = g[1].filter(function (k) { return RT.FX[k]; }); if (!ks.length) return; out.push({ hd: g[0] }); ks.forEach(function (k) { out.push({ t: RT.FX[k].name, raw: chartIcon(k, 'icx'), fn: function () { var ne = insertFx(k); toast('Gráfico inserido. Edite os dados no painel à direita.'); setTimeout(function () { previewEl(ne); }, 250); } }); }); }); return out; }
   $('#addSlide').addEventListener('click', function (e) { var m = $('#mSlide'), open = m.classList.contains('open'); closeMenus(); if (open) return; var r = e.currentTarget.getBoundingClientRect(); m.style.left = (r.left) + 'px'; m.style.top = Math.max(60, r.top - 330) + 'px'; m.classList.add('open'); });
   function addSlide(layout) { if (editingId) endEdit(); deck.slides.splice(cur + 1, 0, mkSlide(layout)); cur++; pick([]); renderAll(); commit(); }
+  /* S28: blocos prontos = sequências de layouts, inseridas depois do slide atual (um Ctrl+Z tira o bloco inteiro) */
+  var SEQS = [['proposal', 'Proposta comercial', ['cover', 'agenda', 'content', 'roadmap', 'compare', 'closing']], ['panel', 'Painel executivo', ['section', 'dashboard', 'kpis']], ['roadmap', 'Roadmap de transformação', ['section', 'roadmap', 'next']], ['exec', 'Apresentação executiva', ['cover', 'exec', 'content', 'next', 'closing']]];
+  function insertSeq(key) {
+    var sq = SEQS.filter(function (x) { return x[0] === key; })[0]; if (!sq) return;
+    if (editingId) endEdit(); var ins = sq[2].map(mkSlide);
+    Array.prototype.splice.apply(deck.slides, [cur + 1, 0].concat(ins)); cur++; pick([]); setZone('thumbs'); renderAll(); commit();
+    var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
+    toast(sq[1] + ': ' + ins.length + ' slides inseridos depois do slide ' + cur + ' · Ctrl+Z desfaz');
+  }
+  function seqItems() { return SEQS.map(function (sq) { return { t: sq[1] + ' (' + sq[2].length + ' slides)', ic: 'models', tip: sq[2].map(function (k) { return LAYOUTS[k].name; }).join(' · '), fn: function () { insertSeq(sq[0]); } }; }); }
 
   /* ---------------- ícones animados: seletor “Ícones” (popover .menu.icmenu; não o #modal, que engole Enter, Tab e Ctrl+A) ----------------
      Busca sem acento (todas as palavras), chips por tema, grade de 6 colunas com prévia do movimento ao passar o mouse,
@@ -8493,7 +8560,7 @@ window.AMRT = (function () {
     },
     slide: function () {
       var n = deck.slides.length;
-      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
         { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
@@ -8852,7 +8919,7 @@ window.AMRT = (function () {
     /* API estável para a capa (cover.js) e extensões */
     W: W, H: H, BRAND: BRAND, LAYOUTS: LAYOUTS, uid: uid, clone: clone, toast: toast,
     mk: { slide: mkSlide, text: mkText, shape: mkShape, line: mkLine, image: mkImage, brand: mkBrand, fx: mkFx },
-    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind,
+    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind, insertSeq: insertSeq, SEQS: SEQS,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },

@@ -55,6 +55,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .menu button:hover{background:#EEF2F7}
 .menu button small{margin-left:auto;color:var(--mut);font-size:11px}
 .menu .mh{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);padding:8px 10px 4px}
+/* S28: 13 layouts no seletor “Novo slide” — duas colunas para caber a 1280×720 */
+#mSlide{width:460px;display:none;grid-template-columns:1fr 1fr;gap:2px}#mSlide.open{display:grid}#mSlide .mh{grid-column:1/-1}#mSlide button{padding:7px 9px}
 .menu .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .menu .grid button{flex-direction:column;gap:4px;padding:8px 4px;font-size:11px;text-align:center}
 .menu .grid svg{width:42px;height:28px}
