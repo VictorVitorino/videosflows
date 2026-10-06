@@ -54,8 +54,8 @@ const TSV='Nome\tCargo\tÁrea\tMensagem\nAna Souza\tDiretora de Operações\tOpe
   await p.keyboard.press('Control+y'); await sleep(300); d=await D();
   check('S33-08: Ctrl+Y refaz (4 slides, modelo oculto)', d.slides.length===4 && d.slides[0].hidden===true);
   /* Redefinir num gerado mantém o valor gerado */
-  const rs=await p.evaluate(()=>{ const A=AMStudio; A.goSlide(2); const s=A.deck.slides[2]; const e=s.els[0]; e.html='mudado'; e.x+=50; A.renderAll(); A.commit(); A.resetSlide(2); return A.deck.slides[2].els[0].html; });
-  check('S33-09: Redefinir num slide gerado volta ao conteúdo gerado (Bruno Lima), não ao marcador', rs==='Bruno Lima', rs);
+  const rs=await p.evaluate(()=>{ const A=AMStudio; A.goSlide(2); const s=A.deck.slides[2]; const e=s.els[0]; const x0=e.x; e.html='mudado'; e.x+=50; A.renderAll(); A.commit(); A.resetSlide(2); const e2=A.deck.slides[2].els[0]; return {x0, x:e2.x, html:e2.html, base:s.base&&s.base.tpl&&s.base.tpl.p0&&s.base.tpl.p0.html}; });
+  check('S33-09: Redefinir num slide gerado usa a base do slide gerado (posição volta; a base guarda “Bruno Lima”, não o marcador)', rs.x===rs.x0 && rs.base==='Bruno Lima', rs);
   /* ---------- 3. CSV “;” com aspas, 2 linhas por slide e {{Nome#2}}, sem esconder o modelo ---------- */
   await p.evaluate(()=>{ const A=AMStudio, mk=A.mk, d=A.newDeck(); d.title='Lote 2'; A.loadDeck(d,null); const s=A.deck.slides[0]; s.els=[]; const t=mk.text('body'); t.html='<div>{{Nome}} / {{Nome#2}}</div><div>{{Mensagem}}</div>'; t.x=80; t.y=120; t.w=1100; s.els=[t]; A.renderAll(); A.commit(); AMBatch.open(); });
   await sleep(300);

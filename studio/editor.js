@@ -3510,10 +3510,11 @@
   /* S24: importar PowerPoint/PDF (ed-42-import.js): a caixa de importação decide entre substituir e acrescentar */
   function importPicker() { if (editingId) endEdit(); flush(); closeMenus(); if (window.AMImport) window.AMImport.pick($('#mbar button[data-m=file]')); else toast('Importação indisponível'); }
   /* slides importados entram no fim, validados como um arquivo aberto (safeSlide), com base para “Redefinir”; um passo de Ctrl+Z */
-  function appendSlides(list, at) { /* at (S33): posição de inserção (padrão: fim); o primeiro slide inserido vira o atual */
+  function appendSlides(list, at, before) { /* at (S33): posição de inserção (padrão: fim); o primeiro slide inserido vira o atual; before(): mudança que entra no mesmo passo de desfazer (ex.: ocultar o modelo) */
     if (editingId) endEdit(); flush();
     var ins = (Array.isArray(list) ? list : []).map(safeSlide).filter(Boolean).map(freshSlide).map(function (s) { return s.base ? s : stampSlide(s); });
     if (!ins.length) return 0;
+    if (typeof before === 'function') { try { before(); } catch (er) { } }
     at = at == null || !isFinite(+at) ? deck.slides.length : Math.max(0, Math.min(deck.slides.length, +at | 0));
     Array.prototype.splice.apply(deck.slides, [at, 0].concat(ins)); cur = at; pick([]); ensureFonts(fontsIn(JSON.stringify(ins))); renderAll(); commit();
     var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });

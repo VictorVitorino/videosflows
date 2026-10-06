@@ -140,11 +140,10 @@
   }
   function run() {
     var A = S(); if (!st || !st.table || !st.table.rows.length || !st.toks.length) return;
-    var tpl = A.deck.slides[st.tplIdx], list = build(tpl, st.table, { per: st.per });
-    if ($('#btHide').checked) tpl.hidden = true; /* no mesmo passo de desfazer que a inserção (appendSlides grava) */
-    var n = A.appendSlides(list, st.tplIdx + 1);
+    var tpl = A.deck.slides[st.tplIdx], list = build(tpl, st.table, { per: st.per }), hide = $('#btHide').checked, rows = st.table.rows.length;
+    var n = A.appendSlides(list, st.tplIdx + 1, function () { if (hide) tpl.hidden = true; }); /* ocultar o modelo entra no mesmo passo de desfazer que a inserção */
     close();
-    toast(n + (n === 1 ? ' slide gerado' : ' slides gerados') + ' a partir de ' + st.table.rows.length + (st.table.rows.length === 1 ? ' linha' : ' linhas') + ($('#btHide').checked ? ' · o modelo ficou oculto' : '') + ' · Ctrl+Z desfaz');
+    toast(n + (n === 1 ? ' slide gerado' : ' slides gerados') + ' a partir de ' + rows + (rows === 1 ? ' linha' : ' linhas') + (hide ? ' · o modelo ficou oculto' : '') + ' · Ctrl+Z desfaz');
   }
   function open(opener) {
     var A = S(); if (!A) return;
