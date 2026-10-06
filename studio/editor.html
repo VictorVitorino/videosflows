@@ -46,6 +46,8 @@ input,select,textarea{font:inherit;color:var(--ink)}
 .rb.accent{background:var(--navy);color:#fff}
 .rb.accent:hover,.rb.accent.open{background:#0B3A63}
 .rb.accent svg{stroke:var(--orange)}
+.rb.inst{border:1.5px solid var(--orange);color:var(--navy);background:#FFF7EE}.rb.inst:hover,.rb.inst:focus-visible{background:#FFE9D1}.rb.inst svg{stroke:var(--orange)}.rb.inst[hidden]{display:none}
+#mSlide button[data-seq]{grid-column:1/-1;border:1.5px solid var(--orange);background:#FFF7EE;font-weight:700}#mSlide button[data-seq]:hover,#mSlide button[data-seq]:focus-visible{background:#FFE9D1}#mSlide button[data-seq] .mi-sw{background:var(--orange)!important}
 .rb .car{width:10px;height:10px;stroke-width:2.5;opacity:.6}
 .rb[disabled]{opacity:.35;pointer-events:none}
 .menu{position:fixed;z-index:40;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:var(--r-pop);box-shadow:0 16px 40px rgba(0,30,50,.18);padding:6px;display:none}
@@ -619,10 +621,11 @@ kbd.k.m{background:#fff;border:1px dashed #A3B8D6;color:var(--steel2);font-weigh
 @media (max-width:1560px){.brand .sub2{display:none}}
 @media (max-width:1500px){#bNew .lbl,#bOpen .lbl{display:none}#bNew,#bOpen{width:34px;padding:0;justify-content:center}}
 @media (max-width:1520px){.rb{padding:0 8px}.rg{padding:0 4px}}
-@media (max-width:1420px){#rib .rb .lbl{display:none}#rib .rb .lbs{display:inline}}
-@media (max-width:1600px){#rib #bFront :is(.lbl,.lbs),#rib #bBack :is(.lbl,.lbs),#rib #bDup :is(.lbl,.lbs),#rib #bDel :is(.lbl,.lbs){display:none}#bFront,#bBack,#bDup,#bDel{width:36px;padding:0;justify-content:center}} /* edição só com ícone (a dica fica no title): sobra lugar para Ícones */
+@media (max-width:1640px){#rib .rb .lbl{display:none}#rib .rb .lbs{display:inline}} /* S34b: rótulos curtos até 1640 (antes 1420) para caber o botão Institucional A&M */
+@media (max-width:1800px){#rib #bFront :is(.lbl,.lbs),#rib #bBack :is(.lbl,.lbs),#rib #bDup :is(.lbl,.lbs),#rib #bDel :is(.lbl,.lbs){display:none}#bFront,#bBack,#bDup,#bDel{width:36px;padding:0;justify-content:center}} /* edição só com ícone (a dica fica no title): sobra lugar para Ícones */
 @media (max-width:1366px){.tb .lbl2{display:none}#top{gap:10px}}
-@media (max-width:1240px){#rib #bCharts :is(.lbl,.lbs,.car){display:none}#bCharts{padding:0 8px}} /* Gráficos só com ícone (a dica fica no title): a barra cabe até 1180 px */
+@media (max-width:1300px){#rib #bCharts :is(.lbl,.lbs,.car){display:none}#bCharts{padding:0 8px}} /* Gráficos só com ícone (a dica fica no title) */
+@media (max-width:1380px){#rib #bPreview :is(.lbl,.lbs){display:none}#bPreview{padding:0 8px}} /* S34b: “Apresentar deste slide” só com ícone (Shift+F5 no title) para o rótulo Institucional caber de 1301 a 1380; a barra cabe até 1180 px */ /* Gráficos só com ícone (a dica fica no title): a barra cabe até 1180 px */
 @media (max-width:1300px){#bPlay .lbl{display:none}#bPlay{width:34px;padding:0;justify-content:center}}
 @media (max-width:1180px){.brand .sub{display:none}}
 .hidden{display:none!important}
@@ -658,6 +661,7 @@ kbd.k.m{background:#fff;border:1px dashed #A3B8D6;color:var(--steel2);font-weigh
     <button class="rb" data-menu="mBrand"><svg viewBox="0 0 24 24"><path d="M5 20L12 4l7 16M12 4v16"/></svg><span class="lbl">Marca A&amp;M</span><span class="lbs">Marca</span><svg class="car" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
   </div>
   <div class="rg">
+    <button class="rb inst" id="bInst" title="Inserir os 5 slides institucionais A&amp;M (capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor) depois do slide atual · Ctrl+Z desfaz"><svg viewBox="0 0 24 24"><path d="M5 20L12 4l7 16M12 4v16"/></svg><span class="lbl">Institucional A&amp;M</span><span class="lbs">Institucional</span></button>
     <button class="rb accent" id="bModels" title="Biblioteca de modelos: RACI, mapa de riscos, SWOT, matrizes, gráficos, termômetro, timeline…"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17.5h7M17.5 14v7"/></svg>Modelos</button>
     <button class="rb accent" id="bFx"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg><span class="lbl">Acervo de efeitos</span><span class="lbs">Efeitos</span></button>
   </div>

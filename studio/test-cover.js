@@ -22,13 +22,14 @@ async function open(o={}){
   return {p,ctx};
 }
 const S=p=>p.evaluate(()=>({open:AMCover.isOpen(), view:document.getElementById('cover').dataset.view, gone:document.getElementById('cover').classList.contains('cv-gone'), slides:AMStudio.deck.slides.length, els:AMStudio.deck.slides.reduce((a,s)=>a+s.els.length,0), title:AMStudio.deck.title, drawer:document.getElementById('drawer').classList.contains('open'), banner:document.getElementById('banner').classList.contains('open')}));
-const EXPECT=[['Proposta comercial',7],['Diagnóstico de maturidade',7],['Status report executivo',6],['Kickoff de projeto',6],['Comitê / Workshop',6]];
+const EXPECT=[['Proposta comercial',7],['Diagnóstico de maturidade',7],['Status report executivo',6],['Kickoff de projeto',6],['Comitê / Workshop',6],['Apresentação institucional A&M',7]]; /* S34b: 6º projeto = bloco institucional + conteúdo + encerramento */
 
 /* mede sobreposição e transbordamento no slide atual do editor (coordenadas lógicas 1280×720) */
 async function slideCheck(p){
   return p.evaluate(()=>{
     const st=document.querySelector('#wrap .am-stage'), sr=st.getBoundingClientRect(), k=1280/sr.width;
     const deck=AMStudio.deck, idx=[...document.querySelectorAll('#thumbs .th')].findIndex(t=>t.classList.contains('on')), els=deck.slides[idx].els;
+    if(/^inst-/.test(deck.slides[idx].layout||'')) return []; /* S34b: slides institucionais = arte oficial em camadas (fidelidade medida em test-s34) */
     const L=r=>({x:(r.left-sr.left)*k,y:(r.top-sr.top)*k,r:(r.right-sr.left)*k,b:(r.bottom-sr.top)*k});
     const issues=[], boxes=[];
     els.forEach(el=>{
@@ -96,7 +97,7 @@ async function slideCheck(p){
     const {p,ctx}=await open({tag:'tpl'+t,vp:{width:1440,height:900}});
     if(t%2===0) await p.click('.cv-opt[data-k="2"]'); else await p.keyboard.press('2'); await sleep(900);
     if(t===0){ const info=await p.evaluate(()=>({cards:document.querySelectorAll('.cv-tcard').length, stages:document.querySelectorAll('.cv-tcard .cv-pv .am-stage').length, strip:document.querySelectorAll('#cvStrip .cv-th .am-stage').length, names:[...document.querySelectorAll('.cv-tname')].map(n=>n.textContent), counts:[...document.querySelectorAll('.cv-tn')].map(n=>n.textContent)}));
-      ok('painel com 5 projetos e prévias vivas',info.cards===5&&info.stages===5&&info.strip===7&&info.names.join('|')===EXPECT.map(e=>e[0]).join('|'),info);
+      ok('painel com 6 projetos e prévias vivas',info.cards===6&&info.stages===6&&info.strip===7&&info.names.join('|')===EXPECT.map(e=>e[0]).join('|'),info);
       ok('nº de slides em cada cartão',info.counts.join(',')===EXPECT.map(e=>String(e[1]).padStart(2,'0')+' slides').join(','),info.counts);
       await p.screenshot({path:path.join(SHOTS,'02-projetos-1440x900.png')}); }
     if(t%2===0) await p.click(`.cv-tcard[data-t="${t}"]`); else await p.keyboard.press(String(t+1)); await sleep(1000);

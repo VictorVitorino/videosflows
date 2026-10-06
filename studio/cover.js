@@ -351,6 +351,18 @@
           fim('Obrigado.', '', 'Facilitação · nome@alvarezandmarsal.com')] };
       } }
     ];
+    /* S34b: projeto pronto com o bloco institucional (pedido do usuário: “uma versão institucional dentro de Projetos prontos”).
+       Só entra quando o bloco está carregado (ed-45 roda antes da capa). Os 5 slides oficiais + 1 slide para o conteúdo + encerramento = 7. */
+    if (S.LAYOUTS && S.LAYOUTS['inst-cover']) TPL.push({ name: 'Apresentação institucional A&M', desc: 'Os 5 slides institucionais oficiais, um slide para o seu conteúdo e o encerramento.', build: function () {
+      var ORDER = (window.AMInst && window.AMInst.ORDER) || ['cover', 'map', 'clients', 'spheres', 'chain'];
+      return { title: 'Apresentação institucional A&M', slides: ORDER.map(function (k) { return S.mk.slide('inst-' + k); }).concat([
+        sl('#FFFFFF', head('01 · SEU CONTEÚDO', 'Comece aqui a sua apresentação', 'Os cinco slides anteriores são o bloco institucional oficial — este é o primeiro slide do seu conteúdo.').concat([
+          T('subtitle', { x: 54, y: 190, w: 560, h: 30, html: 'Como usar este modelo', size: 22, anim: fade(200) }),
+          T('bullets', { x: 54, y: 230, w: 580, h: 230, html: '• Textos, logos e indicadores dos 5 slides são editáveis<br>• Troque este slide pelo seu conteúdo (Novo slide, Modelos)<br>• Em outra apresentação, use o botão <b>Institucional A&amp;M</b> da barra<br>• Um Ctrl+Z desfaz a inserção do bloco', size: 18, lh: 1.65, color: '#3E4C5E', anim: rise(300) }),
+          F('card', { x: 680, y: 194, w: 546, h: 266, data: { tag: 'Padrão oficial', title: 'O institucional não quebra', text: 'Capa, presença global, clientes, esferas de atuação e cadeia de valor entram sempre no modelo oficial — também ao importar um .pptx, pelo botão “Usar os modelos oficiais”.', style: 'ice' }, anim: rise(500) }),
+          src('Modelo institucional A&M Performance · substitua este slide pelo seu conteúdo.')])),
+        fim('Obrigado.', '', 'A&M Performance · nome@alvarezandmarsal.com')]) };
+    } });
     function buildTpl(i) { var d = TPL[i].build(); d.v = 1; d.app = 'AM Studio'; if (has('newId')) d.id = S.newId(); return d; } /* cada projeto carregado é uma obra nova, com id próprio */
     var PV = [];
     function pvDeck(i) { return PV[i] || (PV[i] = buildTpl(i)); }

@@ -1,5 +1,7 @@
 /* S34 — Slides institucionais A&M (ed-45-institucional.js + inst/*.json): bloco “Institucional A&M” (5 slides) no seletor “Novo slide”,
    em Slide › Inserir bloco pronto ▸, em Inserir › Marca A&M ▸ e no painel do slide; layouts ocultos (o seletor continua com 13);
+   S34b: botão “Institucional A&M” na barra (cabe de 1180 a 1600), item no menu de contexto da miniatura e no menu Slide, seção no topo do painel,
+   tile destacado no seletor e o 6º projeto pronto da capa “Apresentação institucional A&M” (7 slides);
    fidelidade de cada slide contra a referência (inst/ref-*.png, ±40 por canal); textos editáveis; kit de marca não mexe; um Ctrl+Z;
    salvar/reabrir (imagem de fundo); PDF e PowerPoint Editável; importação: slides reconhecidos pelo título e troca pelos oficiais.
    Uso: python3 assemble.py && node test-s34-institucional.js */
@@ -39,7 +41,7 @@ async function fidelity(p, idx, refFile){ return p.evaluate(async ([i,ref])=>{ c
   /* ---------- 2. seletor “Novo slide”: 13 layouts + 1 tile de bloco, cabe na tela ---------- */
   await p.click('#addSlide'); await sleep(300);
   const pick=await p.evaluate(()=>{ const m=document.getElementById('mSlide'); const r=m.getBoundingClientRect(); const t=m.querySelector('button[data-seq="inst"]'); return {open:m.classList.contains('open'), lay:m.querySelectorAll('button[data-layout]').length, tile:t?t.textContent.trim():null, fits:r.bottom<=innerHeight&&r.right<=innerWidth&&r.top>=0}; });
-  check('S34-02: o seletor mostra os 13 layouts e o tile “Institucional A&M · 5 slides”, cabendo a 1280×720', pick.open && pick.lay===13 && pick.tile==='Institucional A&M · 5 slides' && pick.fits, pick);
+  check('S34-02: o seletor mostra os 13 layouts e o tile “Inserir os 5 slides institucionais”, cabendo a 1280×720', pick.open && pick.lay===13 && pick.tile==='Inserir os 5 slides institucionais' && pick.fits, pick);
   await p.click('#mSlide button[data-seq="inst"]'); await sleep(500);
   let d=await D();
   check('S34-03: o tile insere os 5 slides depois do atual, na ordem capa, mapa, clientes, esferas, cadeia; atual = capa', d.slides.length===6 && d.slides.slice(1).map(s=>s.layout).join()===ORDER.map(k=>'inst-'+k).join() && await p.evaluate(()=>AMStudio.cur)===1, d.slides.map(s=>s.layout));
@@ -114,6 +116,45 @@ prs.save('${mk}')
   check('S34-19: o botão troca os 3 e fica desativado com a contagem', /3 slides trocados/.test(ui2.t) && ui2.dis && ui2.lay[0]==='inst-cover' && ui2.lay[2]==='inst-spheres' && ui2.lay[3]==='inst-clients', ui2);
   await p.keyboard.press('Escape'); await sleep(200);
   await p.evaluate(()=>AMStudio.goSlide(0)); await sleep(300); await p.screenshot({path:SH('editor')});
+  /* ---------- 8. S34b: botão sempre à vista — barra, menu de contexto da miniatura, menu Slide, painel no topo, seletor destacado, projeto pronto ---------- */
+  const q=await open(ctx, FILE+'?nocover', 'ed2'); const Q=()=>q.evaluate(()=>JSON.parse(JSON.stringify(AMStudio.deck)));
+  await q.setViewportSize({width:1440,height:900}); await sleep(300);
+  const tb=await q.evaluate(()=>{ const b=document.getElementById('bInst'); const r=b.getBoundingClientRect(); const lbl=[...b.querySelectorAll('.lbl,.lbs')].find(x=>getComputedStyle(x).display!=='none'); return {hidden:b.hidden, vis:r.width>0&&r.right<=innerWidth, label:lbl?lbl.textContent:null, border:getComputedStyle(b).borderTopColor, before:AMStudio.deck.slides.length}; });
+  await q.click('#bInst'); await sleep(500); let dq=await Q();
+  check('S34-20: a barra de ferramentas tem o botão “Institucional” (laranja, rótulo curto a 1440) e um clique insere os 5 slides depois do atual', !tb.hidden && tb.vis && tb.label==='Institucional' && tb.border==='rgb(247, 140, 22)' && tb.before===1 && dq.slides.length===6 && dq.slides.slice(1).map(s=>s.layout).join()===ORDER.map(k=>'inst-'+k).join() && (await q.evaluate(()=>AMStudio.cur))===1, tb);
+  await q.screenshot({path:SH('barra-1440')});
+  const fit=[];
+  for (const [w,h] of [[1180,720],[1280,720],[1366,768],[1600,900],[1700,900],[1920,1080]]) { await q.setViewportSize({width:w,height:h}); await sleep(250);
+    fit.push(await q.evaluate(([w])=>{ const rib=document.getElementById('rib'), top=document.getElementById('top'), b=document.getElementById('bInst'), r=b.getBoundingClientRect(), s=document.getElementById('bSave').getBoundingClientRect(); const lb=[...b.querySelectorAll('.lbl,.lbs')].find(x=>getComputedStyle(x).display!=='none'); return {w, rib:rib.scrollWidth<=rib.clientWidth+1, top:top.scrollWidth<=top.clientWidth+1, btn:r.width>=30&&r.right<=innerWidth, save:s.right<=innerWidth, label:lb?lb.textContent:null}; },[w])); }
+  check('S34-21: a barra cabe sem transbordar com o botão a 1180/1280/1366/1600/1700/1920 (rótulo “Institucional” até 1640, “Institucional A&M” acima)', fit.every(f=>f.rib&&f.top&&f.btn&&f.save) && fit.slice(0,4).every(f=>f.label==='Institucional') && fit.slice(4).every(f=>f.label==='Institucional A&M'), fit);
+  await q.setViewportSize({width:1280,height:720}); await sleep(250);
+  await q.evaluate(()=>{ AMStudio.loadDeck(AMStudio.newDeck(),null); }); await sleep(250);
+  const th=await q.$('#thumbs .th'); const bb=await th.boundingBox(); await q.mouse.click(bb.x+bb.width/2, bb.y+bb.height/2, {button:'right'}); await sleep(250);
+  const cm=await q.evaluate(()=>[].map.call(document.querySelectorAll('.xmenu .xi'),x=>x.textContent.trim()));
+  const ci=cm.findIndex(t=>/^Inserir slides institucionais A&M/.test(t));
+  await q.screenshot({path:SH('menu-contexto')});
+  await q.locator('.xmenu .xi',{hasText:'Inserir slides institucionais'}).first().click(); await sleep(500); dq=await Q();
+  check('S34-22: o menu de contexto da miniatura tem “Inserir slides institucionais A&M” logo depois de “Novo slide depois”, e insere os 5', cm.filter(t=>/^Inserir slides institucionais/.test(t)).length===1 && ci>0 && /^Novo slide depois/.test(cm[ci-1]) && dq.slides.length===6 && dq.slides[1].layout==='inst-cover', cm);
+  await q.click('#mbar button[data-m=slide]'); await sleep(250);
+  const sm=await q.evaluate(()=>[].map.call(document.querySelectorAll('.xm .xi, .xmenu .xi'),x=>x.textContent.trim()));
+  await q.keyboard.press('Escape'); await sleep(150);
+  check('S34-23: o menu Slide tem um só “Inserir slides institucionais A&M” e continua com um só “Inserir bloco pronto”', sm.filter(t=>/^Inserir slides institucionais A&M/.test(t)).length===1 && sm.filter(t=>/^Inserir bloco pronto/.test(t)).length===1, sm);
+  await q.click('#wrap',{position:{x:5,y:5}}); await q.keyboard.press('Escape'); await sleep(250);
+  const pn=await q.evaluate(()=>{ const b=document.querySelector('[data-act="inst"]'); if(!b) return {missing:true}; let i=0, n=b.closest('.sec'); const sec=n; while((n=n.previousElementSibling)) if(n.classList.contains('sec')) i++; const r=b.getBoundingClientRect(); return {i, title:sec.querySelector('h3').textContent, vis:r.top>=0&&r.bottom<=innerHeight&&r.width>0, scrolled:(b.closest('aside,section,div[id]')||{}).scrollTop||0}; });
+  check('S34-24: no painel do slide a seção “Slides institucionais A&M” fica logo abaixo de Exibição e layout (≤ 3ª seção), com o botão à vista sem rolar a 1280×720', !pn.missing && pn.i<=2 && /Slides institucionais/.test(pn.title) && pn.vis, pn);
+  await q.click('#addSlide'); await sleep(300);
+  const pk2=await q.evaluate(()=>{ const m=document.getElementById('mSlide'); const t=m.querySelector('button[data-seq="inst"]'); const hs=[...m.querySelectorAll('.mh')].map(h=>h.textContent.trim()); return {lay:m.querySelectorAll('button[data-layout]').length, hs, tile:t&&t.textContent.trim(), border:t&&getComputedStyle(t).borderTopColor}; });
+  await q.screenshot({path:SH('seletor')}); await q.keyboard.press('Escape'); await q.click('#wrap',{position:{x:5,y:5}}); await sleep(150);
+  check('S34-25: o seletor “Novo slide” continua com 13 layouts e destaca “Inserir os 5 slides institucionais” (laranja) sob “Slides institucionais A&M”', pk2.lay===13 && pk2.hs[1]==='Slides institucionais A&M' && pk2.tile==='Inserir os 5 slides institucionais' && pk2.border==='rgb(247, 140, 22)', pk2);
+  await q.click('#bHome'); await sleep(900); await q.keyboard.press('2'); await sleep(800);
+  const cv=await q.evaluate(()=>{ const cards=[...document.querySelectorAll('.cv-tcard')]; const c=cards[5]; const cover=document.getElementById('cover'); return {n:cards.length, name:c&&c.querySelector('.cv-tname').textContent, count:c&&c.querySelector('.cv-tn').textContent, stage:!!(c&&c.querySelector('.cv-pv .am-stage')), fits:cover.scrollHeight<=cover.clientHeight+1&&cover.scrollWidth<=cover.clientWidth}; });
+  await q.screenshot({path:SH('capa-projetos')});
+  await q.keyboard.press('6'); await sleep(500);
+  if(await q.evaluate(()=>{ const c=document.getElementById('cvConfirm'); return !!c&&!c.hidden; })) { await q.click('#cvCfOk'); }
+  await sleep(1200); dq=await Q();
+  check('S34-26: Projetos prontos tem o 6º cartão “Apresentação institucional A&M” (07 slides, prévia viva, cabe a 1280×720); a tecla 6 carrega 7 slides: os 5 institucionais, conteúdo e encerramento', cv.n===6 && cv.name==='Apresentação institucional A&M' && cv.count==='07 slides' && cv.stage && cv.fits && dq.slides.length===7 && dq.slides.slice(0,5).map(s=>s.layout).join()===ORDER.map(k=>'inst-'+k).join() && !dq.slides[5].layout && dq.title==='Apresentação institucional A&M', {cv, n:dq.slides.length, title:dq.title});
+  const f6=await fidelity(q, 0, path.join(__dirname,'inst','ref-cover.png'));
+  check('S34-27: a capa do projeto pronto é a oficial (fidelidade ≥ '+MIN.cover+' %)', f6.match>=MIN.cover, {match:f6.match});
   check('Zero erros de console', errs.length===0, errs);
   console.log(results.join('\n'));
   console.log(failed?('FALHAS: '+failed):'TUDO OK', JSON.stringify({checks:results.length,errs}));

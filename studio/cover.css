@@ -140,7 +140,7 @@ html.cv-boot,html.cv-boot body,html.cv-lock,html.cv-lock body{overflow:hidden}
 .cv-pcount{margin-left:auto;font:500 10.5px/1.3 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--s3);text-align:right}
 
 /* projetos prontos */
-.cv-tgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:clamp(12px,1.3vw,20px)}
+.cv-tgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(12px,1.3vw,20px)} /* S34b: 6 projetos (o 6º é o institucional) */
 .cv-tcard{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:rgba(255,255,255,.035);text-align:left;transition:transform .35s var(--e),border-color .25s,box-shadow .35s var(--e),background .25s;animation:cvRise .6s var(--e) backwards;animation-delay:calc(80ms + var(--i,0) * 60ms)}
 .cv-tcard:hover,.cv-tcard:focus-visible{transform:translateY(-4px);border-color:rgba(247,140,22,.6);background:rgba(255,255,255,.06);box-shadow:0 26px 50px -24px rgba(0,0,0,.8)}
 .cv-tcard.cur{border-color:rgba(247,140,22,.6)}

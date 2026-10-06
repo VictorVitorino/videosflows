@@ -931,6 +931,7 @@
       h += '<div class="ph"><h2>Slide ' + (cur + 1) + '<small>' + plural(s.els.length, 'elemento', 'elementos') + ' · ' + (nVis === deck.slides.length ? plural(deck.slides.length, 'slide', 'slides') + ' na apresentação' : plural(deck.slides.length, 'slide', 'slides') + ' · ' + nVis + ' na apresentação') + (scn && !scn.intro ? ' · capítulo “' + esc(scn.name) + '”' : '') + '</small></h2></div>';
       h += showSec(s); /* S21: ocultar e redefinir logo no topo (cabem sem rolar a 1280×720) */
       h += numSec(); /* S27 */
+      if (hasInst()) h += '<div class="sec"><h3>Slides institucionais A&amp;M</h3><div class="row r1"><button class="btnw pri ic" data-act="inst">' + svgI('brand') + 'Inserir os 5 slides institucionais</button></div><p class="note">Capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, logo depois deste slide. Um Ctrl+Z tira o bloco.</p></div>'; /* S34b: logo abaixo de Exibição e layout, à vista sem rolar */
       h += '<div class="sec"><h3>Sobre este slide</h3>' +
         '<div class="row r1">' + fld('Título no índice', '<input type="text" data-p="s.title" maxlength="160" value="' + esc(s.title || '') + '" placeholder="' + esc(RT.slideTitle(s, cur)) + '">') + '</div>' +
         '<div class="row r1">' + fld('Capítulo (botão da linha do tempo)', '<input type="text" data-p="s.sec" maxlength="80" value="' + esc(s.sec || '') + '" placeholder="' + esc(scn && !scn.intro && !s.sec ? 'herda “' + scn.name + '”' : 'ex.: Contexto, Cultura, Benchmarks') + '">') + '</div>' +
@@ -938,7 +939,6 @@
         '<div class="row r1"><button class="btnw ic" data-act="autonotes">' + svgI('fx') + 'Gerar resumo automático</button></div><div class="row r1"><button class="btnw ic" data-act="viewnotes">' + svgI('zoom') + 'Ver na apresentação</button></div>' +
         '<p class="note">Na apresentação e no arquivo salvo, <b>Sobre este slide</b> (tecla <b>I</b>) mostra este resumo' + (s.notes ? '' : ' — sem texto, o apresentador gera um automático') + '; <b>G</b> abre o índice com todos os slides; o capítulo vira um botão da linha do tempo e vale até o próximo capítulo.</p></div>';
       h += '<div class="sec"><h3>Fundo</h3>' + swatches('s.bg', s.bg) + '<div class="row" style="margin-top:10px"><button class="btnw" data-act="bgimg">' + (s.bgImg ? 'Trocar imagem de fundo' : 'Imagem de fundo…') + '</button><button class="btnw ic" data-act="brandkit" title="Cores e fonte desta apresentação">' + svgI('palette') + 'Kit de marca…</button></div>' + (s.bgImg ? '<div class="row">' + fld('Opacidade da imagem', num('s.bgImgOp', s.bgImgOp == null ? 1 : s.bgImgOp, .05, 0, 1)) + '<label class="pf"><span>&nbsp;</span><button class="btnw" data-act="bgimgdel">Remover</button></label></div>' : '') + '</div>';
-      if (hasInst()) h += '<div class="sec"><h3>Slides institucionais A&amp;M</h3><div class="row r1"><button class="btnw pri ic" data-act="inst">' + svgI('brand') + 'Inserir os 5 slides institucionais</button></div><p class="note">Capa “Somos a A&amp;M Performance”, presença global, clientes, esferas de atuação e cadeia de valor, no padrão oficial, logo depois deste slide. Um Ctrl+Z tira o bloco.</p></div>'; /* S34 */
       h += '<div class="sec"><h3>Transição ao entrar</h3><div class="chips">' + RT.ANIMS.tr.map(function (o) { return '<button class="chip' + ((s.tr || 'fade') === o[0] ? ' on' : '') + '" data-set="s.tr" data-v="' + o[0] + '" title="' + esc(o[2] || '') + '">' + esc(o[1]) + '</button>'; }).join('') + '</div><div class="row r1" style="margin-top:10px"><button class="btnw ic" data-act="gallery-tr">' + svgI('models') + 'Ver transições em caixas</button></div></div>';
       h += '<div class="sec"><h3>Animações do slide</h3><div class="row r1"><button class="btnw pri" data-act="seq">Animar elementos em sequência</button></div><div class="row r1"><button class="btnw" data-act="noanim">Remover animações</button></div><p class="note">“Em sequência” faz os elementos entrarem um a um, de cima para baixo, como numa apresentação de consultoria.</p></div>';
       h += '<div class="empty">Monte o slide peça por peça: use o menu <b>Inserir</b> ou a barra de ferramentas (<b>Texto</b>, <b>Formas</b>, <b>Imagem</b>, <b>Modelos</b>…). <b>Duplo clique</b> no vazio cria uma caixa de texto; <b>clique direito</b> abre o menu de opções; arraste no vazio para selecionar vários elementos. Atalhos: <b>F1</b>.</div>';
@@ -1725,8 +1725,9 @@
   /* seletor “Novo slide”: layouts visíveis (os ocultos, como os institucionais, entram só pelo bloco) + blocos prontos marcados para o seletor (SEQS[i][3]) */
   function buildSlidePicker() {
     var vis = Object.keys(LAYOUTS).filter(function (k) { return !LAYOUTS[k].hidden; }), sq = (typeof SEQS !== 'undefined' && SEQS || []).filter(function (s) { return s[3]; });
+    $('#bInst').hidden = !sq.some(function (s) { return s[0] === 'inst'; }); /* S34b: o botão da barra só aparece com o bloco institucional carregado */
     $('#mSlide').innerHTML = '<div class="mh">Escolha o layout</div>' + vis.map(function (k) { return '<button data-layout="' + k + '"><span class="mi-sw" style="background:' + LAYOUTS[k].bg + '"></span>' + LAYOUTS[k].name + '</button>'; }).join('') +
-      (sq.length ? '<div class="mh">Bloco pronto</div>' + sq.map(function (s) { return '<button data-seq="' + s[0] + '" title="' + esc(s[2].map(function (k) { return LAYOUTS[k] ? LAYOUTS[k].name.replace(/^Institucional · /, '') : k; }).join(' · ')) + '"><span class="mi-sw" style="background:#002A46"></span>' + esc(s[1]) + ' · ' + s[2].length + ' slides</button>'; }).join('') : '');
+      (sq.length ? '<div class="mh">Slides institucionais A&amp;M</div>' + sq.map(function (s) { return '<button data-seq="' + s[0] + '" title="' + esc(s[2].map(function (k) { return LAYOUTS[k] ? LAYOUTS[k].name.replace(/^Institucional · /, '') : k; }).join(' · ')) + ' · depois do slide atual"><span class="mi-sw"></span>Inserir os ' + s[2].length + ' slides institucionais</button>'; }).join('') : '');
   }
   buildSlidePicker();
   /* galeria “Gráficos ▾” (e Inserir › Gráfico ▸): os gráficos do runtime (rt-30-charts.js + bars, linechart, donut, gauge), em três grupos */
@@ -2751,6 +2752,7 @@
   }
   $('#bFx').addEventListener('click', function () { openDrawer(null, 'fx'); });
   $('#bModels').addEventListener('click', function () { openDrawer(null, 'models'); });
+  $('#bInst').addEventListener('click', function () { if (hasInst()) insertSeq('inst'); }); /* S34b: botão sempre à vista para jogar os 5 slides institucionais em qualquer apresentação */
   $('#modelsBody').addEventListener('click', function (e) { var b = e.target.closest('button[data-ins]'); if (!b) return; var el = insertFx(b.dataset.ins, null, null, presetVar(b.dataset.preset, b.dataset.ins), presetData(b.dataset.preset, b.dataset.ins)); openDrawer(false); toast('Modelo inserido. Escolha o efeito no seletor “Efeito” acima dele.'); setTimeout(function () { previewEl(el); }, 250); });
   $('#modelsBody').addEventListener('dragstart', function (e) { var c = e.target.closest('.fxi'); if (!c) return; e.dataTransfer.setData('text/plain', 'amfx:' + c.dataset.k + (c.dataset.preset ? ':' + (presetVar(c.dataset.preset, c.dataset.k) || '') + ':' + c.dataset.preset : '')); e.dataTransfer.effectAllowed = 'copy'; }); /* preset: 'amfx:matrix:quadrants:ansoff' */
   $('#bFxClose').addEventListener('click', function () { openDrawer(false); });
@@ -3304,11 +3306,11 @@
     },
     slide: function () {
       var n = deck.slides.length;
-      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }, { t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+      return [{ t: 'Novo slide', ic: 'slide', sub: layoutItems }, { t: 'Inserir bloco pronto', ic: 'models', sub: seqItems }].concat(hasInst() ? [{ t: 'Inserir slides institucionais A&M', ic: 'brand', tip: 'Os 5 slides oficiais depois do slide atual · Ctrl+Z desfaz', fn: function () { insertSeq('inst'); } }] : [], [{ t: 'Gerar slides de uma planilha (CSV)…', ic: 'csv', dis: !window.AMBatch, tip: 'Um slide por linha da planilha: o slide atual é o modelo, com {{Coluna}} nos textos', fn: function () { if (window.AMBatch) window.AMBatch.open(XM.prev); } }, { t: 'Duplicar slide', ic: 'dup', fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
         { t: 'Copiar slide', ic: 'copy', fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', fn: function () { pasteFromSystem(null, true); } },
         { t: 'Apagar slide', ic: 'del', dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
         { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }, { sep: 1 },
-        { t: sideOff ? 'Mostrar painel de slides' : 'Ocultar painel de slides', ic: 'side', fn: function () { toggleSide(); } }]);
+        { t: sideOff ? 'Mostrar painel de slides' : 'Ocultar painel de slides', ic: 'side', fn: function () { toggleSide(); } }]));
     },
     arrange: function () {
       var any = hasSel();
@@ -3351,7 +3353,7 @@
   }
   function ctxThumbItems() {
     var n = deck.slides.length;
-    return [{ hd: 'Slide ' + (cur + 1) + ' de ' + n + (slide().hidden === true ? ' · oculto' : '') }, { t: 'Novo slide depois', ic: 'slide', fn: newSlideAfter }, { t: 'Duplicar slide', ic: 'dup', k: KEY.dup, fn: function () { dupSlide(cur); } }].concat(slideShowItems(), [{ sep: 1 },
+    return [{ hd: 'Slide ' + (cur + 1) + ' de ' + n + (slide().hidden === true ? ' · oculto' : '') }, { t: 'Novo slide depois', ic: 'slide', fn: newSlideAfter }].concat(hasInst() ? [{ t: 'Inserir slides institucionais A&M', ic: 'brand', tip: 'Os 5 slides oficiais (capa, presença global, clientes, esferas, cadeia de valor) depois deste slide · Ctrl+Z desfaz', fn: function () { insertSeq('inst'); } }] : [], [{ t: 'Duplicar slide', ic: 'dup', k: KEY.dup, fn: function () { dupSlide(cur); } }], slideShowItems(), [{ sep: 1 },
       { t: 'Copiar slide', ic: 'copy', k: KEY.copy, fn: function () { doCopy(false, 'slides'); } }, { t: 'Colar slide', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null, true); } },
       { t: 'Apagar slide', ic: 'del', k: KEY.del, dis: n < 2, fn: function () { delSlide(cur); } }, { sep: 1 },
       { t: 'Mover para cima', ic: 'up', dis: cur === 0, fn: function () { moveSlide(cur, -1); } }, { t: 'Mover para baixo', ic: 'down', dis: cur >= n - 1, fn: function () { moveSlide(cur, 1); } }]);
