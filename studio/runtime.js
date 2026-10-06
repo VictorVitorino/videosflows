@@ -385,6 +385,13 @@ window.AMRT = (function () {
 
   /* espelhar (el.flipH / el.flipV): só o desenho — a foto, o corpo da forma e o traço do ícone. Textos, gráficos e modelos com texto
      não se espelham (a leitura ficaria ao contrário). O espelho nunca vai em .am-rot nem em .am-fxw (giro e animações moram lá) */
+  /* recorte válido de uma foto: {l,t,r,b} em frações (0–0,9), com alguma fatia cortada e algo sobrando */
+  function cropOf(el) {
+    var c = el && el.crop; if (!c || typeof c !== 'object') return null;
+    var o = { l: cl(c.l), t: cl(c.t), r: cl(c.r), b: cl(c.b) }; if (!(o.l || o.t || o.r || o.b) || o.l + o.r > .95 || o.t + o.b > .95) return null; return o;
+    function cl(v) { v = +v; return isFinite(v) ? Math.max(0, Math.min(.9, v)) : 0; }
+  }
+  function r2(v) { return Math.round(v * 100) / 100; }
   function flipOK(el) { if (!el) return false; if (el.type === 'image' || el.type === 'shape') return true; var F = el.type === 'fx' && FX[el.kind]; return !!F && (F.gal === 'icon' || F.flip === true); }
   function flipOf(el) { var fh = el.flipH === true, fv = el.flipV === true; return (fh || fv) && flipOK(el) ? [fh ? -1 : 1, fv ? -1 : 1] : null; }
   /* recuo do texto (CSS inset: topo direita base esquerda) acompanha a forma espelhada: a área útil do balão, triângulo-retângulo… troca de lado */
@@ -405,7 +412,14 @@ window.AMRT = (function () {
       return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none"' + (el.shadow ? ' style="filter:drop-shadow(0 .8cqh 1.6cqh rgba(0,30,50,.3))"' : '') + '>' + body + '</svg>' + (ins ? tx.replace('class="am-text" style="', 'class="am-text" style="inset:' + ins + ';') : tx); }
     if (el.type === 'line') return API.lineSVG(el);
     /* foto espelhada: propriedade scale (soma com o “Zoom interno” do mouse, que usa transform); a sombra é desenhada já espelhada, então inverte o deslocamento */
-    if (el.type === 'image') return '<img class="am-img" alt="" draggable="false" src="' + esc(el.src) + '"' + (fl ? ' data-flip="' + (fl[0] < 0 ? 'h' : '') + (fl[1] < 0 ? 'v' : '') + '"' : '') + ' style="object-fit:' + (el.fit || 'cover') + ';border-radius:' + CQ(+el.radius || 0) + (fl ? ';scale:' + fl[0] + ' ' + fl[1] : '') + (el.shadow ? ';box-shadow:0 ' + (fl && fl[1] < 0 ? '-' : '') + '1cqh 2.4cqh rgba(0,30,50,.3)' : '') + '">';
+    if (el.type === 'image') {
+      var cr = cropOf(el);
+      if (cr) { /* S27b: recorte (frações da foto original): só a fatia aparece, esticada na caixa; cantos, sombra e espelho no quadro */
+        var sw = 100 / (1 - cr.l - cr.r), sh = 100 / (1 - cr.t - cr.b);
+        return '<div class="am-crop"' + (fl ? ' data-flip="' + (fl[0] < 0 ? 'h' : '') + (fl[1] < 0 ? 'v' : '') + '"' : '') + ' style="border-radius:' + CQ(+el.radius || 0) + (fl ? ';scale:' + fl[0] + ' ' + fl[1] : '') + (el.shadow ? ';box-shadow:0 ' + (fl && fl[1] < 0 ? '-' : '') + '1cqh 2.4cqh rgba(0,30,50,.3)' : '') + '"><img class="am-img" alt="" draggable="false" src="' + esc(el.src) + '" style="position:absolute;left:-' + r2(cr.l * sw) + '%;top:-' + r2(cr.t * sh) + '%;width:' + r2(sw) + '%;height:' + r2(sh) + '%;object-fit:fill;border-radius:0"></div>';
+      }
+      return '<img class="am-img" alt="" draggable="false" src="' + esc(el.src) + '"' + (fl ? ' data-flip="' + (fl[0] < 0 ? 'h' : '') + (fl[1] < 0 ? 'v' : '') + '"' : '') + ' style="object-fit:' + (el.fit || 'cover') + ';border-radius:' + CQ(+el.radius || 0) + (fl ? ';scale:' + fl[0] + ' ' + fl[1] : '') + (el.shadow ? ';box-shadow:0 ' + (fl && fl[1] < 0 ? '-' : '') + '1cqh 2.4cqh rgba(0,30,50,.3)' : '') + '">';
+    }
     if (el.type === 'fx' && FX[el.kind]) {
       var inner; try { inner = FX[el.kind].html(el.data || {}, w, h, el); } /* um componente com defeito nunca derruba o slide nem o player exportado */
       catch (ex) { inner = '<div class="fx fx-falha" title="' + esc(ex && ex.message || ex) + '"></div>'; if (window.console && console.warn) console.warn('AMRT: componente “' + el.kind + '” falhou', ex); }
@@ -778,7 +792,7 @@ window.AMRT = (function () {
   function fxLabel(el) { var F = el && FX[el.kind]; return (F && (typeof F.label === 'function' ? F.label(el) : F.name)) || 'Elemento'; }
   var API = { W: W, H: H, FX: FX, FONTS: FONTS, shapeBody: shapeBody, lineSVG: lineSVG, renderEl: renderEl, renderSlide: renderSlide, runFx: runFx, lineBox: lineBox, player: player, esc: esc,
     /* título do slide (índice, resumo, “Ampliar”), elementos ampliáveis de um slide, nome de um elemento fx e texto simples de um HTML guardado */
-    slideTitle: slideTitle, zoomables: zoomables, flipOK: flipOK, fxLabel: fxLabel, plain: plain, isDark: isDark, stampNums: stampNums,
+    slideTitle: slideTitle, zoomables: zoomables, flipOK: flipOK, fxLabel: fxLabel, plain: plain, isDark: isDark, stampNums: stampNums, cropOf: cropOf,
     /* capítulos (linha do tempo e índice), divisor de um slide, resumo automático (“Sobre este slide”) e textos livres de el.data */
     sectionsOf: sectionsOf, dividerOf: dividerOf, autoNotes: autoNotes, dataStrings: dataStrings,
     /* vocabulário de animações (entrada, contínuo, mouse, transição; extensões podem acrescentar famílias, ex.: emph) e inclinação 3D por cursor */

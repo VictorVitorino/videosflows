@@ -460,9 +460,12 @@
     var rel = sctx.rels[rid]; if (!rel || rel.external) { ctx.w('imgExt'); return Promise.resolve(null); }
     var sr = kid(blipFill, 'srcRect'), crop = sr ? ['l', 't', 'r', 'b'].map(function (k) { return num(att(sr, k), 0) / 100000; }) : null;
     var alpha = blip ? kid(blip, 'alphaModFix') : null;
-    return sctx.pkg.media(rel.target, crop).then(function (m) {
+    /* recorte positivo vira el.crop (a foto inteira fica no arquivo, editável); recorte negativo (faixas) é assado pelo canvas */
+    var keep = crop && crop.every(function (v) { return v >= 0 && v <= .9; }) && crop.some(function (v) { return v > .0005; }) && crop[0] + crop[2] <= .95 && crop[1] + crop[3] <= .95;
+    return sctx.pkg.media(rel.target, keep ? null : crop).then(function (m) {
       if (!m || m.unsupported) { ctx.w('imgFmt'); return null; }
       var el = { id: uid(), type: 'image', src: m.src, x: b.x, y: b.y, w: Math.max(8, b.w), h: Math.max(8, b.h), fit: 'cover', radius: o.radius || 0, anim: { in: 'none' } };
+      if (keep) el.crop = { l: r1(crop[0] * 1000) / 1000, t: r1(crop[1] * 1000) / 1000, r: r1(crop[2] * 1000) / 1000, b: r1(crop[3] * 1000) / 1000 };
       if (b.rot) el.rot = Math.round(b.rot); if (b.flipH) el.flipH = true; if (b.flipV) el.flipV = true;
       if (alpha) { var am = num(att(alpha, 'amt'), 100000) / 100000; if (am < .999) el.opacity = r1(am * 100) / 100; }
       ctx.count.images++;

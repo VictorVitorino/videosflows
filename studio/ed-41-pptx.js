@@ -280,8 +280,9 @@
       p.runs.forEach(function (r) { p.lh = Math.max(p.lh, r.lh); });
       p.chain = []; for (var e = p.blk; e && e !== tx; e = e.parentElement) p.chain.push(e);
       if (cs.display === 'list-item') {
-        var ul = p.blk.parentElement, ucs = ul ? getComputedStyle(ul) : cs, lt = cs.listStyleType || 'disc';
-        p.li = { ol: ul && ul.tagName === 'OL', type: lt, ml: parseFloat(ucs.paddingLeft) || 0, start: ul && ul.tagName === 'OL' ? ([].indexOf.call(ul.children, p.blk) + (+ul.getAttribute('start') || 1)) : 1 };
+        var ul = p.blk.parentElement, ucs = ul ? getComputedStyle(ul) : cs, lt = cs.listStyleType || 'disc', depth = 0, mlSum = 0;
+        for (var an = p.blk.parentElement; an && an !== tx; an = an.parentElement) if (/^(UL|OL)$/.test(an.tagName)) { depth++; mlSum += parseFloat(getComputedStyle(an).paddingLeft) || 0; } /* S27b: níveis = listas aninhadas (recuo acumulado) */
+        p.li = { ol: ul && ul.tagName === 'OL', type: lt, ml: mlSum || parseFloat(ucs.paddingLeft) || 0, lvl: Math.max(0, Math.min(8, depth - 1)), start: ul && ul.tagName === 'OL' ? ([].indexOf.call(ul.children, p.blk) + (+ul.getAttribute('start') || 1)) : 1 };
       }
     });
     /* margens dos blocos (p, ul, ol…): o bloco que começa no parágrafo dá o espaço antes, o que termina dá o espaço depois; entre dois
@@ -310,7 +311,7 @@
   function pXml(p) {
     var bu = '<a:buNone/>', mar = '';
     if (p.li) {
-      var ml = Math.max(p.li.ml, p.fs * 1.2); mar = ' marL="' + E(ml) + '" indent="' + E(-Math.min(ml, p.fs * 1.1)) + '"';
+      var ml = Math.max(p.li.ml, p.fs * 1.2); mar = ' marL="' + E(ml) + '" indent="' + E(-Math.min(p.fs * 1.2, p.fs * 1.1)) + '"' + (p.li.lvl ? ' lvl="' + p.li.lvl + '"' : '');
       bu = p.li.ol ? '<a:buFont typeface="+mj-lt"/><a:buAutoNum type="' + ({ 'lower-alpha': 'alphaLcPeriod', 'upper-alpha': 'alphaUcPeriod', 'lower-roman': 'romanLcPeriod', 'upper-roman': 'romanUcPeriod' }[p.li.type] || 'arabicPeriod') + '"' + (p.li.start > 1 ? ' startAt="' + p.li.start + '"' : '') + '/>'
         : p.li.type === 'none' ? '<a:buNone/>' : '<a:buFont typeface="Arial"/><a:buChar char="' + ({ circle: '◦', square: '▪' }[p.li.type] || '•') + '"/>';
     }
@@ -483,8 +484,11 @@
     return media.addSrc(el.src, Math.max(el.w, el.h)).then(function (m) {
       if (!m) return '';
       var id = sl.nid(), rid = sl.img(m.name), o = { rot: el.rot, flipH: el.flipH, flipV: el.flipV, alpha: el.opacity != null && +el.opacity < 1 ? +el.opacity : null, descr: 'Imagem' }, box = { x: el.x, y: el.y, w: el.w, h: el.h };
-      var ia = m.nw / m.nh, ba = el.w / el.h, rad = Math.max(0, +el.radius || 0);
-      if ((el.fit || 'cover') === 'contain') {
+      var ia = m.nw / m.nh, ba = el.w / el.h, rad = Math.max(0, +el.radius || 0), cr = RT.cropOf ? RT.cropOf(el) : null;
+      if (cr) { /* S27b: recorte do editor = srcRect do PowerPoint (a foto inteira vai no arquivo) */
+        o.src = [cr.l, cr.t, cr.r, cr.b];
+        if (rad) { o.prst = 'roundRect'; o.adj = [['adj', clamp(Math.round(Math.min(rad, el.w / 2, el.h / 2) / ssOf(el.w, el.h) * 100000), 0, 50000)]]; }
+      } else if ((el.fit || 'cover') === 'contain') {
         var k = Math.min(el.w / m.nw, el.h / m.nh), iw = m.nw * k, ih = m.nh * k;
         /* “Inteira”: a moldura é a caixa toda (como no editor) e a foto fica centralizada com faixas transparentes (recorte negativo) */
         var lx = (el.w - iw) / 2 / iw, ly = (el.h - ih) / 2 / ih; if (lx > .0005 || ly > .0005) o.src = [-lx, -ly, -lx, -ly];

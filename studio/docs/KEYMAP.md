@@ -49,6 +49,8 @@ Status: **today** = shipped; **F0** = shipped in step S0 (Fundação); **Fn** = 
 
 Editor present mode only: **F5** (start from the beginning) and **Shift+F5** (from the current slide) are handled by the editor before the player sees them (editor.js keydown). The player never binds F-keys other than F.
 
+Localizar e substituir (S27b): **Ctrl/⌘+F** or **Ctrl+H** open the floating panel (also Editar › Localizar e substituir…); inside it Enter = next, Shift+Enter = previous, Esc = close; the editor's own Esc closes it too. Lists while editing text: **Tab** / **Shift+Tab** on a list item change its level.
+
 Organizar (S27a, editor, nothing selected in a field): **Ctrl/⌘+G** group the selection, **Ctrl+Shift+G** ungroup, **Ctrl+Shift+L** lock/unlock, **Ctrl+Alt+C** copy format, **Ctrl+Alt+V** paste format (Ctrl+Shift+C/V are left to the browser's DevTools). A click on a group member selects the group; a second click on a member selects only it. Locked elements ignore drag, arrows, resize, rotate, flip and Delete.
 
 Text editing (S26, inside the contenteditable): **Ctrl/⌘+B / I / U** bold, italic, underline; **Ctrl+Shift+8** bulleted list, **Ctrl+Shift+7** numbered list; Esc ends the edit. The floating bar `#txBar` adds strike, A−/A+, colour, marker, alignment and clear. All other keys inside the text stay with the browser (native undo included).

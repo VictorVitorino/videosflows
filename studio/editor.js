@@ -139,6 +139,7 @@
   /* fontes do painel; uma fonte importada (PowerPoint/PDF) que não é do Canteiro aparece como opção extra, para não sumir do seletor */
   var FONT_OPTS = [['Roboto', 'Roboto (A&M)'], ['Roboto Condensed', 'Roboto Condensed'], ['Inter', 'Inter'], ['JetBrains Mono', 'JetBrains Mono']];
   function fontOpts(cur) { var known = FONT_OPTS.some(function (o) { return o[0] === cur; }); return typeof cur === 'string' && cur && !known ? FONT_OPTS.concat([[cur, cur + ' (do arquivo importado)']]) : FONT_OPTS; }
+  var cropOpen = null; /* S27b: id da foto com os controles de recorte abertos (sem recorte ainda) */
   function fxStyleField(kind) { var F = RT.FX.hasOwnProperty(kind) ? RT.FX[kind] : null; return !!(F && Array.isArray(F.fields) && F.fields.some(function (f) { return f && f[0] === 'style'; })); }
   /* campos de escolha fechada do componente (sel:…, smartlayout): formato que “Redefinir” devolve — fonte/cor do título de impacto, cores das
      Linhas A&M, tipo do velocímetro, legenda da RACI… (os campos de texto e números ficam como estão: são conteúdo) */
@@ -260,6 +261,7 @@
     if (o.html != null) o.html = cleanHTML(String(o.html));
     if (o.ph != null && !(typeof o.ph === 'string' && PH_RE.test(o.ph))) delete o.ph; /* S21: marca do elemento original do layout (safeSlide confere com slide.base) */
     if (o.lock !== true) delete o.lock; /* S27: bloqueado (só true) */
+    if (o.crop != null) { var cc = o.type === 'image' && o.crop && typeof o.crop === 'object' ? {} : null; if (cc) ['l', 't', 'r', 'b'].forEach(function (k) { var v = +o.crop[k]; cc[k] = isFinite(v) ? Math.max(0, Math.min(.9, Math.round(v * 1000) / 1000)) : 0; }); if (cc && (cc.l || cc.t || cc.r || cc.b) && cc.l + cc.r <= .95 && cc.t + cc.b <= .95) o.crop = cc; else delete o.crop; } /* S27b: recorte da foto (frações) */
     if (o.grp != null && !(typeof o.grp === 'string' && /^[\w-]{1,40}$/.test(o.grp))) delete o.grp; /* S27: grupo = id compartilhado */
     if (o.type === 'image') { o.src = safeSrc(o.src); if (!o.src) return null; }
     var a = o.anim && typeof o.anim === 'object' ? o.anim : {}; o.anim = { in: TOKEN_RE.test(a.in || '') ? a.in || 'none' : 'none' };
@@ -640,6 +642,7 @@
   var IC = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 9.5V20h14V9.5"/><path d="M10 20v-6h4v6"/>',
     import: '<path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>',
+    find: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/>', crop: '<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/>',
     lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/>',
     grp: '<rect x="3" y="3" width="9" height="9" rx="1.5"/><rect x="12" y="12" width="9" height="9" rx="1.5"/><path d="M3 16v5h5M21 8V3h-5" stroke-dasharray="2 2"/>', ungrp: '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M13 7l3-3M7 13l-3 3"/>',
     brush: '<path d="M14 3l7 7-9 9H5v-7z"/><path d="M5 12l7 7"/>', brushp: '<path d="M14 3l7 7-9 9H5v-7z"/><path d="M5 12l7 7"/><path d="M17 19h4M19 17v4"/>', layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/><path d="M3 17l9 5 9-5"/>',
@@ -833,7 +836,12 @@
         (el.type === 'text' ? '<span class="pf"><span>Fundo do texto</span></span>' + swatches('bg', el.bg, true) + (el.bg && el.bg !== 'none' ? '<div class="row" style="margin-top:8px">' + fld('Arredondamento', num('radius', el.radius || 0, 1, 0, 200)) + '</div>' : '') : '') + '</div>';
     }
     if (el.type === 'image') {
-      h += '<div class="sec"><h3>Imagem</h3><div class="row r1">' + seg('fit', el.fit || 'cover', [['cover', 'Preencher'], ['contain', 'Inteira']]) + '</div><div class="row">' + fld('Arredondamento', num('radius', el.radius || 0, 1, 0, 400)) + '<label class="pf"><span>&nbsp;</span>' + tog('shadow', el.shadow, 'Sombra') + '</label></div><div class="row r1"><button class="btnw" data-act="replace">Trocar imagem…</button></div></div>';
+      var cropOn = !!el.crop || cropOpen === el.id, cr = el.crop || { l: 0, t: 0, r: 0, b: 0 };
+      h += '<div class="sec"><h3>Imagem</h3><div class="row r1">' + seg('fit', el.fit || 'cover', [['cover', 'Preencher'], ['contain', 'Inteira']]) + '</div><div class="row">' + fld('Arredondamento', num('radius', el.radius || 0, 1, 0, 400)) + '<label class="pf"><span>&nbsp;</span>' + tog('shadow', el.shadow, 'Sombra') + '</label></div>' +
+        '<div class="row r1"><button class="btnw ic" data-act="crop" aria-expanded="' + cropOn + '" title="Recortar: escolha quanto tirar de cada lado; a foto original fica guardada">' + svgI('crop') + (cropOn ? 'Recortando…' : 'Recortar') + '</button></div>' +
+        (cropOn ? '<div class="crop">' + [['l', 'Esquerda'], ['t', 'Topo'], ['r', 'Direita'], ['b', 'Base']].map(function (k) { return '<label class="pf"><span>' + k[1] + ' <em>' + Math.round((+cr[k[0]] || 0) * 100) + '%</em></span><input type="range" data-p="crop.' + k[0] + '" data-n="1" min="0" max="0.9" step="0.01" value="' + (+cr[k[0]] || 0) + '" aria-label="Recortar ' + k[1].toLowerCase() + '"></label>'; }).join('') +
+          '<div class="chips"><button type="button" class="chip" data-act="crop-fit" title="Altura da caixa pela proporção da fatia (como o PowerPoint)">Ajustar à caixa</button><button type="button" class="chip" data-act="crop-none">Sem recorte</button></div><p class="note">O recorte vai para o PDF e para o PowerPoint; “Sem recorte” devolve a foto inteira.</p></div>' : '') +
+        '<div class="row r1"><button class="btnw" data-act="replace">Trocar imagem…</button></div></div>';
     }
     if (el.type === 'fx') h += '<div class="sec"><h3>Cantos</h3><div class="row">' + fld('Arredondamento', num('radius', el.radius || 0, 1, 0, 200)) + '</div></div>';
     if (RT.zoomables && (el.type === 'image' || (el.type === 'fx' && FD && (FD.model || el.zoom === true)))) { /* ampliar (⤢) na apresentação: modelos, gráficos e imagens */
@@ -1013,6 +1021,11 @@
     if (path === 'anim.in' && val === 'words' && !hasText(el)) toast('“Palavra a palavra” funciona em textos e formas com texto.');
     if (path === 'shape' && el.type === 'shape') shapeSwitch(el, val);
     if (path === 'rot') { val = normRot(val); if (!val) { delete el.rot; rerenderEl(el); if (!live) commit(); return; } } /* giro sempre em (-180, 180] */
+    if (/^crop\.[ltrb]$/.test(path)) { /* S27b: cada lado 0–90 %; lados opostos nunca passam de 95 % juntos */
+      var ck = path.slice(5), cv = Math.max(0, Math.min(.9, Math.round((+val || 0) * 1000) / 1000)), op = { l: 'r', r: 'l', t: 'b', b: 't' }[ck];
+      el.crop = el.crop && typeof el.crop === 'object' ? el.crop : { l: 0, t: 0, r: 0, b: 0 }; if (cv + (+el.crop[op] || 0) > .95) cv = Math.max(0, .95 - (+el.crop[op] || 0)); el.crop[ck] = cv;
+      rerenderEl(el); if (!live) { commit(); renderProps(); } return;
+    }
     setPath(el, path, val);
     rerenderEl(el);
     if (!live) { commit(); }
@@ -1354,6 +1367,9 @@
     if (a === 'slreset') return resetSlide(cur);
     if (a === 'group') return groupSel(); if (a === 'ungroup') return ungroupSel(); if (a === 'lock') return lockSel(); if (a === 'unlock') return lockSel(false); /* S27 */
     if (a === 'fmtcopy') return copyFmt(); if (a === 'fmtpaste') return pasteFmt(); if (a === 'layers') return showLayers();
+    if (a === 'crop' && el && el.type === 'image') { cropOpen = cropOpen === el.id && !el.crop ? null : el.id; renderProps(); var r0 = $('#props input[data-p="crop.l"]'); if (r0) r0.focus(); return; }
+    if (a === 'crop-none' && el && el.type === 'image') { delete el.crop; cropOpen = null; rerenderEl(el); renderProps(); commit(); toast('Foto inteira de volta · Ctrl+Z desfaz'); return; }
+    if (a === 'crop-fit' && el && el.type === 'image') { var cim = stage.querySelector('.am-el[data-id="' + el.id + '"] img'), nw = cim && cim.naturalWidth, nh = cim && cim.naturalHeight, cro = RT.cropOf(el); if (!nw || !nh) return; var asp = (nw * (1 - (cro ? cro.l + cro.r : 0))) / (nh * (1 - (cro ? cro.t + cro.b : 0))); el.h = Math.max(8, Math.round(el.w / asp)); rerenderEl(el); renderProps(); commit(); return; }
     if (a.indexOf('ly-') === 0) return layerAct(a); if (a.indexOf('num-') === 0) return numAct(a);
     if (/^(rot-[lr0]|flip-[hv])$/.test(a)) { if (anyLocked()) return lockHint(); return frameAct(a); }
     if (a === 'del') return delSel();
@@ -2371,10 +2387,15 @@
     if (e.key === 'F1') { e.preventDefault(); showHelp(); return; }
     if (mod && !e.altKey && k === 's') { e.preventDefault(); if (editingId) endEdit(); save(); return; }
     if (mod && !e.altKey && k === 'p') { e.preventDefault(); if (editingId) endEdit(); exportAs('pdf'); return; } /* Ctrl+P: Salvar como PDF (imprimir o editor não serve para nada) */
+    if (mod && !e.altKey && (k === 'f' || k === 'h') && !(t.closest && t.closest('#xfDlg'))) { e.preventDefault(); if (editingId) endEdit(); openFind(); return; } /* S27b: Localizar e substituir */
     if (mod && !e.altKey && k === 'o') { e.preventDefault(); openPicker(); return; }
     if (mod && !e.altKey && k === 'd' && (typing || t.isContentEditable)) { e.preventDefault(); return; } /* nunca abre o "favoritos" do navegador */
     if (t.isContentEditable) {
       if (e.key === 'Escape') { e.preventDefault(); t.blur(); return; }
+      if (editingId && e.key === 'Tab' && !mod && !e.altKey) { /* S27b: Tab / Shift+Tab mudam o nível do item da lista */
+        var sl0 = getSelection(), an = sl0 && sl0.anchorNode, li0 = an && (an.nodeType === 1 ? an : an.parentElement), lit = li0 && li0.closest && li0.closest('li');
+        if (lit && t.contains(lit)) { e.preventDefault(); cmd(e.shiftKey ? 'outdent' : 'indent'); syncTxBar(); return; }
+      }
       if (editingId && mod && !e.altKey) { /* S26: formatação do trecho (as mesmas teclas do PowerPoint/Word) */
         if (!e.shiftKey && (k === 'b' || k === 'i' || k === 'u')) { e.preventDefault(); txFmt(k === 'b' ? 'bold' : k === 'i' ? 'italic' : 'underline'); return; }
         if (e.shiftKey && (e.code === 'Digit8' || e.code === 'Digit7')) { e.preventDefault(); txFmt(e.code === 'Digit8' ? 'bullets' : 'numbered'); return; }
@@ -2396,7 +2417,7 @@
       return;
     }
     if (e.ctrlKey && e.altKey && !e.metaKey && (k === 'c' || k === 'v') && !e.getModifierState('AltGraph')) { e.preventDefault(); if (k === 'c') copyFmt(); else pasteFmt(); return; } /* S27: pincel de formato (Ctrl+Alt+C copia, Ctrl+Alt+V aplica) */
-    if (e.key === 'Escape') { if (gxIsOpen()) { gxClose(); return; } closeMenus(); openDrawer(false); select(null); return; }
+    if (e.key === 'Escape') { if (gxIsOpen()) { gxClose(); return; } if (xf && !xf.hidden) { closeFind(); return; } closeMenus(); openDrawer(false); select(null); return; }
     if (onControl(t)) return;
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); if (zone === 'thumbs') delSlide(cur); else if (list.length && zone === 'canvas') delSel(); return; }
     if (e.key === 'Enter' && el && (el.type === 'text' || el.type === 'shape')) { e.preventDefault(); startEdit(el, false); return; }
@@ -3037,7 +3058,7 @@
           { t: 'Selecionar todo o texto', ic: 'all', k: KEY.all, keepEdit: 1, fn: function () { document.execCommand('selectAll'); } },
           { t: 'Concluir edição', ic: 'edit', k: 'Esc', fn: function () { } }];
       }
-      return [{ t: 'Desfazer', ic: 'undo', k: KEY.undo, dis: !hist.length, fn: undo }, { t: 'Refazer', ic: 'redo', k: KEY.redo, dis: !fut.length, fn: redo }, { sep: 1 },
+      return [{ t: 'Desfazer', ic: 'undo', k: KEY.undo, dis: !hist.length, fn: undo }, { t: 'Refazer', ic: 'redo', k: KEY.redo, dis: !fut.length, fn: redo }, { t: 'Localizar e substituir…', ic: 'find', k: 'Ctrl+F', fn: openFind }, { sep: 1 },
         { t: sl ? 'Recortar slide' : 'Recortar', ic: 'cut', k: KEY.cut, dis: !any && !sl, fn: function () { doCopy(true); } },
         { t: sl ? 'Copiar slide' : 'Copiar', ic: 'copy', k: KEY.copy, dis: !any && !sl, fn: function () { doCopy(false); } },
         { t: 'Colar', ic: 'paste', k: KEY.paste, fn: function () { pasteFromSystem(null); } },
@@ -3187,6 +3208,86 @@
   /* apresentação "intocada": um slide branco, sem elementos, título padrão e sem histórico */
   function isBlank() { var s = deck.slides; return s.length === 1 && !s[0].els.length && !s[0].bgImg && String(s[0].bg || '#FFFFFF').toUpperCase() === '#FFFFFF' && (deck.title || '') === 'Nova apresentação' && !hist.length; }
   var LOSE = 'O que não foi salvo com <b>Salvar apresentação</b> será perdido, e o histórico de desfazer será zerado.';
+  /* ---------------- S27b: Localizar e substituir (painel flutuante, não modal) ----------------
+     procura em textos e formas (nós de texto, a marcação fica) e nas palavras dos componentes (campos de texto de el.data); nunca em cores,
+     ids ou nomes fechados. Substituir = a ocorrência atual; Substituir tudo = todas, num só passo de Ctrl+Z */
+  var xf = null, xfM = { list: [], at: -1, q: '' };
+  function xfSlots(el) { /* caixas de texto de um elemento: [{get(), set(v)}] */
+    var out = [];
+    if (el.type === 'text' || el.type === 'shape') { out.push({ html: true }); return out; }
+    if (el.type === 'fx' && el.data) (function walk(o, pk) { if (!o || typeof o !== 'object') return; Object.keys(o).forEach(function (k) { var v = o[k]; if (typeof v === 'string') { if (NOTEXT.indexOf(k) < 0 && !/^(id|kind|src|href|url)$/.test(k) && /[A-Za-zÀ-ɏ]/.test(v) && !COLOR_RE.test(v)) out.push({ obj: o, key: k }); } else if (v && typeof v === 'object') walk(v, k); }); })(el.data, '');
+    return out;
+  }
+  function xfRe(q, cs, all) { return new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), (cs ? '' : 'i') + (all ? 'g' : '')); }
+  function xfCountIn(el, re) {
+    var n = 0, slots = xfSlots(el);
+    slots.forEach(function (sl) {
+      if (sl.html) { var tp = document.createElement('template'); tp.innerHTML = String(el.html || ''); var tw = document.createTreeWalker(tp.content, NodeFilter.SHOW_TEXT), nd; while ((nd = tw.nextNode())) n += (nd.nodeValue.match(re) || []).length; }
+      else n += (String(sl.obj[sl.key]).match(re) || []).length;
+    });
+    return n;
+  }
+  function xfReplaceIn(el, re, rep, only) { /* only = índice da ocorrência a trocar dentro do elemento (null = todas); devolve quantas trocou */
+    var k = 0, done = 0;
+    xfSlots(el).forEach(function (sl) {
+      if (sl.html) {
+        var tp = document.createElement('template'); tp.innerHTML = String(el.html || ''); var tw = document.createTreeWalker(tp.content, NodeFilter.SHOW_TEXT), nd, ch = false;
+        while ((nd = tw.nextNode())) { nd.nodeValue = nd.nodeValue.replace(re, function (m) { var hit = only == null || k === only; k++; if (hit) { done++; ch = true; return rep; } return m; }); }
+        if (ch) el.html = cleanHTML(tp.innerHTML);
+      } else { var v = String(sl.obj[sl.key]), nv = v.replace(re, function (m) { var hit = only == null || k === only; k++; if (hit) { done++; return rep; } return m; }); if (nv !== v) sl.obj[sl.key] = nv; }
+    });
+    return done;
+  }
+  function xfScan() {
+    var q = $('#xfQ').value, cs = $('#xfCase').checked, list = [];
+    xfM.q = q; xfM.cs = cs;
+    if (q) { var re = xfRe(q, cs, true); deck.slides.forEach(function (s, si) { s.els.forEach(function (e) { var n = xfCountIn(e, re); for (var i = 0; i < n; i++) list.push({ si: si, id: e.id, i: i }); }); }); }
+    xfM.list = list; if (xfM.at >= list.length) xfM.at = -1;
+    xfLabel();
+  }
+  function xfLabel() {
+    var n = xfM.list.length, sl = {}; xfM.list.forEach(function (m) { sl[m.si] = 1; }); var ns = Object.keys(sl).length;
+    $('#xfCount').textContent = !xfM.q ? 'Digite o que procurar' : !n ? 'Nenhuma ocorrência' : (xfM.at >= 0 ? (xfM.at + 1) + ' de ' + n + ' · ' : '') + n + (n === 1 ? ' ocorrência em ' : ' ocorrências em ') + ns + (ns === 1 ? ' slide' : ' slides');
+    $('#xfRep').disabled = $('#xfAll').disabled = !n; $('#xfPrev').disabled = $('#xfNext').disabled = !n;
+    var ae = document.activeElement; if (ae && ae.disabled && xf.contains(ae)) $('#xfQ').focus(); /* botão que ficou desabilitado não segura o foco (Esc continuaria funcionando) */
+  }
+  function xfGo(dir) {
+    if (!xfM.list.length) return; xfM.at = ((xfM.at < 0 ? (dir > 0 ? -1 : 0) : xfM.at) + dir + xfM.list.length) % xfM.list.length;
+    var m = xfM.list[xfM.at]; if (editingId) endEdit(); if (m.si !== cur) goSlide(m.si); setSel([m.id], m.id); xfLabel();
+    var th = $('#thumbs .th.on'); if (th && th.scrollIntoView) th.scrollIntoView({ block: 'nearest' });
+  }
+  function xfReplace(all) {
+    if (!xfM.list.length) return; var re = xfRe(xfM.q, xfM.cs, true), rep = $('#xfR').value, n = 0, touched = {};
+    if (all) { deck.slides.forEach(function (s, si) { s.els.forEach(function (e) { var d = xfReplaceIn(e, re, rep, null); if (d) { n += d; touched[si] = 1; } }); }); }
+    else { if (xfM.at < 0) xfGo(1); var m = xfM.list[xfM.at], e = deck.slides[m.si].els.filter(function (x) { return x.id === m.id; })[0]; if (e) { n = xfReplaceIn(e, re, rep, m.i); touched[m.si] = 1; } }
+    if (!n) return;
+    if (touched[cur]) renderStage(); Object.keys(touched).forEach(function (si) { renderThumb(+si); }); renderProps(); commit();
+    var at = xfM.at; xfScan(); if (!all && xfM.list.length) { xfM.at = Math.min(at, xfM.list.length - 1) - 1; xfGo(1); }
+    toast(all ? n + (n === 1 ? ' ocorrência substituída' : ' ocorrências substituídas') + ' · Ctrl+Z desfaz' : 'Substituído · Ctrl+Z desfaz');
+  }
+  function buildFind() {
+    xf = document.createElement('div'); xf.id = 'xfDlg'; xf.className = 'xf'; xf.hidden = true; xf.setAttribute('role', 'dialog'); xf.setAttribute('aria-label', 'Localizar e substituir');
+    xf.innerHTML = '<div class="xf-h"><span>Localizar e substituir</span><button type="button" class="xf-x" data-x="close" title="Fechar (Esc)" aria-label="Fechar">×</button></div>' +
+      '<label class="xf-f"><span>Localizar</span><input type="text" id="xfQ" autocomplete="off" spellcheck="false" placeholder="palavra ou trecho"></label>' +
+      '<label class="xf-f"><span>Substituir por</span><input type="text" id="xfR" autocomplete="off" spellcheck="false"></label>' +
+      '<div class="xf-o"><label><input type="checkbox" id="xfCase"> Diferenciar maiúsculas</label><span id="xfCount" aria-live="polite">Digite o que procurar</span></div>' +
+      '<div class="xf-b"><button type="button" id="xfPrev" title="Anterior (Shift+Enter)">Anterior</button><button type="button" id="xfNext" title="Próximo (Enter)">Próximo</button><span class="sp"></span><button type="button" id="xfRep">Substituir</button><button type="button" id="xfAll" class="pri">Substituir tudo</button></div>';
+    document.body.appendChild(xf);
+    xf.addEventListener('input', function (e) { if (e.target.id === 'xfQ') { xfM.at = -1; xfScan(); } });
+    xf.addEventListener('change', function (e) { if (e.target.id === 'xfCase') { xfM.at = -1; xfScan(); } });
+    xf.addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.x === 'close') closeFind(); else if (b.id === 'xfPrev') xfGo(-1); else if (b.id === 'xfNext') xfGo(1); else if (b.id === 'xfRep') xfReplace(false); else if (b.id === 'xfAll') xfReplace(true);
+    });
+    xf.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeFind(); return; }
+      if (e.key === 'Enter' && (e.target.id === 'xfQ' || e.target.id === 'xfR')) { e.preventDefault(); e.stopPropagation(); xfGo(e.shiftKey ? -1 : 1); return; }
+      if ((e.ctrlKey || e.metaKey) && /^[fh]$/i.test(e.key)) { e.preventDefault(); e.stopPropagation(); $('#xfQ').focus(); $('#xfQ').select(); return; }
+      e.stopPropagation(); /* teclas do painel não chegam ao slide (Delete não apaga, setas não movem) */
+    });
+  }
+  function openFind() { if (!xf) buildFind(); closeMenus(); xf.hidden = false; var q = $('#xfQ'); var sel0 = sel(); if (!q.value && sel0 && (sel0.type === 'text' || sel0.type === 'shape')) { var w = RT.plain(sel0.html).split(/\s+/)[0] || ''; if (w.length > 2 && w.length < 24) q.value = w; } xfM.at = -1; xfScan(); q.focus(); q.select(); }
+  function closeFind() { if (!xf || xf.hidden) return; xf.hidden = true; var f = $('#cv'); if (f) f.focus({ preventScroll: true }); }
   function openPicker() {
     if (editingId) endEdit(); flush();
     function pick() { var f = $('#fOpen'); f.value = ''; f.click(); }
@@ -3338,7 +3439,7 @@
     /* API estável para a capa (cover.js) e extensões */
     W: W, H: H, BRAND: BRAND, LAYOUTS: LAYOUTS, uid: uid, clone: clone, toast: toast,
     mk: { slide: mkSlide, text: mkText, shape: mkShape, line: mkLine, image: mkImage, brand: mkBrand, fx: mkFx },
-    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank,
+    newDeck: newDeck, newId: deckId, loadDeck: loadDeck, openFile: openFile, pickFile: function () { $('#fOpen').click(); }, appendSlides: appendSlides, isBlank: isBlank, openFind: openFind,
     /* Minhas obras (capa + history.js): validar um deck vindo do banco, gerar o .html de qualquer deck, baixar, renomear a obra aberta */
     safeDeck: safeDeck, exportDeck: function (d) { return exportHTML(d); }, slug: slug, download: download, openObras: goObras,
     setTitle: function (t) { t = String(t == null ? '' : t).slice(0, 300); if (editingId) endEdit(); deck.title = t; $('#title').value = t; commit(); },
