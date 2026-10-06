@@ -173,10 +173,11 @@
     };
     var paste = function (e) { var box = e.target && e.target.closest ? e.target.closest('.amf-in') : null; if (!box) return; e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text'); if (t) document.execCommand('insertText', false, box.classList.contains('amf-ta') ? t : t.replace(/\s*\n+\s*/g, ' ')); };
     deckEl.addEventListener('click', click); deckEl.addEventListener('keydown', keyd); deckEl.addEventListener('paste', paste);
-    var show = function () { Array.prototype.forEach.call(deckEl.querySelectorAll('.amf'), function (root) { arm(root, hd.deck && hd.deck.id); }); }; /* todos os formulários do deck (poucos): campos editáveis e contagem */
-    R.hooks.show.push(show);
-    hd.onDestroy(function () { deckEl.removeEventListener('click', click); deckEl.removeEventListener('keydown', keyd); deckEl.removeEventListener('paste', paste); var k = R.hooks.show.indexOf(show); if (k >= 0) R.hooks.show.splice(k, 1); });
-    show(hd.cur());
+    hd.onDestroy(function () { deckEl.removeEventListener('click', click); deckEl.removeEventListener('keydown', keyd); deckEl.removeEventListener('paste', paste); });
+    /* todos os slides já estão no DOM do player: os formulários ficam ativos de uma vez (sem hooks.show, que é só da navegação) */
+    Array.prototype.forEach.call(deckEl.querySelectorAll('.amf'), function (root) { arm(root, hd.deck && hd.deck.id); });
   });
-  R.forms = { parse: parseQs, key: storeKey, load: load, csv: toCSV, tsv: toTSV, answers: answersOf, submit: submit };
+  R.forms = { parse: parseQs, key: storeKey, load: load, csv: toCSV, tsv: toTSV, answers: answersOf, submit: submit,
+    /* partilhado com rt-61-workshop.js (quadro, votação): guardar, baixar, nome de arquivo, data/hora, envio à planilha, célula CSV */
+    save: save, download: download, slug: slug, stamp: stamp, post: postSheet, cell: csvCell };
 })(window.AMRT);

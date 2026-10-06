@@ -813,6 +813,9 @@
     'rot-0': '<path d="M3 20h18"/><rect x="6" y="9" width="12" height="8" rx="1.5"/><path d="M12 3v3"/>',
     side: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',
     form: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    note: '<path d="M4 4h16v11l-5 5H4z"/><path d="M15 20v-5h5"/>',
+    vote: '<path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/>',
+    timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
     palette: '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.5-.2-.8-.5-1.2-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
     smart: '<rect x="3" y="9" width="6" height="6" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M9 12h3M12 12V5.5h3M12 12v6.5h3"/>',
     /* S21: slide oculto / reexibir / redefinir slide */
@@ -3164,8 +3167,11 @@
   }
   /* mesmos itens do menu "Cards" da faixa de ferramentas */
   /* S30/S31: componentes interativos da apresentação (formulário; depois post-its, votação, cronômetro) */
-  var INTERACTIVE = [['form', 'Formulário inserido. Escreva as perguntas no painel à direita; na apresentação, as pessoas respondem no slide.']];
-  function interactiveItems() { return INTERACTIVE.filter(function (o) { return RT.FX[o[0]]; }).map(function (o) { return { t: RT.FX[o[0]].name, ic: 'form', fn: function () { insertFx(o[0]); toast(o[1]); } }; }); }
+  var INTERACTIVE = [['form', 'Formulário inserido. Escreva as perguntas no painel à direita; na apresentação, as pessoas respondem no slide.', 'form'],
+    ['board', 'Quadro inserido. Defina as colunas e as notas iniciais no painel; na apresentação, cada coluna ganha “+ Nota”.', 'note'],
+    ['vote', 'Votação inserida. Escreva as opções e os pontos por pessoa no painel; na apresentação, cada um distribui os pontos e vota.', 'vote'],
+    ['timer', 'Cronômetro inserido. Defina minutos e segundos no painel; na apresentação, Iniciar/Pausar, Reiniciar e ±1 min.', 'timer']];
+  function interactiveItems() { return INTERACTIVE.filter(function (o) { return RT.FX[o[0]]; }).map(function (o) { return { t: RT.FX[o[0]].name, ic: o[2] || 'form', fn: function () { insertFx(o[0]); toast(o[1]); } }; }); }
   function cardItems() { return $$('#mCard button').map(function (b) { return { t: b.textContent, ic: 'card', fn: function () { insertFx(b.dataset.fx, b.dataset.style || (b.dataset.fx === 'card' && dark() ? 'dark' : null)); } }; }); }
   function alignItems() {
     var list = sels(), n = list.length, many = n > 1;
