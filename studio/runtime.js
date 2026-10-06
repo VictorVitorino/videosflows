@@ -766,7 +766,7 @@ window.AMRT = (function () {
       if (e.target.closest('.amp-zb')) { openZoom(hoverId || 0); return; }
       var b = e.target.closest('[data-a]');
       if (b) { var a = b.dataset.a; if (a === 'prev') go(cur - 1); else if (a === 'next') go(cur + 1); else if (a === 'full') full(); else if (a === 'zoom') openZoom(hoverId || 0); else if (a === 'exit' && opts.onExit) opts.onExit(); return; }
-      if (!deckEl.contains(e.target) || zoomableNode(e.target)) return; /* clique num gráfico é dele (duplo clique amplia), nunca das zonas de avançar/voltar */
+      if (!deckEl.contains(e.target) || zoomableNode(e.target) || (e.target.closest && e.target.closest('.am-ia'))) return; /* clique num gráfico é dele (duplo clique amplia) e num componente interativo (.am-ia: formulário, quadro, votação…) também; nunca das zonas de avançar/voltar */
       var r = deckEl.getBoundingClientRect(); if (e.clientX > r.left + r.width * .82) go(cur + 1); else if (e.clientX < r.left + r.width * .18) go(cur - 1);
     });
     deckEl.addEventListener('dblclick', function (e) { var n = zoomableNode(e.target); if (n) { e.preventDefault(); openZoom(n.dataset.id); } });

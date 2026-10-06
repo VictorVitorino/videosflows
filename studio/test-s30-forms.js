@@ -108,7 +108,18 @@ async function open(ctx, url, tag){ const p=await ctx.newPage(); await fonts(p);
   await pv.evaluate(()=>document.activeElement.blur()); await pv.keyboard.press('ArrowRight'); await sleep(400);
   const nv2=await pv.evaluate(()=>({hash:location.hash, cur:[...document.querySelectorAll('.am-stage')].findIndex(s=>s.classList.contains('am-in'))}));
   check('S30-20: setas dentro do campo não trocam de slide; fora do campo, → avança', navk && nv.cur===0 && nv2.cur===1, {nv, nv2});
-  await pv.screenshot({path:SH('player')}); await pv.close();
+  /* formulário encostado na borda esquerda (zona “voltar” do player) e na direita (zona “avançar”): clicar nele não troca de slide */
+  await pv.evaluate(()=>{ history.replaceState(null,'','#/1'); location.reload(); }); await sleep(900);
+  await pv.close();
+  await p.evaluate(()=>{ const A=AMStudio; A.goSlide(0); const e=A.deck.slides[0].els.find(x=>x.kind==='form'); e.x=0; e.y=100; A.renderAll(); A.commit(); });
+  const hp2=path.join(TMP,'form-edge.html'); fs.writeFileSync(hp2, await p.evaluate(()=>AMStudio.exportHTML()));
+  const pe=await open(ctx,'file://'+hp2,'player2'); await sleep(900);
+  await pe.click('.amf-q[data-q="2"] .amf-o[data-v="TI"]'); await sleep(300);
+  const z1=await pe.evaluate(()=>({cur:[...document.querySelectorAll('.am-stage')].findIndex(s=>s.classList.contains('am-in')), on:document.querySelectorAll('.amf [aria-checked=true]').length}));
+  await pe.click('.amf-h'); await sleep(300);
+  const z2=await pe.evaluate(()=>[...document.querySelectorAll('.am-stage')].findIndex(s=>s.classList.contains('am-in')));
+  check('S30-24: formulário na zona “voltar/avançar” do player: clicar numa opção ou no título do formulário não troca de slide', z1.cur===0 && z1.on===1 && z2===0, {z1,z2});
+  await pe.close();
   /* ---------- 6. modo apresentar do editor, salvar/reabrir, ferramentas escondidas, endereço inválido ---------- */
   await p.evaluate(()=>{ AMStudio.goSlide(0); AMStudio.present(0); }); await sleep(900);
   await p.click('#presenter .amf-q[data-q="0"] .amf-in'); await p.keyboard.type('Carla'); await p.click('#presenter .amf-send'); await sleep(400);

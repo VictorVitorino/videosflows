@@ -81,7 +81,7 @@
     html: function (d, w, h, el) {
       var qs = parseQs(d.qs), f = Math.max(11, Math.min(w * .027, h * .038)), id = 'amf-' + esc(String(el && el.id || 'x').replace(/[^\w-]/g, ''));
       var tools = String(d.tools == null ? '1' : d.tools) !== '0';
-      return '<div class="fx amf" style="font-size:' + CQ(f) + '" data-form="1"' + (tools ? ' data-tools="1"' : '') + (typeof d.sheet === 'string' && /^https:\/\//i.test(d.sheet.trim()) ? ' data-sheet="' + esc(d.sheet.trim()) + '"' : '') + ' data-title="' + esc(d.title || '') + '">' +
+      return '<div class="fx amf am-ia" style="font-size:' + CQ(f) + '" data-form="1"' + (tools ? ' data-tools="1"' : '') + (typeof d.sheet === 'string' && /^https:\/\//i.test(d.sheet.trim()) ? ' data-sheet="' + esc(d.sheet.trim()) + '"' : '') + ' data-title="' + esc(d.title || '') + '">' +
         '<div class="amf-body"><div class="amf-h">' + (d.title ? '<b class="amf-t">' + esc(d.title) + '</b>' : '') + (d.intro ? '<span class="amf-i">' + esc(d.intro) + '</span>' : '') + '</div>' +
         '<div class="amf-qs">' + (qs.length ? qs.map(function (q, i) { return qHTML(q, i, id); }).join('') : '<p class="amf-empty">Escreva as perguntas no painel (uma por linha).</p>') + '</div>' +
         '<div class="amf-done" hidden><b>' + esc(d.thanks || 'Obrigado!') + '</b><button type="button" class="amf-again">Responder de novo</button></div></div>' + /* a mensagem final cobre só título e perguntas: o rodapé (contagem, CSV, copiar) continua à mão */
